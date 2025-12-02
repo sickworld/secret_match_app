@@ -8,7 +8,8 @@ struct MatchView: View {
     @State private var showMatchAnimation = false
     @State private var currentAnimationName = ""
     @State private var gifID = UUID()
-    @FocusState private var isTargetFieldFocused: Bool
+    @State private var inputFieldID = UUID()
+    @State private var isTargetNumberFocused = false
     
     var body: some View {
         ZStack {
@@ -79,24 +80,9 @@ struct MatchView: View {
                             .fontWeight(.bold)
                             .foregroundColor(.white)
 
-                        TextField("", text: $targetNumber)
-                            .placeholder(when: targetNumber.isEmpty) {
-                                Text("Ziel-Nummer eingeben")
-                                    .foregroundColor(.white.opacity(0.6))
-                            }
-                            .keyboardType(.numberPad)
-                            .padding()
+                        NumberTextField(text: $targetNumber, placeholder: "Ziel-Nummer eingeben", isFocused: $isTargetNumberFocused)
+                            .id(inputFieldID)
                             .frame(width: 280, height: 55)
-                            .background(Color.black.opacity(0.4))
-                            .cornerRadius(12)
-                            .foregroundColor(.white)
-                            .font(.system(size: 20, weight: .medium, design: .rounded))
-                            .multilineTextAlignment(.center)
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 12)
-                                    .stroke(Color.white.opacity(0.6), lineWidth: 2)
-                            )
-                            .focused($isTargetFieldFocused)
                             .padding(.horizontal)
 
                         HStack(spacing: 16) {
@@ -136,25 +122,40 @@ struct MatchView: View {
     func sendMatch(type: String) {
         Task {
             do {
-                let result = try await api.submitMatch(targetNumber: targetNumber, type: type)
-                responseMessage = result
-                targetNumber = ""
-                isTargetFieldFocused = true
-
-                if result.contains("Match gefunden") || result.contains("F-Match") || result.contains("F-Gematcht") {
-                    currentAnimationName = (type == "hot") ? "hot_match" : "normal_match"
+                if targetNumber == api.number {
+                    responseMessage = "Du kannst dich nicht selbst matchen 😅"
+                    currentAnimationName = "stupid"
                     gifID = UUID()
                     showMatchAnimation = true
+
                     DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
                         withAnimation {
                             showMatchAnimation = false
                         }
+                    }
+
+                    return
+                }
+                let result = try await api.submitMatch(targetNumber: targetNumber, type: type)
+                responseMessage = result
+                if result.contains("Match gefunden") || result.contains("F-Match") || result.contains("F-Gematcht") {
+                    currentAnimationName = (type == "hot") ? "hot_match" : "normal_match"
+                    gifID = UUID()
+                    showMatchAnimation = true
+
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
+                        withAnimation {
+                            showMatchAnimation = false
+                        }
+                        inputFieldID = UUID()
                     }
                 }
 
             } catch {
                 responseMessage = "Fehler: \(error.localizedDescription)"
             }
+            targetNumber = ""
+            isTargetNumberFocused = false
         }
     }
 }
