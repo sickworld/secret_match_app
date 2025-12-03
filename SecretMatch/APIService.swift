@@ -45,10 +45,20 @@ class APIService: ObservableObject {
         let decoded = try JSONDecoder().decode(MatchResponse.self, from: data)
         return decoded.data
     }
+    
+    @MainActor
+    func loadMatches() async throws -> [Match] {
+        let url = baseURL.appendingPathComponent("matches")
+        let (data, response) = try await URLSession.shared.data(from: url)
 
-    struct MatchResponse: Codable {
-        let success: Bool
-        let data: String
+        guard let http = response as? HTTPURLResponse, http.statusCode == 200 else {
+            throw URLError(.badServerResponse)
+        }
+
+        print(String(data: data, encoding: .utf8) ?? "Kein JSON")
+
+        let decoded = try JSONDecoder().decode([Match].self, from: data)
+        return decoded
     }
 
     func logout() {

@@ -2,7 +2,7 @@ import SwiftUI
 
 struct MatchView: View {
     @EnvironmentObject var api: APIService
-    @State private var showMatchesSheet = false
+    @State private var showMatchesOverlay = false
     @State private var targetNumber = ""
     @State private var responseMessage = ""
     @State private var showMatchAnimation = false
@@ -10,9 +10,10 @@ struct MatchView: View {
     @State private var gifID = UUID()
     @State private var inputFieldID = UUID()
     @State private var isTargetNumberFocused = false
-    
+
     var body: some View {
         ZStack {
+            // 🎉 GIF-Overlay bei Match
             if showMatchAnimation {
                 ZStack {
                     Color.black.opacity(0.6)
@@ -21,17 +22,20 @@ struct MatchView: View {
                     GIFView(name: currentAnimationName)
                         .frame(width: 500, height: 500)
                         .id(gifID)
-                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
                 }
                 .transition(.scale)
-                .zIndex(1)
+                .zIndex(2)
             }
+
+            // 🔲 Hintergrundbild
             Image("bg")
                 .resizable()
                 .scaledToFill()
                 .ignoresSafeArea()
 
+            // 📦 Hauptinhalt
             HStack(spacing: 0) {
+                // 🧭 Sidebar
                 VStack(alignment: .leading, spacing: 20) {
                     Image("logo")
                         .resizable()
@@ -47,17 +51,17 @@ struct MatchView: View {
                         .fontWeight(.bold)
                         .foregroundColor(.white)
 
-                    Button("📋 Meine Matches") {
-                        showMatchesSheet = true
+                    Button("Deine Matches") {
+                        showMatchesOverlay = true
                     }
                     .buttonStyle(SidebarButtonStyle())
 
-                    Button("📜 Spielregeln") {
-                        // TODO: Spielregeln anzeigen
+                    Button("Spielregeln") {
+                        // TODO
                     }
                     .buttonStyle(SidebarButtonStyle())
 
-                    Button("🚪 Logout") {
+                    Button("Logout") {
                         api.logout()
                     }
                     .buttonStyle(SidebarButtonStyle())
@@ -71,6 +75,7 @@ struct MatchView: View {
                 Divider()
                     .background(Color.white.opacity(0.3))
 
+                // 📝 Wunsch äußern
                 VStack {
                     Spacer()
 
@@ -86,7 +91,7 @@ struct MatchView: View {
                             .padding(.horizontal)
 
                         HStack(spacing: 16) {
-                            Button("N-Match") {
+                            Button("N-Match ❤️") {
                                 sendMatch(type: "normal")
                             }
                             .buttonStyle(MatchButtonStyle())
@@ -103,7 +108,7 @@ struct MatchView: View {
                         }
                     }
                     .padding()
-                    .background(Color(hex: "#3c0d1f").opacity(0.92)) // 🔥 Burgundy Box
+                    .background(Color(hex: "#3c0d1f").opacity(0.92))
                     .cornerRadius(24)
                     .shadow(color: .black.opacity(0.3), radius: 20, x: 0, y: 10)
 
@@ -113,9 +118,20 @@ struct MatchView: View {
                 }
                 .frame(maxWidth: .infinity)
             }
-        }
-        .sheet(isPresented: $showMatchesSheet) {
-            MatchListView()
+
+            // ✅ MatchList Overlay
+            if showMatchesOverlay {
+                Color.black.opacity(0.6)
+                    .ignoresSafeArea()
+                    .onTapGesture {
+                        showMatchesOverlay = false
+                    }
+
+                MatchListView(isPresented: $showMatchesOverlay)
+                    .environmentObject(api)
+                    .zIndex(3)
+                    .transition(.opacity)
+            }
         }
     }
 
@@ -127,7 +143,6 @@ struct MatchView: View {
                     currentAnimationName = "stupid"
                     gifID = UUID()
                     showMatchAnimation = true
-
                     DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
                         withAnimation {
                             showMatchAnimation = false
@@ -137,13 +152,14 @@ struct MatchView: View {
                     isTargetNumberFocused = false
                     return
                 }
+
                 let result = try await api.submitMatch(targetNumber: targetNumber, type: type)
                 responseMessage = result
+
                 if result.contains("Match gefunden") || result.contains("F-Match") || result.contains("F-Gematcht") {
                     currentAnimationName = (type == "hot") ? "hot_match" : "normal_match"
                     gifID = UUID()
                     showMatchAnimation = true
-
                     DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
                         withAnimation {
                             showMatchAnimation = false
@@ -155,6 +171,7 @@ struct MatchView: View {
             } catch {
                 responseMessage = "Fehler: \(error.localizedDescription)"
             }
+
             targetNumber = ""
             isTargetNumberFocused = false
         }
