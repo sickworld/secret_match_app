@@ -3,7 +3,8 @@ import SwiftUI
 @main
 struct SecretMatchApp: App {
     @StateObject private var api = APIService.shared
-
+    @State private var isLoading = true
+    
     var body: some Scene {
         WindowGroup {
             ZStack {
@@ -11,13 +12,36 @@ struct SecretMatchApp: App {
                     .resizable()
                     .scaledToFill()
                     .ignoresSafeArea()
-                if api.isLoggedIn {
-                    MatchView()
+
+                if isLoading {
+                    VStack(spacing: 20) {
+                        Image("logo")
+                            .resizable()
+                            .scaledToFit()
+                            .frame(width: 220, height: 220)
+
+                        ProgressView()
+                            .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                    }
+                    .zIndex(999)
                 } else {
-                    LoginView()
+                    if api.isLoggedIn {
+                        MatchView()
+                    } else {
+                        LoginView()
+                    }
                 }
             }
             .environmentObject(api)
+            .onAppear {
+                Task {
+                    // Hier kannst du ggf. eine API-Statusprüfung einbauen
+                    try? await Task.sleep(nanoseconds: 1_000_000_000) // optional: Wartezeit simulieren
+                    withAnimation {
+                        isLoading = false
+                    }
+                }
+            }
         }
     }
 }
