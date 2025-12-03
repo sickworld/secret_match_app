@@ -133,7 +133,8 @@ struct MatchView: View {
                             showMatchAnimation = false
                         }
                     }
-
+                    targetNumber = ""
+                    isTargetNumberFocused = false
                     return
                 }
                 let result = try await api.submitMatch(targetNumber: targetNumber, type: type)
