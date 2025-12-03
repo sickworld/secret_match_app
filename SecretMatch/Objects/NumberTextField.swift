@@ -15,15 +15,21 @@ struct NumberTextField: UIViewRepresentable {
         }
 
         func textFieldDidChangeSelection(_ textField: UITextField) {
-            parent.text = textField.text ?? ""
+            DispatchQueue.main.async {
+                self.parent.text = textField.text ?? ""
+            }
         }
 
         func textFieldDidBeginEditing(_ textField: UITextField) {
-            parent.isFocused = true
+            DispatchQueue.main.async {
+                self.parent.isFocused = true
+            }
         }
 
         func textFieldDidEndEditing(_ textField: UITextField) {
-            parent.isFocused = false
+            DispatchQueue.main.async {
+                self.parent.isFocused = false
+            }
         }
     }
 
