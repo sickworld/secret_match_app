@@ -10,7 +10,35 @@ struct MatchView: View {
     @State private var gifID = UUID()
     @State private var inputFieldID = UUID()
     @State private var isTargetNumberFocused = false
+    @State private var lastInteraction = Date()
+    @State private var inactivityTimer: Timer?
+    @State private var countdownTimer: Timer?
+    @State private var secondsRemaining = 20
+    
+    func resetInactivityTimer() {
+        lastInteraction = Date()
+        inactivityTimer?.invalidate()
+        countdownTimer?.invalidate()
+        secondsRemaining = 20
 
+        // Timer für Auto-Logout
+        inactivityTimer = Timer.scheduledTimer(withTimeInterval: 20, repeats: false) { _ in
+            Task { @MainActor in
+                print("🔒 Auto-Logout wegen Inaktivität")
+                api.logout()
+            }
+        }
+
+        // Countdown-Timer für Anzeige
+        countdownTimer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { _ in
+            if secondsRemaining > 0 {
+                secondsRemaining -= 1
+            } else {
+                countdownTimer?.invalidate()
+            }
+        }
+    }
+    
     var body: some View {
         ZStack {
             // 🎉 GIF-Overlay bei Match
@@ -52,12 +80,13 @@ struct MatchView: View {
                         .foregroundColor(.white)
 
                     Button("Deine Matches") {
+                        resetInactivityTimer()
                         showMatchesOverlay = true
                     }
                     .buttonStyle(SidebarButtonStyle())
 
                     Button("Spielregeln") {
-                        // TODO
+                        resetInactivityTimer()
                     }
                     .buttonStyle(SidebarButtonStyle())
 
@@ -66,6 +95,10 @@ struct MatchView: View {
                     }
                     .buttonStyle(SidebarButtonStyle())
 
+                    Text("⏳ Auto-Logout in \(secondsRemaining)s")
+                        .font(.caption2)
+                        .foregroundColor(.white.opacity(0.5))
+                    
                     Spacer()
                 }
                 .padding()
@@ -93,11 +126,13 @@ struct MatchView: View {
                         HStack(spacing: 16) {
                             Button("N-Match ❤️") {
                                 sendMatch(type: "normal")
+                                resetInactivityTimer()
                             }
                             .buttonStyle(MatchButtonStyle())
 
                             Button("F-Match 🔥") {
                                 sendMatch(type: "hot")
+                                resetInactivityTimer()
                             }
                             .buttonStyle(FMatchButtonStyle())
                         }
@@ -132,6 +167,8 @@ struct MatchView: View {
                     .zIndex(3)
                     .transition(.opacity)
             }
+        }.onAppear {
+            resetInactivityTimer()
         }
     }
 
