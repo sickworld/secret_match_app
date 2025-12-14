@@ -4,14 +4,18 @@ import Combine
 struct LoginView: View {
     @State private var number: String = ""
     @EnvironmentObject var api: APIService
+    @State private var showKeyboard = false
+    @State private var isLoading = false
 
     var body: some View {
         ZStack {
+            // Hintergrundbild
             Image("bg")
                 .resizable()
                 .scaledToFill()
                 .ignoresSafeArea()
 
+            // Inhalt
             VStack {
                 Spacer()
 
@@ -21,31 +25,30 @@ struct LoginView: View {
                         .scaledToFit()
                         .frame(width: 200, height: 170)
 
-                    TextField("", text: $number)
-                        .placeholder(when: number.isEmpty) {
-                            Text("Deine Nummer eingeben")
-                                .foregroundColor(.white.opacity(0.6))
-                        }
-                        .keyboardType(.numberPad)
-                        .padding()
-                        .frame(width: 280, height: 55)
+                    Text(number.isEmpty ? "Deine Nummer eingeben" : number)
+                        .foregroundColor(number.isEmpty ? .white.opacity(0.6) : .white)
+                        .frame(width: 500, height: 55)
                         .background(Color.black.opacity(0.4))
                         .cornerRadius(12)
-                        .foregroundColor(.white)
                         .font(.system(size: 20, weight: .medium, design: .rounded))
                         .multilineTextAlignment(.center)
                         .overlay(
                             RoundedRectangle(cornerRadius: 12)
                                 .stroke(Color.white.opacity(0.6), lineWidth: 2)
                         )
-                    
+                        .onTapGesture {
+                            showKeyboard = true
+                        }
+
                     Button(action: {
                         Task {
+                            isLoading = true
                             do {
                                 try await api.login(number: number)
                             } catch {
                                 print("Login fehlgeschlagen: \(error.localizedDescription)")
                             }
+                            isLoading = false
                         }
                     }) {
                         Text("Einloggen")
@@ -56,28 +59,53 @@ struct LoginView: View {
                             .cornerRadius(12)
                             .font(.headline)
                     }
-                    .frame(width: 280)
+                    .frame(width: 500)
                 }
                 .padding()
-                .background(Color(hex: "#3c0d1f").opacity(0.92)) // 🔥 Burgundy Box
+                .background(Color(hex: "#3c0d1f").opacity(0.92))
                 .cornerRadius(24)
                 .shadow(color: .black.opacity(0.3), radius: 20, x: 0, y: 10)
 
                 Spacer()
             }
-        }
-    }
-}
 
-extension View {
-    func placeholder<Content: View>(
-        when shouldShow: Bool,
-        alignment: Alignment = .leading,
-        @ViewBuilder placeholder: () -> Content
-    ) -> some View {
-        ZStack(alignment: alignment) {
-            placeholder().opacity(shouldShow ? 1 : 0)
-            self
+            // 🔄 Loading Overlay
+            if isLoading {
+                LoadingOverlay(message: "Wird angemeldet…")
+                    .zIndex(10)
+            }
+
+            // 🔢 Tastatur-Overlay
+            if showKeyboard {
+                // Transparente Fläche, die das Keyboard schließt
+                Color.black.opacity(0.6)
+                    .ignoresSafeArea()
+                    .onTapGesture {
+                        withAnimation {
+                            showKeyboard = false
+                        }
+                    }
+                    .zIndex(20)
+
+                // Zentrierte Tastaturbox
+                VStack {
+                    Spacer()
+                    VStack(spacing: 10) {
+                        CustomNumberKeyboard(text: $number) {
+                            withAnimation {
+                                showKeyboard = false
+                            }
+                        }
+                        .frame(maxWidth: 320)
+                        .cornerRadius(16)
+                        .shadow(radius: 20)
+                    }
+                    .padding()
+                    Spacer()
+                }
+                .zIndex(30)
+                .transition(.move(edge: .bottom))
+            }
         }
     }
 }

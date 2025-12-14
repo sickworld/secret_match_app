@@ -17,7 +17,7 @@ struct MatchButtonStyle: ButtonStyle {
         configuration.label
             .padding()
             .frame(width: 140)
-            .background(Color.green)
+            .background(Color(hex: "#a33c5e"))
             .foregroundColor(.white)
             .cornerRadius(10)
             .opacity(configuration.isPressed ? 0.8 : 1.0)
@@ -29,7 +29,7 @@ struct FMatchButtonStyle: ButtonStyle {
         configuration.label
             .padding()
             .frame(width: 140)
-            .background(Color.orange)
+            .background(Color(hex: "#a33c5e"))
             .foregroundColor(.white)
             .cornerRadius(10)
             .opacity(configuration.isPressed ? 0.8 : 1.0)

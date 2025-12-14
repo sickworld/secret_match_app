@@ -6,10 +6,13 @@ struct MatchListView: View {
     @Environment(\.dismiss) private var dismiss
     @Binding var isPresented: Bool
 
+    var groupedMatches: [String: [Match]] {
+        Dictionary(grouping: matches, by: { $0.type })
+    }
+
     var body: some View {
         ZStack {
-            Color.black.opacity(0.6)
-                .ignoresSafeArea()
+            Color.black.opacity(0.6).ignoresSafeArea()
 
             VStack(spacing: 20) {
                 Text("Deine Matches")
@@ -23,22 +26,27 @@ struct MatchListView: View {
                         .padding(.top, 30)
                 } else {
                     ScrollView {
-                        VStack(spacing: 12) {
-                            ForEach(matches) { match in
-                                HStack {
-                                    Text("\(match.other)")
-                                        .foregroundColor(.white)
-                                        .fontWeight(.medium)
+                        VStack(spacing: 24) {
+                            ForEach(groupedMatches.keys.sorted(), id: \.self) { type in
+                                VStack(alignment: .leading, spacing: 8) {
+                                    Text(typeTitle(for: type))
+                                        .font(.headline)
+                                        .foregroundColor(.white.opacity(0.8))
+                                        .padding(.leading)
 
-                                    Spacer()
+                                    ForEach(groupedMatches[type] ?? []) { match in
+                                        HStack {
+                                            Text("\(match.other)")
+                                                .foregroundColor(.white)
+                                                .fontWeight(.medium)
 
-                                    Text(match.type == "hot" ? "🔥 F-Match" : "❤️ Normal")
-                                        .font(.caption)
-                                        .foregroundColor(match.type == "hot" ? .orange : .green)
+                                            Spacer()
+                                        }
+                                        .padding()
+                                        .background(Color.black.opacity(0.4))
+                                        .cornerRadius(12)
+                                    }
                                 }
-                                .padding()
-                                .background(Color.black.opacity(0.4))
-                                .cornerRadius(12)
                             }
                         }
                         .padding(.horizontal)
@@ -54,7 +62,7 @@ struct MatchListView: View {
             }
             .padding()
             .frame(maxWidth: 400)
-            .background(Color(hex: "#3c0d1f").opacity(0.92)) // 🍷 Box-Stil
+            .background(Color(hex: "#3c0d1f").opacity(0.92))
             .cornerRadius(24)
             .shadow(color: .black.opacity(0.3), radius: 20, x: 0, y: 10)
         }
@@ -67,6 +75,14 @@ struct MatchListView: View {
                     print("❌ Fehler beim Laden der Matches: \(error.localizedDescription)")
                 }
             }
+        }
+    }
+
+    func typeTitle(for type: String) -> String {
+        switch type {
+            case "hot": return "Fuck-Matches"
+            case "normal": return "Hot-Matches"
+            default: return "Andere"
         }
     }
 }
