@@ -6,7 +6,8 @@ struct LoginView: View {
     @EnvironmentObject var api: APIService
     @State private var showKeyboard = false
     @State private var isLoading = false
-
+    @State private var showAdminLogin = false
+    
     var body: some View {
         ZStack {
             Image("bg")
@@ -22,7 +23,11 @@ struct LoginView: View {
                         .resizable()
                         .scaledToFit()
                         .frame(width: 300, height: 270)
-
+                        .onLongPressGesture(minimumDuration: 3) {
+                            UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+                            showAdminLogin = true
+                        }
+                    
                     Text(number.isEmpty ? "Deine Nummer eingeben" : number)
                         .foregroundColor(number.isEmpty ? .white.opacity(0.6) : .white)
                         .frame(width: 500, height: 55)
@@ -100,6 +105,9 @@ struct LoginView: View {
                 .zIndex(30)
                 .transition(.move(edge: .bottom))
             }
+        }.sheet(isPresented: $showAdminLogin) {
+            AdminLoginView(isPresented: $showAdminLogin)
+                .environmentObject(api)
         }
     }
 }

@@ -27,7 +27,7 @@ struct MatchView: View {
 
 
     // MARK: - Inactivity Handling
-
+    
     func resetInactivityTimer() {
         inactivityTimer?.invalidate()
         countdownTimer?.invalidate()
@@ -67,7 +67,9 @@ struct MatchView: View {
                 Color.black.opacity(0.6)
                     .ignoresSafeArea()
                     .zIndex(20)
-
+                    .task {
+                        pauseInactivityTimer()
+                    }
                 VStack {
                     Spacer()
 
@@ -89,8 +91,10 @@ struct MatchView: View {
             if showKeyboardAction {
                 Color.black.opacity(0.6)
                     .ignoresSafeArea()
-                    .zIndex(20) // Tastatur immer ganz oben
-
+                    .zIndex(20)
+                    .task {
+                        pauseInactivityTimer()
+                    }
                 VStack {
                     Spacer()
 
@@ -116,15 +120,13 @@ struct MatchView: View {
                 .ignoresSafeArea()
 
             HStack(spacing: 0) {
-               
                 SidebarView(
                     secondsRemaining: secondsRemaining,
-                    pauseInactivity: { pauseInactivityTimer() },
+                    pauseInactivity: pauseInactivityTimer,
                     logout: { api.logout() },
                     showMatchesOverlay: $showMatchesOverlay,
                     showActionsOverlay: $showActionsOverlay
                 )
-                .environmentObject(api)
 
                 Divider().background(Color.white.opacity(0.3))
 
@@ -158,7 +160,7 @@ struct MatchView: View {
                     .ignoresSafeArea()
                     .onTapGesture {
                         showMatchesOverlay = false
-                        pauseInactivityTimer()
+                        resetInactivityTimer()
                     }
 
                 MatchListView(isPresented: $showMatchesOverlay)
@@ -184,12 +186,11 @@ struct MatchView: View {
                     }
             }
             
-            
-            
         }.onTapGesture {
             withAnimation {
                 showKeyboard = false
                 showKeyboardAction = false
+                resetInactivityTimer()
             }
         }
     }

@@ -11,10 +11,13 @@ class APIService: ObservableObject {
     @Published var number: String = ""
     @Published var matches: [Match] = []
     @Published var actions: [SecretAction] = []
-
+    @Published var isAdmin: Bool = false
+    @Published var adminActions: [AdminAction] = []
+    @Published var adminMatches: [AdminMatch] = []
     private let baseURL = URL(string: "https://secret-match.de/wp-json/secretmatch/v1")!
 
     func login(number: String) async throws {
+        if isAdmin { return }
         let url = baseURL.appendingPathComponent("login")
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
@@ -100,11 +103,75 @@ class APIService: ObservableObject {
         let json = try JSONSerialization.jsonObject(with: data) as? [String: Any]
         return json?["message"] as? String ?? "Aktion gespeichert"
     }
+    
+    @MainActor
+    func adminLogin(password: String) async -> Bool {
+        let url = baseURL.appendingPathComponent("admin/login")
+
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("application/x-www-form-urlencoded", forHTTPHeaderField: "Content-Type")
+        request.httpBody = "password=\(password)".data(using: .utf8)
+
+        do {
+            let (_, response) = try await URLSession.shared.data(for: request)
+            let success = (response as? HTTPURLResponse)?.statusCode == 200
+
+            if success {
+                isAdmin = true
+                isLoggedIn = false
+                number = ""
+                matches = []
+                actions = []
+            }
+
+            return success
+        } catch {
+            return false
+        }
+    }
+    
+    @MainActor
+    func loadAdminActions() async {
+        let url = baseURL.appendingPathComponent("admin/actions")
+
+        do {
+            let (data, response) = try await URLSession.shared.data(from: url)
+            guard (response as? HTTPURLResponse)?.statusCode == 200 else {
+                print("❌ AdminActions HTTP Fehler")
+                return
+            }
+
+            adminActions = try JSONDecoder().decode([AdminAction].self, from: data)
+        } catch {
+            print("❌ AdminActions Fehler:", error.localizedDescription)
+            adminActions = []
+        }
+    }
+    
+    @MainActor
+    func loadAdminMatches() async {
+        let url = baseURL.appendingPathComponent("admin/matches")
+
+        do {
+            let (data, response) = try await URLSession.shared.data(from: url)
+            guard (response as? HTTPURLResponse)?.statusCode == 200 else {
+                print("❌ AdminMatches HTTP Fehler")
+                return
+            }
+
+            adminMatches = try JSONDecoder().decode([AdminMatch].self, from: data)
+        } catch {
+            print("❌ AdminMatches Fehler:", error.localizedDescription)
+            adminMatches = []
+        }
+    }
 
     func logout() {
         self.isLoggedIn = false
         self.number = ""
         self.matches = []
         self.actions = []
+        self.isAdmin = false
     }
 }

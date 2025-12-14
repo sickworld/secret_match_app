@@ -25,18 +25,21 @@ struct SecretMatchApp: App {
                     }
                     .zIndex(999)
                 } else {
-                    if api.isLoggedIn {
-                        MatchView()
-                    } else {
-                        LoginView()
+                    Group {
+                        if api.isAdmin {
+                            AdminMainView()
+                        } else if api.isLoggedIn {
+                            MatchView()
+                        } else {
+                            LoginView()
+                        }
                     }
                 }
             }
             .environmentObject(api)
             .onAppear {
                 Task {
-                    // Hier kannst du ggf. eine API-Statusprüfung einbauen
-                    try? await Task.sleep(nanoseconds: 1_000_000_000) // optional: Wartezeit simulieren
+                    try? await Task.sleep(nanoseconds: 1_000_000_000)
                     withAnimation {
                         isLoading = false
                     }
