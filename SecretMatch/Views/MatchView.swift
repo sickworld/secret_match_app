@@ -8,7 +8,9 @@ struct MatchView: View {
     @State private var targetNumber = ""
     @State private var actionNumber = ""
 
-    @State private var responseMessage = ""
+    @State private var responseMessageMatches = ""
+    @State private var responseMessageAction = ""
+
 
     // Inactivity / Auto-Logout
     @State private var inactivityTimer: Timer?
@@ -20,6 +22,9 @@ struct MatchView: View {
     @State private var showKeyboardAction = false
 
     @State private var isLoading = false
+    
+    @State private var sentActions: [SentAction] = []
+
 
     // MARK: - Inactivity Handling
 
@@ -129,14 +134,15 @@ struct MatchView: View {
                     MatchInputBox(
                         targetNumber: $targetNumber,
                         showKeyboard: $showKeyboard,
-                        responseMessage: $responseMessage,
+                        responseMessage: $responseMessageMatches,
                         onSendMatch: { type in sendMatch(type: type) }
                     )
 
                     OtherActionsBox(
                         targetNumber: $actionNumber,
                         showKeyboard: $showKeyboardAction,
-                        onSendBonus: { bonusType in sendBonus(type: bonusType) }
+                        responseMessage: $responseMessageAction,
+                        onSendAction: { bonusType in sendAction(type: bonusType) }
                     )
 
                     Spacer()
@@ -165,14 +171,17 @@ struct MatchView: View {
             }
 
             if showActionsOverlay {
-                Color.black.opacity(0.6)
-                    .ignoresSafeArea()
+                Color.black.opacity(0.6).ignoresSafeArea().onTapGesture {
+                    showActionsOverlay = false
+                }
+
+                ActionListView(isPresented: $showActionsOverlay)
+                    .environmentObject(api)
+                    .zIndex(5)
                     .onTapGesture {
                         showActionsOverlay = false
-                        pauseInactivityTimer()
+                        resetInactivityTimer()
                     }
-
-                //TODO: added overlay for actions
             }
             
             
@@ -198,7 +207,7 @@ struct MatchView: View {
             }
 
             if targetNumber == api.number {
-                responseMessage = "Du kannst dich nicht selbst matchen 😅"
+                responseMessageMatches = "Du kannst dich nicht selbst matchen 😅"
                 return
             }
 
@@ -207,27 +216,32 @@ struct MatchView: View {
                     targetNumber: targetNumber,
                     type: type
                 )
-                responseMessage = result
+                responseMessageMatches = result
             } catch {
-                responseMessage = "Fehler: \(error.localizedDescription)"
+                responseMessageMatches = "Fehler: \(error.localizedDescription)"
             }
         }
     }
     
-    func sendBonus(type: String) {
+    func sendAction(type: String) {
         Task {
             isLoading = true
             defer {
                 isLoading = false
-                targetNumber = ""
+                actionNumber = ""
                 showKeyboard = false
+            }
+            
+            if actionNumber == api.number {
+                responseMessageAction = "Du kannst dich nicht selbst beglücken 😅"
+                return
             }
 
             do {
-                let result = try await api.submitMatch(targetNumber: targetNumber, type: type)
-                responseMessage = result
+                let result = try await api.submitAction(targetNumber: actionNumber, type: type)
+                responseMessageAction = result
             } catch {
-                responseMessage = "Fehler: \(error.localizedDescription)"
+                responseMessageAction = "Fehler: \(error.localizedDescription)"
             }
         }
     }

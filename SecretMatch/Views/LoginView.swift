@@ -21,7 +21,7 @@ struct LoginView: View {
                     Image("logo")
                         .resizable()
                         .scaledToFit()
-                        .frame(width: 200, height: 170)
+                        .frame(width: 300, height: 270)
 
                     Text(number.isEmpty ? "Deine Nummer eingeben" : number)
                         .foregroundColor(number.isEmpty ? .white.opacity(0.6) : .white)

@@ -10,6 +10,7 @@ class APIService: ObservableObject {
     @Published var isLoggedIn: Bool = false
     @Published var number: String = ""
     @Published var matches: [Match] = []
+    @Published var actions: [SecretAction] = []
 
     private let baseURL = URL(string: "https://secret-match.de/wp-json/secretmatch/v1")!
 
@@ -60,10 +61,50 @@ class APIService: ObservableObject {
         let decoded = try JSONDecoder().decode([Match].self, from: data)
         return decoded
     }
+    
+    @MainActor
+    func loadActions() async throws -> [SecretAction] {
+        let url = baseURL.appendingPathComponent("actions")
+        let (data, _) = try await URLSession.shared.data(from: url)
+        
+        return try JSONDecoder().decode([SecretAction].self, from: data)
+    }
+    
+    @MainActor
+    func submitAction(targetNumber: String, type: String) async throws -> String {
+        let url = baseURL.appendingPathComponent("actions")
+
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+
+        let body: [String: String] = [
+            "target_number": targetNumber,
+            "action_type": type
+        ]
+
+        request.httpBody = try JSONSerialization.data(withJSONObject: body)
+
+        let (data, response) = try await URLSession.shared.data(for: request)
+
+        guard let http = response as? HTTPURLResponse else {
+            throw URLError(.badServerResponse)
+        }
+
+        if http.statusCode != 200 {
+            let msg = String(data: data, encoding: .utf8) ?? "Serverfehler"
+            throw NSError(domain: "", code: http.statusCode,
+                          userInfo: [NSLocalizedDescriptionKey: msg])
+        }
+
+        let json = try JSONSerialization.jsonObject(with: data) as? [String: Any]
+        return json?["message"] as? String ?? "Aktion gespeichert"
+    }
 
     func logout() {
         self.isLoggedIn = false
         self.number = ""
         self.matches = []
+        self.actions = []
     }
 }

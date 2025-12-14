@@ -3,17 +3,19 @@ import SwiftUI
 struct OtherActionsBox: View {
     @Binding var targetNumber: String
     @Binding var showKeyboard: Bool
+    @Binding var responseMessage: String
 
-    let onSendBonus: (String) -> Void
-    
+    let onSendAction: (String) -> Void
+
     var body: some View {
         VStack(spacing: 20) {
-            Text("Aktion schicken?")
+            Text("Aktion senden")
                 .font(.title2)
                 .fontWeight(.bold)
                 .foregroundColor(.white)
 
-            Text(targetNumber.isEmpty ? "Aktion schicken an" : targetNumber)
+            // 📱 Eingabefeld
+            Text(targetNumber.isEmpty ? "Nummer eingeben" : targetNumber)
                 .foregroundColor(targetNumber.isEmpty ? .white.opacity(0.6) : .white)
                 .frame(width: 500, height: 55)
                 .background(Color.black.opacity(0.4))
@@ -27,23 +29,20 @@ struct OtherActionsBox: View {
                 .onTapGesture {
                     showKeyboard = true
                 }
-                .padding()
+                .padding(.bottom, 10)
 
+            // 🎯 Bonus-Aktionen
             HStack(spacing: 16) {
-                Button("Blow-Job") {
-                    onSendBonus("bjob")
-                }
-                .buttonStyle(MatchButtonStyle())
+                ActionButton(label: "Blow-Job", type: "bjob")
+                ActionButton(label: "Hand-Job", type: "hjob")
+                ActionButton(label: "Lick-Job", type: "ljob")
+            }
 
-                Button("Hand-Job") {
-                    onSendBonus("hjob")
-                }
-                .buttonStyle(MatchButtonStyle())
-                
-                Button("Lick-Job") {
-                    onSendBonus("ljob")
-                }
-                .buttonStyle(MatchButtonStyle())
+            if !responseMessage.isEmpty {
+                Text(responseMessage)
+                    .font(.footnote)
+                    .foregroundColor(.white.opacity(0.9))
+                    .padding(.top, 4)
             }
         }
         .padding()
@@ -51,5 +50,15 @@ struct OtherActionsBox: View {
         .frame(width: 550)
         .cornerRadius(24)
         .shadow(color: .black.opacity(0.3), radius: 20)
+    }
+
+    func ActionButton(label: String, type: String) -> some View {
+        Button(action: {
+            onSendAction(type)
+        }) {
+            Text(label)
+                .frame(minWidth: 80)
+        }
+        .buttonStyle(MatchButtonStyle())
     }
 }
