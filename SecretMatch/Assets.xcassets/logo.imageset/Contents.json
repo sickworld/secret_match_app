@@ -1,17 +1,17 @@
 {
   "images" : [
     {
-      "filename" : "LogoNeu_tr.png",
+      "filename" : "Match1.png",
       "idiom" : "universal",
       "scale" : "1x"
     },
     {
-      "filename" : "LogoNeu_tr 1.png",
+      "filename" : "Match1 1.png",
       "idiom" : "universal",
       "scale" : "2x"
     },
     {
-      "filename" : "LogoNeu_tr 2.png",
+      "filename" : "Match1 2.png",
       "idiom" : "universal",
       "scale" : "3x"
     }
