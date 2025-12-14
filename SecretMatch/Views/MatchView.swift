@@ -116,8 +116,8 @@ struct MatchView: View {
                     secondsRemaining: secondsRemaining,
                     pauseInactivity: { pauseInactivityTimer() },
                     logout: { api.logout() },
-                    showMatches: { showMatchesOverlay = true },
-                    showActions: { showActionsOverlay = true }
+                    showMatchesOverlay: $showMatchesOverlay,
+                    showActionsOverlay: $showActionsOverlay
                 )
                 .environmentObject(api)
 
@@ -146,6 +146,37 @@ struct MatchView: View {
                     resetInactivityTimer()
                 }
             }
+            
+            if showMatchesOverlay {
+                Color.black.opacity(0.6)
+                    .ignoresSafeArea()
+                    .onTapGesture {
+                        showMatchesOverlay = false
+                        pauseInactivityTimer()
+                    }
+
+                MatchListView(isPresented: $showMatchesOverlay)
+                    .environmentObject(api)
+                    .zIndex(5)
+                    .onTapGesture {
+                        showMatchesOverlay = false
+                        resetInactivityTimer()
+                    }
+            }
+
+            if showActionsOverlay {
+                Color.black.opacity(0.6)
+                    .ignoresSafeArea()
+                    .onTapGesture {
+                        showActionsOverlay = false
+                        pauseInactivityTimer()
+                    }
+
+                //TODO: added overlay for actions
+            }
+            
+            
+            
         }.onTapGesture {
             withAnimation {
                 showKeyboard = false

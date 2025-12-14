@@ -5,8 +5,8 @@ struct SidebarView: View {
     var secondsRemaining: Int
     var pauseInactivity: () -> Void
     var logout: () -> Void
-    var showMatches: () -> Void
-    var showActions: () -> Void
+    @Binding var showMatchesOverlay: Bool
+    @Binding var showActionsOverlay: Bool
 
     var body: some View {
         VStack(alignment: .leading, spacing: 20) {
@@ -26,13 +26,13 @@ struct SidebarView: View {
 
             Button("Deine Matches") {
                 pauseInactivity()
-                showMatches()
+                showMatchesOverlay = true
             }
             .buttonStyle(SidebarButtonStyle())
             
             Button("Deine Aktionen") {
                 pauseInactivity()
-                showActions()
+                showActionsOverlay = true
             }
             .buttonStyle(SidebarButtonStyle())
 

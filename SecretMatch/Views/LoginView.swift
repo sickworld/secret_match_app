@@ -9,13 +9,11 @@ struct LoginView: View {
 
     var body: some View {
         ZStack {
-            // Hintergrundbild
             Image("bg")
                 .resizable()
                 .scaledToFill()
                 .ignoresSafeArea()
 
-            // Inhalt
             VStack {
                 Spacer()
 
@@ -69,15 +67,12 @@ struct LoginView: View {
                 Spacer()
             }
 
-            // 🔄 Loading Overlay
             if isLoading {
                 LoadingOverlay(message: "Wird angemeldet…")
                     .zIndex(10)
             }
 
-            // 🔢 Tastatur-Overlay
             if showKeyboard {
-                // Transparente Fläche, die das Keyboard schließt
                 Color.black.opacity(0.6)
                     .ignoresSafeArea()
                     .onTapGesture {
@@ -87,7 +82,6 @@ struct LoginView: View {
                     }
                     .zIndex(20)
 
-                // Zentrierte Tastaturbox
                 VStack {
                     Spacer()
                     VStack(spacing: 10) {
