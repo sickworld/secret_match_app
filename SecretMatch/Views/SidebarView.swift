@@ -15,14 +15,18 @@ struct SidebarView: View {
                 .scaledToFit()
                 .frame(width: 200, height: 170)
 
-            Text("Deine Nummer:")
-                .font(.caption2)
-                .foregroundColor(.white.opacity(0.6))
+            VStack(alignment: .leading, spacing: 4) {
+                Text("Deine Nummer")
+                    .font(.caption)
+                    .foregroundColor(.white.opacity(0.6))
 
-            Text(api.number)
-                .font(.title2)
-                .fontWeight(.bold)
-                .foregroundColor(.white)
+                Text(api.number)
+                    .font(.system(size: 32, weight: .heavy, design: .rounded))
+                    .foregroundColor(.white)
+                    .padding(8)
+                    .background(Color.white.opacity(0.1))
+                    .cornerRadius(12)
+            }
 
             Button("Deine Matches") {
                 pauseInactivity()

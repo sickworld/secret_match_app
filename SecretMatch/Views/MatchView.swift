@@ -61,7 +61,7 @@ struct MatchView: View {
             if showKeyboard {
                 Color.black.opacity(0.6)
                     .ignoresSafeArea()
-                    .zIndex(20) // Tastatur immer ganz oben
+                    .zIndex(20)
 
                 VStack {
                     Spacer()

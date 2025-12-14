@@ -13,14 +13,12 @@ struct CustomNumberKeyboard: View {
 
     var body: some View {
         VStack(spacing: 16) {
-            // Eingabefeld
-            Text(text.isEmpty ? "Nummer eingeben…" : text)
+            Text(text.isEmpty ? "Nummer…" : text)
                 .font(.system(size: 28, weight: .bold, design: .rounded))
                 .foregroundColor(.white)
                 .frame(maxWidth: .infinity)
                 .padding(.top, 12)
 
-            // Tastenfeld
             VStack(spacing: 10) {
                 ForEach(keys, id: \.self) { row in
                     HStack(spacing: 10) {
