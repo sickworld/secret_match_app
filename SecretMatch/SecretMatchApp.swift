@@ -8,6 +8,9 @@ struct SecretMatchApp: App {
     var body: some Scene {
         WindowGroup {
             ZStack {
+                Color(hex: "#200813")
+                    .ignoresSafeArea()
+
                 Image("bg")
                     .resizable()
                     .scaledToFill()

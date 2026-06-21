@@ -10,6 +10,9 @@ struct AdminLoginView: View {
 
     var body: some View {
         ZStack {
+            Color(hex: "#200813")
+                .ignoresSafeArea()
+
             // Hintergrund wie überall sonst
             Image("bg")
                 .resizable()

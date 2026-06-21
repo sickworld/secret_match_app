@@ -53,6 +53,9 @@ struct MatchView: View {
 
     var body: some View {
         ZStack {
+            Color(hex: "#200813")
+                .ignoresSafeArea()
+
             if isLoading {
                 LoadingOverlay(message: "Wird geprüft…")
                     .zIndex(10)
