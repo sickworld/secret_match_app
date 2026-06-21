@@ -9,11 +9,10 @@ struct AdminSidebarView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 20) {
-            Image("hot-chili")
+            Image("logo")
                 .resizable()
                 .scaledToFit()
-                .frame(maxWidth: .infinity, minHeight: 120, maxHeight: 155)
-                .accessibilityLabel("Hot Chili Events")
+                .frame(width: 200, height: 170)
 
             Text("Admin Mode")
                 .font(.headline)
@@ -39,6 +38,12 @@ struct AdminSidebarView: View {
             .buttonStyle(SidebarButtonStyle())
 
             Spacer()
+
+            Image("hot-chili")
+                .resizable()
+                .scaledToFit()
+                .frame(maxWidth: .infinity, maxHeight: 76)
+                .accessibilityLabel("Hot Chili Events")
         }
         .padding()
         .frame(width: 240)
