@@ -9,11 +9,16 @@ struct AdminSidebarView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 20) {
+            HStack(spacing: 10) {
+                Image("hot-chili")
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 44, height: 44)
 
-            Image("logo")
-                .resizable()
-                .scaledToFit()
-                .frame(width: 200, height: 170)
+                Text("Secret Match")
+                    .font(.headline)
+                    .foregroundColor(.white)
+            }
 
             Text("Admin Mode")
                 .font(.headline)

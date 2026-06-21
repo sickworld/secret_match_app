@@ -3,51 +3,20 @@ import SwiftUI
 @main
 struct SecretMatchApp: App {
     @StateObject private var api = APIService.shared
-    @State private var isLoading = true
     
     var body: some Scene {
         WindowGroup {
-            ZStack {
-                Color(hex: "#200813")
-                    .ignoresSafeArea()
-
-                Image("bg")
-                    .resizable()
-                    .scaledToFill()
-                    .ignoresSafeArea()
-
-                if isLoading {
-                    VStack(spacing: 20) {
-                        Image("logo")
-                            .resizable()
-                            .scaledToFit()
-                            .frame(width: 220, height: 220)
-
-                        ProgressView()
-                            .progressViewStyle(CircularProgressViewStyle(tint: .white))
-                    }
-                    .zIndex(999)
+            Group {
+                if api.isAdmin {
+                    AdminMainView()
+                } else if api.isLoggedIn {
+                    MatchView()
                 } else {
-                    Group {
-                        if api.isAdmin {
-                            AdminMainView()
-                        } else if api.isLoggedIn {
-                            MatchView()
-                        } else {
-                            LoginView()
-                        }
-                    }
+                    LoginView()
                 }
             }
             .environmentObject(api)
-            .onAppear {
-                Task {
-                    try? await Task.sleep(nanoseconds: 1_000_000_000)
-                    withAnimation {
-                        isLoading = false
-                    }
-                }
-            }
+            .preferredColorScheme(.dark)
         }
     }
 }
