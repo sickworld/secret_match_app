@@ -10,21 +10,11 @@ struct SidebarView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 20) {
-            HStack(spacing: 10) {
-                Image("hot-chili")
-                    .resizable()
-                    .scaledToFit()
-                    .frame(width: 44, height: 44)
-
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("Secret Match")
-                        .font(.headline)
-                        .foregroundColor(.white)
-                    Text("Navigation")
-                        .font(.caption2)
-                        .foregroundColor(.white.opacity(0.55))
-                }
-            }
+            Image("hot-chili")
+                .resizable()
+                .scaledToFit()
+                .frame(maxWidth: .infinity, minHeight: 120, maxHeight: 155)
+                .accessibilityLabel("Hot Chili Events")
 
             VStack(alignment: .leading, spacing: 4) {
                 Text("Deine Nummer")

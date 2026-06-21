@@ -23,21 +23,6 @@ struct LoginView: View {
                 Spacer()
 
                 VStack(spacing: 20) {
-                    HStack(spacing: 10) {
-                        Image("hot-chili")
-                            .resizable()
-                            .scaledToFit()
-                            .frame(width: 54, height: 48)
-
-                        Text("Hot Chili Events")
-                            .font(.subheadline.weight(.bold))
-                            .foregroundColor(.white)
-                    }
-                    .padding(.horizontal, 14)
-                    .padding(.vertical, 8)
-                    .background(Color.black.opacity(0.28))
-                    .clipShape(Capsule())
-
                     Image("logo")
                         .resizable()
                         .scaledToFit()
