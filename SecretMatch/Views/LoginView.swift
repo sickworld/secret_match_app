@@ -7,6 +7,7 @@ struct LoginView: View {
     @State private var showKeyboard = false
     @State private var isLoading = false
     @State private var showAdminLogin = false
+    @State private var errorMessage: String?
     
     var body: some View {
         ZStack {
@@ -43,17 +44,18 @@ struct LoginView: View {
                             showKeyboard = true
                         }
 
-                    Button(action: {
-                        Task {
-                            isLoading = true
-                            do {
-                                try await api.login(number: number)
-                            } catch {
-                                print("Login fehlgeschlagen: \(error.localizedDescription)")
-                            }
-                            isLoading = false
-                        }
-                    }) {
+                    if let errorMessage {
+                        Text(errorMessage)
+                            .foregroundColor(.white)
+                            .font(.footnote.weight(.semibold))
+                            .padding(.horizontal, 14)
+                            .padding(.vertical, 10)
+                            .frame(width: 500)
+                            .background(Color.red.opacity(0.28))
+                            .cornerRadius(10)
+                    }
+
+                    Button(action: submitLogin) {
                         Text("Einloggen")
                             .frame(maxWidth: .infinity)
                             .padding()
@@ -63,6 +65,8 @@ struct LoginView: View {
                             .font(.headline)
                     }
                     .frame(width: 500)
+                    .disabled(isLoading || number.isEmpty)
+                    .opacity(number.isEmpty ? 0.55 : 1)
                 }
                 .padding()
                 .background(Color(hex: "#3c0d1f").opacity(0.92))
@@ -90,12 +94,10 @@ struct LoginView: View {
                 VStack {
                     Spacer()
                     VStack(spacing: 10) {
-                        CustomNumberKeyboard(text: $number) {
-                            withAnimation {
-                                showKeyboard = false
-                            }
+                        CustomNumberKeyboard(text: $number, doneLabel: "Einloggen") {
+                            submitLogin()
                         }
-                        .frame(maxWidth: 320)
+                        .frame(maxWidth: 460)
                         .cornerRadius(16)
                         .shadow(radius: 20)
                     }
@@ -108,6 +110,23 @@ struct LoginView: View {
         }.sheet(isPresented: $showAdminLogin) {
             AdminLoginView(isPresented: $showAdminLogin)
                 .environmentObject(api)
+        }
+    }
+
+    private func submitLogin() {
+        guard !number.isEmpty, !isLoading else { return }
+
+        showKeyboard = false
+        errorMessage = nil
+        Task {
+            isLoading = true
+            defer { isLoading = false }
+
+            do {
+                try await api.login(number: number)
+            } catch {
+                errorMessage = "Login fehlgeschlagen. Bitte Nummer prüfen und erneut versuchen."
+            }
         }
     }
 }

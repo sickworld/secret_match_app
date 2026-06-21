@@ -33,6 +33,8 @@ struct AdminLoginView: View {
                     .foregroundColor(.white)
                     .cornerRadius(12)
                     .textContentType(.password)
+                    .submitLabel(.go)
+                    .onSubmit(performLogin)
 
                 if let errorMessage {
                     Text(errorMessage)
@@ -40,19 +42,7 @@ struct AdminLoginView: View {
                         .font(.caption)
                 }
 
-                Button {
-                    Task {
-                        isLoading = true
-                        let success = await api.adminLogin(password: password)
-                        isLoading = false
-
-                        if success {
-                            isPresented = false
-                        } else {
-                            errorMessage = "Falsches Passwort"
-                        }
-                    }
-                } label: {
+                Button(action: performLogin) {
                     if isLoading {
                         ProgressView()
                             .tint(.white)
@@ -62,6 +52,7 @@ struct AdminLoginView: View {
                     }
                 }
                 .buttonStyle(SidebarButtonStyle())
+                .disabled(password.isEmpty || isLoading)
 
                 Button("Abbrechen") {
                     isPresented = false
@@ -76,6 +67,23 @@ struct AdminLoginView: View {
             .background(Color(hex: "#3c0d1f").opacity(0.95))
             .cornerRadius(24)
             .shadow(color: .black.opacity(0.4), radius: 25)
+        }
+    }
+
+    private func performLogin() {
+        guard !password.isEmpty, !isLoading else { return }
+
+        errorMessage = nil
+        Task {
+            isLoading = true
+            let success = await api.adminLogin(password: password)
+            isLoading = false
+
+            if success {
+                isPresented = false
+            } else {
+                errorMessage = "Falsches Passwort"
+            }
         }
     }
 }

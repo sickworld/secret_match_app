@@ -2,6 +2,7 @@ import SwiftUI
 
 struct CustomNumberKeyboard: View {
     @Binding var text: String
+    var doneLabel = "Fertig"
     var onDone: () -> Void
 
     let keys: [[String]] = [
@@ -12,34 +13,38 @@ struct CustomNumberKeyboard: View {
     ]
 
     var body: some View {
-        VStack(spacing: 16) {
+        VStack(spacing: 20) {
             Text(text.isEmpty ? "Nummer…" : text)
-                .font(.system(size: 28, weight: .bold, design: .rounded))
+                .font(.system(size: 34, weight: .bold, design: .rounded))
                 .foregroundColor(.white)
                 .frame(maxWidth: .infinity)
-                .padding(.top, 12)
+                .padding(.top, 16)
 
-            VStack(spacing: 10) {
+            VStack(spacing: 12) {
                 ForEach(keys, id: \.self) { row in
-                    HStack(spacing: 10) {
+                    HStack(spacing: 12) {
                         ForEach(row, id: \.self) { key in
                             Button(action: {
                                 handleTap(key)
                             }) {
                                 Text(key)
-                                    .frame(width: 70, height: 50)
-                                    .background(Color.black.opacity(0.3))
+                                    .frame(width: 104, height: 68)
+                                    .background(key == "✓" ? Color(hex: "#d94b68") : Color.black.opacity(0.3))
                                     .foregroundColor(.white)
-                                    .font(.system(size: 24, weight: .bold, design: .rounded))
-                                    .cornerRadius(10)
+                                    .font(.system(size: 30, weight: .bold, design: .rounded))
+                                    .cornerRadius(14)
                             }
                         }
                     }
                 }
             }
+
+            Text("✓  \(doneLabel)")
+                .font(.caption.weight(.semibold))
+                .foregroundColor(.white.opacity(0.72))
         }
-        .padding()
-        .frame(maxWidth: 500)
+        .padding(24)
+        .frame(maxWidth: 430)
         .background(Color(hex: "#3c0d1f").opacity(0.95))
         .cornerRadius(20)
         .shadow(color: .black.opacity(0.4), radius: 20, x: 0, y: 10)

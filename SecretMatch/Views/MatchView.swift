@@ -6,10 +6,8 @@ struct MatchView: View {
     @State private var showMatchesOverlay = false
     @State private var showActionsOverlay = false
     @State private var targetNumber = ""
-    @State private var actionNumber = ""
-
-    @State private var responseMessageMatches = ""
-    @State private var responseMessageAction = ""
+    @State private var selectedActions: Set<String> = []
+    @State private var responseMessage = ""
 
 
     // Inactivity / Auto-Logout
@@ -19,11 +17,8 @@ struct MatchView: View {
 
     // UI State
     @State private var showKeyboard = false
-    @State private var showKeyboardAction = false
 
     @State private var isLoading = false
-    
-    @State private var sentActions: [SentAction] = []
 
 
     // MARK: - Inactivity Handling
@@ -77,7 +72,7 @@ struct MatchView: View {
                         showKeyboard = false
                         resetInactivityTimer()
                     }
-                    .frame(maxWidth: 300)
+                    .frame(maxWidth: 460)
                     .padding()
                     .cornerRadius(16)
                     .shadow(radius: 20)
@@ -87,32 +82,6 @@ struct MatchView: View {
                 .transition(.move(edge: .bottom))
                 .zIndex(30)
             }
-            
-            if showKeyboardAction {
-                Color.black.opacity(0.6)
-                    .ignoresSafeArea()
-                    .zIndex(20)
-                    .task {
-                        pauseInactivityTimer()
-                    }
-                VStack {
-                    Spacer()
-
-                    CustomNumberKeyboard(text: $actionNumber) {
-                        showKeyboardAction = false
-                        resetInactivityTimer()
-                    }
-                    .frame(maxWidth: 300)
-                    .padding()
-                    .cornerRadius(16)
-                    .shadow(radius: 20)
-
-                    Spacer()
-                }
-                .transition(.move(edge: .bottom))
-                .zIndex(30)
-            }
-            
             
             Image("bg")
                 .resizable()
@@ -130,21 +99,15 @@ struct MatchView: View {
 
                 Divider().background(Color.white.opacity(0.3))
 
-                VStack(spacing: 30) {
+                VStack {
                     Spacer()
 
                     MatchInputBox(
                         targetNumber: $targetNumber,
                         showKeyboard: $showKeyboard,
-                        responseMessage: $responseMessageMatches,
-                        onSendMatch: { type in sendMatch(type: type) }
-                    )
-
-                    OtherActionsBox(
-                        targetNumber: $actionNumber,
-                        showKeyboard: $showKeyboardAction,
-                        responseMessage: $responseMessageAction,
-                        onSendAction: { bonusType in sendAction(type: bonusType) }
+                        selectedActions: $selectedActions,
+                        responseMessage: $responseMessage,
+                        onSend: sendInteractions
                     )
 
                     Spacer()
@@ -189,60 +152,46 @@ struct MatchView: View {
         }.onTapGesture {
             withAnimation {
                 showKeyboard = false
-                showKeyboardAction = false
                 resetInactivityTimer()
             }
         }
     }
 
-    func sendMatch(type: String) {
+    func sendInteractions() {
         Task {
+            guard !targetNumber.isEmpty, !selectedActions.isEmpty else { return }
             pauseInactivityTimer()
             isLoading = true
 
             defer {
                 isLoading = false
                 targetNumber = ""
+                selectedActions = []
                 resetInactivityTimer()
                 showKeyboard = false
             }
 
             if targetNumber == api.number {
-                responseMessageMatches = "Du kannst dich nicht selbst matchen 😅"
+                responseMessage = "Du kannst keine Aktion an dich selbst senden 😅"
                 return
             }
 
             do {
-                let result = try await api.submitMatch(
-                    targetNumber: targetNumber,
-                    type: type
-                )
-                responseMessageMatches = result
-            } catch {
-                responseMessageMatches = "Fehler: \(error.localizedDescription)"
-            }
-        }
-    }
-    
-    func sendAction(type: String) {
-        Task {
-            isLoading = true
-            defer {
-                isLoading = false
-                actionNumber = ""
-                showKeyboard = false
-            }
-            
-            if actionNumber == api.number {
-                responseMessageAction = "Du kannst dich nicht selbst beglücken 😅"
-                return
-            }
+                let orderedTypes = ["normal", "hot", "bjob", "hjob", "ljob"]
+                    .filter(selectedActions.contains)
+                var results: [String] = []
 
-            do {
-                let result = try await api.submitAction(targetNumber: actionNumber, type: type)
-                responseMessageAction = result
+                for type in orderedTypes {
+                    if type == "normal" || type == "hot" {
+                        results.append(try await api.submitMatch(targetNumber: targetNumber, type: type))
+                    } else {
+                        results.append(try await api.submitAction(targetNumber: targetNumber, type: type))
+                    }
+                }
+
+                responseMessage = results.joined(separator: "\n")
             } catch {
-                responseMessageAction = "Fehler: \(error.localizedDescription)"
+                responseMessage = "Nicht alle Aktionen konnten gesendet werden: \(error.localizedDescription)"
             }
         }
     }
