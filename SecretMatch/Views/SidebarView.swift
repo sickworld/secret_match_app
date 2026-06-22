@@ -3,7 +3,7 @@ import SwiftUI
 struct SidebarView: View {
     @EnvironmentObject var api: APIService
     var secondsRemaining: Int
-    var pauseInactivity: () -> Void
+    var registerActivity: () -> Void
     var logout: () -> Void
     @Binding var showMatchesOverlay: Bool
     @Binding var showActionsOverlay: Bool
@@ -29,19 +29,19 @@ struct SidebarView: View {
             }
 
             Button("Deine Matches") {
-                pauseInactivity()
+                registerActivity()
                 showMatchesOverlay = true
             }
             .buttonStyle(SidebarButtonStyle())
             
             Button("Deine Aktionen") {
-                pauseInactivity()
+                registerActivity()
                 showActionsOverlay = true
             }
             .buttonStyle(SidebarButtonStyle())
 
             Button("Spielregeln") {
-                pauseInactivity()
+                registerActivity()
             }
             .buttonStyle(SidebarButtonStyle())
 
@@ -56,14 +56,17 @@ struct SidebarView: View {
 
             Spacer()
 
-            Image("hot-chili")
-                .resizable()
-                .scaledToFit()
-                .frame(maxWidth: .infinity, maxHeight: 76)
-                .accessibilityLabel("Hot Chili Events")
+            HStack {
+                Spacer()
+                Image("hot-chili")
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 104, height: 72)
+                    .accessibilityLabel("Hot Chili Events")
+            }
         }
         .padding()
         .frame(width: 240)
-        .background(Color.black.opacity(0.6))
+        .background(Color(hex: "#24050A").opacity(0.94))
     }
 }

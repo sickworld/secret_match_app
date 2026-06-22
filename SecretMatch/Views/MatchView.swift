@@ -11,9 +11,9 @@ struct MatchView: View {
 
 
     // Inactivity / Auto-Logout
-    @State private var inactivityTimer: Timer?
-    @State private var countdownTimer: Timer?
+    @State private var autoLogoutTask: Task<Void, Never>?
     @State private var secondsRemaining = 30
+    private let autoLogoutSeconds = 30
 
     // UI State
     @State private var showKeyboard = false
@@ -24,37 +24,35 @@ struct MatchView: View {
     // MARK: - Inactivity Handling
     
     func resetInactivityTimer() {
-        inactivityTimer?.invalidate()
-        countdownTimer?.invalidate()
+        autoLogoutTask?.cancel()
+        secondsRemaining = autoLogoutSeconds
 
-        secondsRemaining = 30
+        autoLogoutTask = Task { @MainActor in
+            while !Task.isCancelled && secondsRemaining > 0 {
+                do {
+                    try await Task.sleep(for: .seconds(1))
+                } catch {
+                    return
+                }
 
-        inactivityTimer = Timer.scheduledTimer(withTimeInterval: 30, repeats: false) { _ in
-            Task { @MainActor in
-                api.logout()
-            }
-        }
-
-        countdownTimer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { _ in
-            if secondsRemaining > 0 {
+                guard !Task.isCancelled else { return }
                 secondsRemaining -= 1
-            } else {
-                countdownTimer?.invalidate()
             }
+
+            guard !Task.isCancelled, secondsRemaining == 0 else { return }
+            api.logout()
         }
     }
 
     func pauseInactivityTimer() {
-        inactivityTimer?.invalidate()
-        countdownTimer?.invalidate()
+        autoLogoutTask?.cancel()
     }
 
     // MARK: - View
 
     var body: some View {
         ZStack {
-            Color(hex: "#200813")
-                .ignoresSafeArea()
+            BrandBackground()
 
             if isLoading {
                 LoadingOverlay(message: "Wird geprüft…")
@@ -65,13 +63,10 @@ struct MatchView: View {
                 Color.black.opacity(0.6)
                     .ignoresSafeArea()
                     .zIndex(20)
-                    .task {
-                        pauseInactivityTimer()
-                    }
                 VStack {
                     Spacer()
 
-                    CustomNumberKeyboard(text: $targetNumber) {
+                    CustomNumberKeyboard(text: $targetNumber, onActivity: resetInactivityTimer) {
                         showKeyboard = false
                         resetInactivityTimer()
                     }
@@ -86,15 +81,10 @@ struct MatchView: View {
                 .zIndex(30)
             }
             
-            Image("bg")
-                .resizable()
-                .scaledToFill()
-                .ignoresSafeArea()
-
             HStack(spacing: 0) {
                 SidebarView(
                     secondsRemaining: secondsRemaining,
-                    pauseInactivity: pauseInactivityTimer,
+                    registerActivity: resetInactivityTimer,
                     logout: { api.logout() },
                     showMatchesOverlay: $showMatchesOverlay,
                     showActionsOverlay: $showActionsOverlay
@@ -141,6 +131,7 @@ struct MatchView: View {
             if showActionsOverlay {
                 Color.black.opacity(0.6).ignoresSafeArea().onTapGesture {
                     showActionsOverlay = false
+                    resetInactivityTimer()
                 }
 
                 ActionListView(isPresented: $showActionsOverlay)
@@ -157,6 +148,9 @@ struct MatchView: View {
                 showKeyboard = false
                 resetInactivityTimer()
             }
+        }
+        .onDisappear {
+            autoLogoutTask?.cancel()
         }
     }
 

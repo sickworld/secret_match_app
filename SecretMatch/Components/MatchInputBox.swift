@@ -66,7 +66,7 @@ struct MatchInputBox: View {
                 Text(selectedActions.count == 1 ? "Aktion senden" : "\(selectedActions.count) Aktionen senden")
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 15)
-                    .background(Color(hex: "#d94b68"))
+                    .background(Color(hex: "#F52235"))
                     .foregroundColor(.white)
                     .font(.headline)
                     .cornerRadius(12)
@@ -81,7 +81,7 @@ struct MatchInputBox: View {
             }
         }
         .padding(28)
-        .background(Color(hex: "#3c0d1f").opacity(0.94))
+        .background(Color(hex: "#35070D").opacity(0.94))
         .frame(maxWidth: 650)
         .padding(.horizontal, 24)
         .cornerRadius(24)
@@ -108,7 +108,7 @@ struct MatchInputBox: View {
             .foregroundColor(.white)
             .padding(.horizontal, 14)
             .frame(maxWidth: .infinity, minHeight: 54)
-            .background(isSelected ? Color(hex: "#d94b68") : Color.white.opacity(0.08))
+            .background(isSelected ? Color(hex: "#F52235") : Color.white.opacity(0.08))
             .overlay(
                 RoundedRectangle(cornerRadius: 12)
                     .stroke(isSelected ? Color.white.opacity(0.7) : Color.white.opacity(0.2), lineWidth: 1.5)

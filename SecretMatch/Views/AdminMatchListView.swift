@@ -37,7 +37,7 @@ struct AdminMatchListView: View {
             }
             .padding()
             .frame(maxWidth: 520)
-            .background(Color(hex: "#3c0d1f").opacity(0.95))
+            .background(Color(hex: "#35070D").opacity(0.96))
             .cornerRadius(24)
         }
         .task {

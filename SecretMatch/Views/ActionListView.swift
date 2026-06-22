@@ -57,7 +57,7 @@ struct ActionListView: View {
             }
             .padding()
             .frame(maxWidth: 400)
-            .background(Color(hex: "#3c0d1f").opacity(0.92))
+            .background(Color(hex: "#35070D").opacity(0.94))
             .cornerRadius(24)
             .shadow(color: .black.opacity(0.3), radius: 20, x: 0, y: 10)
         }

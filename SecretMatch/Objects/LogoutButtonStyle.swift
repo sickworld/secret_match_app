@@ -5,7 +5,7 @@ struct LogoutButtonStyle: ButtonStyle {
         configuration.label
             .padding(.horizontal, 16)
             .padding(.vertical, 10)
-            .background(Color(hex: "#a33c5e"))
+            .background(Color(hex: "#F52235"))
             .foregroundColor(.white)
             .cornerRadius(10)
             .opacity(configuration.isPressed ? 0.7 : 1.0)

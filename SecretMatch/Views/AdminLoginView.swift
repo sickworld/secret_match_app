@@ -10,14 +10,7 @@ struct AdminLoginView: View {
 
     var body: some View {
         ZStack {
-            Color(hex: "#200813")
-                .ignoresSafeArea()
-
-            // Hintergrund wie überall sonst
-            Image("bg")
-                .resizable()
-                .scaledToFill()
-                .ignoresSafeArea()
+            BrandBackground()
 
             VStack(spacing: 24) {
                 Image("logo")
@@ -67,7 +60,7 @@ struct AdminLoginView: View {
             }
             .padding(30)
             .frame(maxWidth: 360)
-            .background(Color(hex: "#3c0d1f").opacity(0.95))
+            .background(Color(hex: "#35070D").opacity(0.96))
             .cornerRadius(24)
             .shadow(color: .black.opacity(0.4), radius: 25)
         }

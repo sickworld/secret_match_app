@@ -8,13 +8,7 @@ struct AdminMainView: View {
 
     var body: some View {
         ZStack {
-            Color(hex: "#200813")
-                .ignoresSafeArea()
-
-            Image("bg")
-                .resizable()
-                .scaledToFill()
-                .ignoresSafeArea()
+            BrandBackground()
 
             HStack(spacing: 0) {
                 AdminSidebarView(

@@ -3,6 +3,7 @@ import SwiftUI
 struct CustomNumberKeyboard: View {
     @Binding var text: String
     var doneLabel = "Fertig"
+    var onActivity: () -> Void = {}
     var onDone: () -> Void
 
     let keys: [[String]] = [
@@ -29,7 +30,7 @@ struct CustomNumberKeyboard: View {
                             }) {
                                 Text(key)
                                     .frame(width: 104, height: 68)
-                                    .background(key == "✓" ? Color(hex: "#d94b68") : Color.black.opacity(0.3))
+                                    .background(key == "✓" ? Color(hex: "#F52235") : Color.black.opacity(0.3))
                                     .foregroundColor(.white)
                                     .font(.system(size: 30, weight: .bold, design: .rounded))
                                     .cornerRadius(14)
@@ -45,13 +46,15 @@ struct CustomNumberKeyboard: View {
         }
         .padding(24)
         .frame(maxWidth: 430)
-        .background(Color(hex: "#3c0d1f").opacity(0.95))
+        .background(Color(hex: "#35070D").opacity(0.96))
         .cornerRadius(20)
         .shadow(color: .black.opacity(0.4), radius: 20, x: 0, y: 10)
         .padding(.horizontal, 20)
     }
 
     private func handleTap(_ key: String) {
+        onActivity()
+
         switch key {
         case "←":
             if !text.isEmpty {

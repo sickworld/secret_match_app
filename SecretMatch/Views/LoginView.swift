@@ -11,13 +11,7 @@ struct LoginView: View {
     
     var body: some View {
         ZStack {
-            Color(hex: "#200813")
-                .ignoresSafeArea()
-
-            Image("bg")
-                .resizable()
-                .scaledToFill()
-                .ignoresSafeArea()
+            BrandBackground()
 
             VStack {
                 Spacer()
@@ -62,7 +56,7 @@ struct LoginView: View {
                         Text("Einloggen")
                             .frame(maxWidth: .infinity)
                             .padding()
-                            .background(Color(hex: "#a33c5e"))
+                            .background(Color(hex: "#F52235"))
                             .foregroundColor(.white)
                             .cornerRadius(12)
                             .font(.headline)
@@ -72,7 +66,7 @@ struct LoginView: View {
                     .opacity(number.isEmpty ? 0.55 : 1)
                 }
                 .padding()
-                .background(Color(hex: "#3c0d1f").opacity(0.92))
+                .background(Color(hex: "#35070D").opacity(0.94))
                 .cornerRadius(24)
                 .shadow(color: .black.opacity(0.3), radius: 20, x: 0, y: 10)
 

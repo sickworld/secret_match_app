@@ -39,14 +39,17 @@ struct AdminSidebarView: View {
 
             Spacer()
 
-            Image("hot-chili")
-                .resizable()
-                .scaledToFit()
-                .frame(maxWidth: .infinity, maxHeight: 76)
-                .accessibilityLabel("Hot Chili Events")
+            HStack {
+                Spacer()
+                Image("hot-chili")
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 104, height: 72)
+                    .accessibilityLabel("Hot Chili Events")
+            }
         }
         .padding()
         .frame(width: 240)
-        .background(Color.black.opacity(0.7))
+        .background(Color(hex: "#24050A").opacity(0.96))
     }
 }
