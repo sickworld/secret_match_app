@@ -78,7 +78,7 @@ struct SidebarView: View {
 
             Spacer()
 
-            HStack {
+            VStack(alignment: .leading, spacing: 18) {
                 Spacer()
                 Image("hot-chili")
                     .resizable()
