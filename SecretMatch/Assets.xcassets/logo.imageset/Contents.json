@@ -1,17 +1,17 @@
 {
   "images" : [
     {
-      "filename" : "Match1.png",
+      "filename" : "match-play-logo.svg",
       "idiom" : "universal",
       "scale" : "1x"
     },
     {
-      "filename" : "Match1 1.png",
+      "filename" : "match-play-logo 1.svg",
       "idiom" : "universal",
       "scale" : "2x"
     },
     {
-      "filename" : "Match1 2.png",
+      "filename" : "match-play-logo 2.svg",
       "idiom" : "universal",
       "scale" : "3x"
     }

@@ -33,7 +33,7 @@ struct LoginView: View {
                             .tracking(2.2)
                             .foregroundStyle(SecretMatchTheme.secondary)
 
-                        Text("Bereit für SecretMatch?")
+                        Text("Bereit für Match&Play?")
                             .font(.system(size: 28, weight: .bold, design: .rounded))
                             .foregroundStyle(SecretMatchTheme.text)
 
@@ -44,11 +44,6 @@ struct LoginView: View {
                     }
 
                     VStack(alignment: .leading, spacing: 9) {
-                        Text("EVENT-NUMMER")
-                            .font(.caption2.bold())
-                            .tracking(1.4)
-                            .foregroundStyle(SecretMatchTheme.muted)
-
                         Text(number.isEmpty ? "Nummer eingeben" : number)
                             .foregroundStyle(number.isEmpty ? SecretMatchTheme.muted : SecretMatchTheme.text)
                             .font(.system(size: 22, weight: .semibold, design: .rounded))
