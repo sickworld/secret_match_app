@@ -13,65 +13,83 @@ struct LoginView: View {
         ZStack {
             BrandBackground()
 
-            VStack {
+            VStack(spacing: 0) {
                 Spacer()
 
-                VStack(spacing: 20) {
+                VStack(spacing: 24) {
                     Image("logo")
                         .resizable()
                         .scaledToFit()
-                        .frame(width: 300, height: 270)
+                        .frame(width: 220, height: 190)
+                        .shadow(color: SecretMatchTheme.primary.opacity(0.22), radius: 24)
                         .onLongPressGesture(minimumDuration: 3) {
                             UIImpactFeedbackGenerator(style: .medium).impactOccurred()
                             showAdminLogin = true
                         }
-                    
-                    Text(number.isEmpty ? "Deine Nummer eingeben" : number)
-                        .foregroundColor(number.isEmpty ? .white.opacity(0.6) : .white)
-                        .frame(width: 500, height: 55)
-                        .background(Color.black.opacity(0.4))
-                        .cornerRadius(12)
-                        .font(.system(size: 20, weight: .medium, design: .rounded))
-                        .multilineTextAlignment(.center)
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 12)
-                                .stroke(Color.white.opacity(0.6), lineWidth: 2)
-                        )
-                        .onTapGesture {
-                            showKeyboard = true
-                        }
+
+                    VStack(spacing: 7) {
+                        Text("DEIN EVENT. DEIN MATCH.")
+                            .font(.system(size: 12, weight: .bold, design: .rounded))
+                            .tracking(2.2)
+                            .foregroundStyle(SecretMatchTheme.secondary)
+
+                        Text("Bereit für SecretMatch?")
+                            .font(.system(size: 28, weight: .bold, design: .rounded))
+                            .foregroundStyle(SecretMatchTheme.text)
+
+                        Text("Gib deine Event-Nummer ein und entdecke, wer mit dir matcht.")
+                            .font(.subheadline)
+                            .foregroundStyle(SecretMatchTheme.muted)
+                            .multilineTextAlignment(.center)
+                    }
+
+                    VStack(alignment: .leading, spacing: 9) {
+                        Text("EVENT-NUMMER")
+                            .font(.caption2.bold())
+                            .tracking(1.4)
+                            .foregroundStyle(SecretMatchTheme.muted)
+
+                        Text(number.isEmpty ? "Nummer eingeben" : number)
+                            .foregroundStyle(number.isEmpty ? SecretMatchTheme.muted : SecretMatchTheme.text)
+                            .font(.system(size: 22, weight: .semibold, design: .rounded))
+                            .multilineTextAlignment(.center)
+                            .secretInput(highlighted: showKeyboard)
+                            .onTapGesture {
+                                withAnimation(.easeOut(duration: 0.2)) {
+                                    showKeyboard = true
+                                }
+                            }
+                    }
 
                     if let errorMessage {
                         Text(errorMessage)
-                            .foregroundColor(.white)
+                            .foregroundStyle(SecretMatchTheme.text)
                             .font(.footnote.weight(.semibold))
                             .padding(.horizontal, 14)
                             .padding(.vertical, 10)
-                            .frame(width: 500)
-                            .background(Color.red.opacity(0.28))
-                            .cornerRadius(10)
+                            .frame(maxWidth: .infinity)
+                            .background(SecretMatchTheme.danger.opacity(0.16))
+                            .clipShape(RoundedRectangle(cornerRadius: 12))
+                            .overlay(RoundedRectangle(cornerRadius: 12).stroke(SecretMatchTheme.danger.opacity(0.4)))
                     }
 
                     Button(action: submitLogin) {
-                        Text("Einloggen")
-                            .frame(maxWidth: .infinity)
-                            .padding()
-                            .background(Color(hex: "#F52235"))
-                            .foregroundColor(.white)
-                            .cornerRadius(12)
-                            .font(.headline)
+                        HStack {
+                            Text("Event betreten")
+                            Spacer()
+                            Image(systemName: "arrow.right")
+                        }
                     }
-                    .frame(width: 500)
+                    .buttonStyle(SecretPrimaryButtonStyle())
                     .disabled(isLoading || number.isEmpty)
                     .opacity(number.isEmpty ? 0.55 : 1)
                 }
-                .padding()
-                .background(Color(hex: "#35070D").opacity(0.94))
-                .cornerRadius(24)
-                .shadow(color: .black.opacity(0.3), radius: 20, x: 0, y: 10)
+                .frame(maxWidth: 500)
+                .secretCard(cornerRadius: 24, padding: 32)
 
                 Spacer()
             }
+            .padding(28)
 
             if isLoading {
                 LoadingOverlay(message: "Wird angemeldet…")
@@ -104,7 +122,9 @@ struct LoginView: View {
                 .zIndex(30)
                 .transition(.move(edge: .bottom))
             }
-        }.sheet(isPresented: $showAdminLogin) {
+        }
+        .animation(.easeInOut(duration: 0.24), value: showKeyboard)
+        .sheet(isPresented: $showAdminLogin) {
             AdminLoginView(isPresented: $showAdminLogin)
                 .environmentObject(api)
         }

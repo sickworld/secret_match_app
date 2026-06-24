@@ -11,14 +11,18 @@ struct AdminMatchListView: View {
                 .onTapGesture { isPresented = false }
 
             VStack(spacing: 20) {
+                Text("EVENT CONTROL")
+                    .font(.caption2.bold())
+                    .tracking(2)
+                    .foregroundStyle(SecretMatchTheme.secondary)
+
                 Text("Alle Matches")
-                    .font(.title2)
-                    .fontWeight(.bold)
-                    .foregroundColor(.white)
+                    .font(.system(size: 26, weight: .bold, design: .rounded))
+                    .foregroundStyle(.white)
 
                 if api.adminMatches.isEmpty {
                     Text("Keine Matches gefunden")
-                        .foregroundColor(.white.opacity(0.6))
+                        .foregroundStyle(SecretMatchTheme.muted)
                 } else {
                     ScrollView {
                         VStack(spacing: 12) {
@@ -33,12 +37,10 @@ struct AdminMatchListView: View {
                 Button("Schließen") {
                     isPresented = false
                 }
-                .buttonStyle(SidebarButtonStyle())
+                .buttonStyle(SecretPrimaryButtonStyle())
             }
-            .padding()
             .frame(maxWidth: 520)
-            .background(Color(hex: "#35070D").opacity(0.96))
-            .cornerRadius(24)
+            .secretCard(cornerRadius: 24, padding: 28)
         }
         .task {
             await api.loadAdminMatches()
@@ -51,16 +53,20 @@ struct AdminMatchListView: View {
     private func matchRow(_ match: AdminMatch) -> some View {
         HStack(alignment: .top, spacing: 14) {
 
-            Text(icon(for: match.type))
-                .font(.system(size: 28))
+            Image(systemName: icon(for: match.type))
+                .font(.system(size: 22, weight: .bold))
+                .foregroundStyle(SecretMatchTheme.primary)
+                .frame(width: 44, height: 44)
+                .background(SecretMatchTheme.primary.opacity(0.12))
+                .clipShape(RoundedRectangle(cornerRadius: 12))
 
             VStack(alignment: .leading, spacing: 6) {
                 Text(prettyMatchType(match.type))
                     .font(.headline)
-                    .foregroundColor(.white)
+                    .foregroundStyle(.white)
 
                 Text("\(match.number_a) ↔ \(match.number_b)")
-                    .foregroundColor(.white.opacity(0.8))
+                    .foregroundStyle(SecretMatchTheme.muted)
                     .font(.subheadline)
 
                 // Datum optional, bewusst weggelassen
@@ -72,8 +78,9 @@ struct AdminMatchListView: View {
             Spacer()
         }
         .padding()
-        .background(Color.black.opacity(0.4))
-        .cornerRadius(14)
+        .background(SecretMatchTheme.surfaceRaised)
+        .clipShape(RoundedRectangle(cornerRadius: 14))
+        .overlay(RoundedRectangle(cornerRadius: 14).stroke(SecretMatchTheme.border))
     }
 
     // MARK: - Mapping
@@ -81,9 +88,9 @@ struct AdminMatchListView: View {
     private func prettyMatchType(_ type: String) -> String {
         switch type {
         case "hot":
-            return "Fuck-Match 🔥"
+            return "Fuck-Match"
         case "normal":
-            return "Hot-Match ❤️"
+            return "Hot-Match"
         default:
             return type.capitalized
         }
@@ -92,11 +99,11 @@ struct AdminMatchListView: View {
     private func icon(for type: String) -> String {
         switch type {
         case "hot":
-            return "🔥"
+            return "flame.fill"
         case "normal":
-            return "❤️"
+            return "sparkles"
         default:
-            return "✨"
+            return "circle.hexagongrid.fill"
         }
     }
 }

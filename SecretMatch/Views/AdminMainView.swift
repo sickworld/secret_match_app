@@ -19,6 +19,18 @@ struct AdminMainView: View {
                 .environmentObject(api)
 
                 Divider().background(Color.white.opacity(0.3))
+
+                VStack(spacing: 14) {
+                    Image(systemName: "sparkles")
+                        .font(.system(size: 34, weight: .bold))
+                        .foregroundStyle(SecretMatchTheme.primary)
+                    Text("SecretMatch Event Control")
+                        .font(.system(size: 28, weight: .bold, design: .rounded))
+                        .foregroundStyle(.white)
+                    Text("Wähle links Aktionen oder Matches aus.")
+                        .foregroundStyle(SecretMatchTheme.muted)
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
             
             if showAdminActions {

@@ -16,25 +16,29 @@ struct AdminLoginView: View {
                 Image("logo")
                     .resizable()
                     .scaledToFit()
-                    .frame(width: 180)
+                    .frame(width: 160)
+                    .shadow(color: SecretMatchTheme.primary.opacity(0.18), radius: 18)
 
-                Text("Admin Login")
-                    .font(.title2)
-                    .fontWeight(.bold)
-                    .foregroundColor(.white)
+                VStack(spacing: 6) {
+                    Text("EVENT CONTROL")
+                        .font(.caption2.bold())
+                        .tracking(2)
+                        .foregroundStyle(SecretMatchTheme.secondary)
+                    Text("Admin Login")
+                        .font(.system(size: 25, weight: .bold, design: .rounded))
+                        .foregroundStyle(.white)
+                }
 
                 SecureField("Admin Passwort", text: $password)
-                    .padding()
-                    .background(Color.white.opacity(0.1))
-                    .foregroundColor(.white)
-                    .cornerRadius(12)
+                    .foregroundStyle(.white)
+                    .secretInput()
                     .textContentType(.password)
                     .submitLabel(.go)
                     .onSubmit(performLogin)
 
                 if let errorMessage {
                     Text(errorMessage)
-                        .foregroundColor(.red)
+                        .foregroundStyle(SecretMatchTheme.danger)
                         .font(.caption)
                 }
 
@@ -47,22 +51,19 @@ struct AdminLoginView: View {
                             .fontWeight(.bold)
                     }
                 }
-                .buttonStyle(SidebarButtonStyle())
+                .buttonStyle(SecretPrimaryButtonStyle())
                 .disabled(password.isEmpty || isLoading)
 
                 Button("Abbrechen") {
                     isPresented = false
                 }
-                .foregroundColor(.white.opacity(0.7))
+                .foregroundStyle(SecretMatchTheme.muted)
                 .padding(.top, 4)
-                .buttonStyle(SidebarButtonStyle())
+                .buttonStyle(SecretSecondaryButtonStyle())
 
             }
-            .padding(30)
             .frame(maxWidth: 360)
-            .background(Color(hex: "#35070D").opacity(0.96))
-            .cornerRadius(24)
-            .shadow(color: .black.opacity(0.4), radius: 25)
+            .secretCard(cornerRadius: 24, padding: 30)
         }
     }
 

@@ -10,16 +10,14 @@ struct LoadingOverlay: View {
 
             VStack(spacing: 16) {
                 ProgressView()
-                    .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                    .progressViewStyle(CircularProgressViewStyle(tint: SecretMatchTheme.primary))
                     .scaleEffect(1.5)
 
                 Text(message)
-                    .foregroundColor(.white)
-                    .font(.headline)
+                    .foregroundStyle(.white)
+                    .font(.headline.weight(.semibold))
             }
-            .padding()
-            .background(Color.black.opacity(0.8))
-            .cornerRadius(16)
+            .secretCard(cornerRadius: 18, padding: 24)
         }
         .transition(.opacity)
         .zIndex(100)

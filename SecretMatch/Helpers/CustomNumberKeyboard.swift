@@ -15,11 +15,15 @@ struct CustomNumberKeyboard: View {
 
     var body: some View {
         VStack(spacing: 20) {
+            Text("EVENT-NUMMER")
+                .font(.caption2.bold())
+                .tracking(1.8)
+                .foregroundStyle(SecretMatchTheme.secondary)
+
             Text(text.isEmpty ? "Nummer…" : text)
                 .font(.system(size: 34, weight: .bold, design: .rounded))
-                .foregroundColor(.white)
+                .foregroundStyle(.white)
                 .frame(maxWidth: .infinity)
-                .padding(.top, 16)
 
             VStack(spacing: 12) {
                 ForEach(keys, id: \.self) { row in
@@ -30,10 +34,15 @@ struct CustomNumberKeyboard: View {
                             }) {
                                 Text(key)
                                     .frame(width: 104, height: 68)
-                                    .background(key == "✓" ? Color(hex: "#F52235") : Color.black.opacity(0.3))
-                                    .foregroundColor(.white)
+                                    .background(key == "✓" ? SecretMatchTheme.primary : SecretMatchTheme.surfaceRaised)
+                                    .foregroundStyle(.white)
                                     .font(.system(size: 30, weight: .bold, design: .rounded))
-                                    .cornerRadius(14)
+                                    .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 16)
+                                            .stroke(key == "✓" ? SecretMatchTheme.primaryHover : SecretMatchTheme.border)
+                                    )
+                                    .shadow(color: key == "✓" ? SecretMatchTheme.primary.opacity(0.25) : .clear, radius: 12)
                             }
                         }
                     }
@@ -42,13 +51,10 @@ struct CustomNumberKeyboard: View {
 
             Text("✓  \(doneLabel)")
                 .font(.caption.weight(.semibold))
-                .foregroundColor(.white.opacity(0.72))
+                .foregroundStyle(SecretMatchTheme.muted)
         }
-        .padding(24)
         .frame(maxWidth: 430)
-        .background(Color(hex: "#35070D").opacity(0.96))
-        .cornerRadius(20)
-        .shadow(color: .black.opacity(0.4), radius: 20, x: 0, y: 10)
+        .secretCard(cornerRadius: 22, padding: 24)
         .padding(.horizontal, 20)
     }
 

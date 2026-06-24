@@ -19,14 +19,18 @@ struct ActionListView: View {
                 .ignoresSafeArea()
 
             VStack(spacing: 20) {
+                Text("ACTIVITY")
+                    .font(.caption2.bold())
+                    .tracking(2)
+                    .foregroundStyle(SecretMatchTheme.secondary)
+
                 Text("Deine Aktionen")
-                    .font(.title2)
-                    .fontWeight(.bold)
-                    .foregroundColor(.white)
+                    .font(.system(size: 26, weight: .bold, design: .rounded))
+                    .foregroundStyle(.white)
 
                 if api.actions.isEmpty {
-                    Text("Noch keine Aktionen 🎯")
-                        .foregroundColor(.white.opacity(0.6))
+                    Text("Noch keine Aktionen")
+                        .foregroundStyle(SecretMatchTheme.muted)
                         .padding(.top, 30)
                 } else {
                     ScrollView {
@@ -35,7 +39,7 @@ struct ActionListView: View {
                                 VStack(alignment: .leading, spacing: 8) {
                                     Text(key)
                                         .font(.headline)
-                                        .foregroundColor(.white.opacity(0.85))
+                                        .foregroundStyle(SecretMatchTheme.muted)
                                         .padding(.leading)
 
                                     ForEach(groupedActions[key] ?? [], id: \.id) { action in
@@ -52,14 +56,11 @@ struct ActionListView: View {
                     isPresented = false
                     dismiss()
                 }
-                .buttonStyle(SidebarButtonStyle())
+                .buttonStyle(SecretPrimaryButtonStyle())
                 .padding(.top, 20)
             }
-            .padding()
             .frame(maxWidth: 400)
-            .background(Color(hex: "#35070D").opacity(0.94))
-            .cornerRadius(24)
-            .shadow(color: .black.opacity(0.3), radius: 20, x: 0, y: 10)
+            .secretCard(cornerRadius: 24, padding: 28)
         }
         .task(id: isPresented) {
             guard isPresented else { return }
@@ -81,19 +82,20 @@ struct ActionListView: View {
         VStack(alignment: .leading, spacing: 6) {
             HStack {
                 Text(actionLabel(for: action.action_type))
-                    .foregroundColor(.white)
+                    .foregroundStyle(.white)
                     .fontWeight(.medium)
 
                 Spacer()
 
                 Text(partner(for: action))
-                    .foregroundColor(.white.opacity(0.7))
+                    .foregroundStyle(SecretMatchTheme.muted)
                     .font(.caption)
             }
         }
         .padding()
-        .background(Color.black.opacity(0.4))
-        .cornerRadius(12)
+        .background(SecretMatchTheme.surfaceRaised)
+        .clipShape(RoundedRectangle(cornerRadius: 14))
+        .overlay(RoundedRectangle(cornerRadius: 14).stroke(SecretMatchTheme.border))
     }
 
     // MARK: - Helpers

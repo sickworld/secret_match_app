@@ -15,14 +15,18 @@ struct MatchListView: View {
             Color.black.opacity(0.6).ignoresSafeArea()
 
             VStack(spacing: 20) {
+                Text("CONNECTIONS")
+                    .font(.caption2.bold())
+                    .tracking(2)
+                    .foregroundStyle(SecretMatchTheme.secondary)
+
                 Text("Deine Matches")
-                    .font(.title2)
-                    .fontWeight(.bold)
-                    .foregroundColor(.white)
+                    .font(.system(size: 26, weight: .bold, design: .rounded))
+                    .foregroundStyle(.white)
 
                 if matches.isEmpty {
-                    Text("Noch keine Matches 🤷‍♂️")
-                        .foregroundColor(.white.opacity(0.6))
+                    Text("Noch keine Matches")
+                        .foregroundStyle(SecretMatchTheme.muted)
                         .padding(.top, 30)
                 } else {
                     ScrollView {
@@ -31,20 +35,21 @@ struct MatchListView: View {
                                 VStack(alignment: .leading, spacing: 8) {
                                     Text(typeTitle(for: type))
                                         .font(.headline)
-                                        .foregroundColor(.white.opacity(0.8))
+                                        .foregroundStyle(SecretMatchTheme.muted)
                                         .padding(.leading)
 
                                     ForEach(groupedMatches[type] ?? []) { match in
                                         HStack {
                                             Text("\(match.other)")
-                                                .foregroundColor(.white)
+                                                .foregroundStyle(.white)
                                                 .fontWeight(.medium)
 
                                             Spacer()
                                         }
                                         .padding()
-                                        .background(Color.black.opacity(0.4))
-                                        .cornerRadius(12)
+                                        .background(SecretMatchTheme.surfaceRaised)
+                                        .clipShape(RoundedRectangle(cornerRadius: 14))
+                                        .overlay(RoundedRectangle(cornerRadius: 14).stroke(SecretMatchTheme.border))
                                     }
                                 }
                             }
@@ -57,14 +62,11 @@ struct MatchListView: View {
                     isPresented = false
                     dismiss()
                 }
-                .buttonStyle(SidebarButtonStyle())
+                .buttonStyle(SecretPrimaryButtonStyle())
                 .padding(.top, 20)
             }
-            .padding()
             .frame(maxWidth: 400)
-            .background(Color(hex: "#35070D").opacity(0.94))
-            .cornerRadius(24)
-            .shadow(color: .black.opacity(0.3), radius: 20, x: 0, y: 10)
+            .secretCard(cornerRadius: 24, padding: 28)
         }
         .onAppear {
             Task {
