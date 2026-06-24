@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <defs>
+    <linearGradient id="background" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#191719"/>
+      <stop offset="1" stop-color="#0b0b0b"/>
+    </linearGradient>
+    <linearGradient id="pink" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#ff5fa8"/>
+      <stop offset="1" stop-color="#e83e8c"/>
+    </linearGradient>
+    <filter id="glow" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="14" result="blur"/>
+      <feFlood flood-color="#e83e8c" flood-opacity=".42"/>
+      <feComposite in2="blur" operator="in"/>
+      <feMerge>
+        <feMergeNode/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <rect width="1024" height="1024" fill="#121212"/>
+  <rect x="14" y="14" width="996" height="996" rx="184" fill="url(#background)"/>
+  <rect x="28" y="28" width="968" height="968" rx="166" fill="none" stroke="#333333" stroke-width="4"/>
+  <rect x="42" y="42" width="940" height="940" rx="154" fill="none" stroke="url(#pink)" stroke-width="10" opacity=".92" filter="url(#glow)"/>
+
+  <g font-family="Helvetica Neue, Arial Narrow, Arial, sans-serif" font-weight="900" text-anchor="middle">
+    <text x="512" y="390" fill="#ffffff" font-size="182" letter-spacing="-8">MATCH</text>
+    <text x="512" y="570" font-size="172" letter-spacing="-8">
+      <tspan fill="#f4b400">&amp;</tspan>
+      <tspan fill="#e83e8c"> PLAY</tspan>
+    </text>
+    <text x="512" y="755" fill="#f4b400" font-size="170" letter-spacing="12">PARTY</text>
+  </g>
+
+  <g fill="url(#pink)">
+    <rect x="158" y="816" width="224" height="15" rx="8"/>
+    <rect x="642" y="816" width="224" height="15" rx="8"/>
+    <circle cx="512" cy="823.5" r="11"/>
+  </g>
+</svg>
