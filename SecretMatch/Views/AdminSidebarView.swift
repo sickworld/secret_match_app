@@ -6,14 +6,15 @@ struct AdminSidebarView: View {
     @Binding var showActions: Bool
     @Binding var showMatches: Bool
     var logout: () -> Void
+    var isCompact = false
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 18) {
+        VStack(alignment: .leading, spacing: isCompact ? 12 : 18) {
             Image("logo")
                 .resizable()
                 .scaledToFit()
-                .frame(maxWidth: 174)
-                .frame(height: 142)
+                .frame(maxWidth: isCompact ? 132 : 174)
+                .frame(height: isCompact ? 86 : 142)
                 .shadow(color: SecretMatchTheme.primary.opacity(0.16), radius: 18)
 
             Text("EVENT CONTROL")
@@ -46,22 +47,27 @@ struct AdminSidebarView: View {
             }
             .buttonStyle(LogoutButtonStyle())
 
-            Spacer()
+            if !isCompact {
+                Spacer()
+            }
 
             HStack {
                 Spacer()
                 Image("hot-chili")
                     .resizable()
                     .scaledToFit()
-                    .frame(width: 104, height: 72)
+                    .frame(width: isCompact ? 82 : 104, height: isCompact ? 56 : 72)
                     .accessibilityLabel("Hot Chili Events")
             }
         }
-        .padding(22)
-        .frame(width: 260)
+        .padding(isCompact ? 16 : 22)
+        .frame(width: isCompact ? nil : 260)
+        .frame(maxWidth: isCompact ? .infinity : nil)
         .background(SecretMatchTheme.surface.opacity(0.97))
-        .overlay(alignment: .trailing) {
-            Rectangle().fill(SecretMatchTheme.border).frame(width: 1)
+        .overlay(alignment: isCompact ? .bottom : .trailing) {
+            Rectangle()
+                .fill(SecretMatchTheme.border)
+                .frame(width: isCompact ? nil : 1, height: isCompact ? 1 : nil)
         }
     }
 }

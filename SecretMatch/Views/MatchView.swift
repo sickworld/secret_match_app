@@ -51,6 +51,14 @@ struct MatchView: View {
     // MARK: - View
 
     var body: some View {
+        GeometryReader { proxy in
+            let isCompact = proxy.size.width < proxy.size.height
+
+            content(isCompact: isCompact)
+        }
+    }
+
+    private func content(isCompact: Bool) -> some View {
         ZStack {
             BrandBackground()
 
@@ -80,36 +88,11 @@ struct MatchView: View {
                 .transition(.move(edge: .bottom))
                 .zIndex(30)
             }
-            
-            HStack(spacing: 0) {
-                SidebarView(
-                    secondsRemaining: secondsRemaining,
-                    registerActivity: resetInactivityTimer,
-                    logout: { api.logout() },
-                    showMatchesOverlay: $showMatchesOverlay,
-                    showActionsOverlay: $showActionsOverlay
-                )
 
-                Divider().background(Color.white.opacity(0.3))
-
-                VStack {
-                    Spacer()
-
-                    MatchInputBox(
-                        targetNumber: $targetNumber,
-                        showKeyboard: $showKeyboard,
-                        selectedActions: $selectedActions,
-                        responseMessage: $responseMessage,
-                        onSend: sendInteractions
-                    )
-
-                    Spacer()
-                }
-                .frame(maxWidth: .infinity)
+            mainLayout(isCompact: isCompact)
                 .onAppear {
                     resetInactivityTimer()
                 }
-            }
             
             if showMatchesOverlay {
                 Color.black.opacity(0.6)
@@ -152,6 +135,58 @@ struct MatchView: View {
         .onDisappear {
             autoLogoutTask?.cancel()
         }
+    }
+
+    @ViewBuilder
+    private func mainLayout(isCompact: Bool) -> some View {
+        if isCompact {
+            ScrollView {
+                VStack(spacing: 0) {
+                    sidebar(isCompact: true)
+
+                    MatchInputBox(
+                        targetNumber: $targetNumber,
+                        showKeyboard: $showKeyboard,
+                        selectedActions: $selectedActions,
+                        responseMessage: $responseMessage,
+                        onSend: sendInteractions
+                    )
+                    .padding(18)
+                }
+            }
+        } else {
+            HStack(spacing: 0) {
+                sidebar(isCompact: false)
+
+                Divider().background(Color.white.opacity(0.3))
+
+                VStack {
+                    Spacer()
+
+                    MatchInputBox(
+                        targetNumber: $targetNumber,
+                        showKeyboard: $showKeyboard,
+                        selectedActions: $selectedActions,
+                        responseMessage: $responseMessage,
+                        onSend: sendInteractions
+                    )
+
+                    Spacer()
+                }
+                .frame(maxWidth: .infinity)
+            }
+        }
+    }
+
+    private func sidebar(isCompact: Bool) -> some View {
+        SidebarView(
+            secondsRemaining: secondsRemaining,
+            registerActivity: resetInactivityTimer,
+            logout: { api.logout() },
+            showMatchesOverlay: $showMatchesOverlay,
+            showActionsOverlay: $showActionsOverlay,
+            isCompact: isCompact
+        )
     }
 
     func sendInteractions() {

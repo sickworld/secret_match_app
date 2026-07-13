@@ -7,14 +7,15 @@ struct SidebarView: View {
     var logout: () -> Void
     @Binding var showMatchesOverlay: Bool
     @Binding var showActionsOverlay: Bool
+    var isCompact = false
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 18) {
+        VStack(alignment: .leading, spacing: isCompact ? 12 : 18) {
             Image("logo")
                 .resizable()
                 .scaledToFit()
-                .frame(maxWidth: 174)
-                .frame(height: 142)
+                .frame(maxWidth: isCompact ? 132 : 174)
+                .frame(height: isCompact ? 86 : 142)
                 .shadow(color: SecretMatchTheme.primary.opacity(0.16), radius: 18)
 
             VStack(alignment: .leading, spacing: 8) {
@@ -76,23 +77,29 @@ struct SidebarView: View {
                     .foregroundStyle(SecretMatchTheme.muted)
             }
 
-            Spacer()
+            if !isCompact {
+                Spacer()
+            }
 
-            VStack(alignment: .leading, spacing: 18) {
+            VStack(alignment: isCompact ? .center : .leading, spacing: 18) {
                 Spacer()
                 Image("hot-chili")
                     .resizable()
                     .scaledToFit()
-                    .frame(width: 112, height: 78)
+                    .frame(width: isCompact ? 82 : 112, height: isCompact ? 56 : 78)
                     .shadow(color: SecretMatchTheme.primary.opacity(0.18), radius: 12)
                     .accessibilityLabel("Hot Chili Events")
             }
+            .frame(maxWidth: isCompact ? .infinity : nil)
         }
-        .padding(22)
-        .frame(width: 260)
+        .padding(isCompact ? 16 : 22)
+        .frame(width: isCompact ? nil : 260)
+        .frame(maxWidth: isCompact ? .infinity : nil)
         .background(SecretMatchTheme.surface.opacity(0.97))
-        .overlay(alignment: .trailing) {
-            Rectangle().fill(SecretMatchTheme.border).frame(width: 1)
+        .overlay(alignment: isCompact ? .bottom : .trailing) {
+            Rectangle()
+                .fill(SecretMatchTheme.border)
+                .frame(width: isCompact ? nil : 1, height: isCompact ? 1 : nil)
         }
     }
 }
