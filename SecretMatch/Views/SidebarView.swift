@@ -7,6 +7,8 @@ struct SidebarView: View {
     var logout: () -> Void
     @Binding var showMatchesOverlay: Bool
     @Binding var showActionsOverlay: Bool
+    @Binding var showGuideOverlay: Bool
+    @Binding var showRulesOverlay: Bool
     var isCompact = false
 
     var body: some View {
@@ -56,8 +58,17 @@ struct SidebarView: View {
 
             Button {
                 registerActivity()
+                showGuideOverlay = true
             } label: {
-                Label("Spielregeln", systemImage: "list.bullet.clipboard")
+                Label("So funktioniert's", systemImage: "questionmark.circle.fill")
+            }
+            .buttonStyle(SidebarButtonStyle())
+
+            Button {
+                registerActivity()
+                showRulesOverlay = true
+            } label: {
+                Label("Spielregeln", systemImage: "list.bullet.clipboard.fill")
             }
             .buttonStyle(SidebarButtonStyle())
 

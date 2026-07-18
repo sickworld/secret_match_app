@@ -18,10 +18,11 @@ class APIService: ObservableObject {
 
     func login(number: String) async throws {
         if isAdmin { return }
+        let normalizedNumber = number.normalizedEventNumber
         let url = baseURL.appendingPathComponent("login")
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
-        request.httpBody = "secretmatch_number=\(number)".data(using: .utf8)
+        request.httpBody = "secretmatch_number=\(normalizedNumber)".data(using: .utf8)
         request.setValue("application/x-www-form-urlencoded", forHTTPHeaderField: "Content-Type")
 
         let (_, response) = try await URLSession.shared.data(for: request)
@@ -30,14 +31,15 @@ class APIService: ObservableObject {
         }
 
         self.isLoggedIn = true
-        self.number = number
+        self.number = normalizedNumber
     }
 
     func submitMatch(targetNumber: String, type: String) async throws -> String {
+        let normalizedTargetNumber = targetNumber.normalizedEventNumber
         let url = baseURL.appendingPathComponent("match")
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
-        let body = "target_number=\(targetNumber)&match_type=\(type)"
+        let body = "target_number=\(normalizedTargetNumber)&match_type=\(type)"
         request.httpBody = body.data(using: .utf8)
         request.setValue("application/x-www-form-urlencoded", forHTTPHeaderField: "Content-Type")
 
@@ -75,6 +77,7 @@ class APIService: ObservableObject {
     
     @MainActor
     func submitAction(targetNumber: String, type: String) async throws -> String {
+        let normalizedTargetNumber = targetNumber.normalizedEventNumber
         let url = baseURL.appendingPathComponent("actions")
 
         var request = URLRequest(url: url)
@@ -82,7 +85,7 @@ class APIService: ObservableObject {
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
 
         let body: [String: String] = [
-            "target_number": targetNumber,
+            "target_number": normalizedTargetNumber,
             "action_type": type
         ]
 
@@ -173,5 +176,13 @@ class APIService: ObservableObject {
         self.matches = []
         self.actions = []
         self.isAdmin = false
+    }
+}
+
+extension String {
+    var normalizedEventNumber: String {
+        let digits = trimmingCharacters(in: .whitespacesAndNewlines)
+        let normalized = digits.drop(while: { $0 == "0" })
+        return normalized.isEmpty && !digits.isEmpty ? "0" : String(normalized)
     }
 }

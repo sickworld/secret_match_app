@@ -5,6 +5,8 @@ struct MatchView: View {
     
     @State private var showMatchesOverlay = false
     @State private var showActionsOverlay = false
+    @State private var showGuideOverlay = false
+    @State private var showRulesOverlay = false
     @State private var targetNumber = ""
     @State private var selectedActions: Set<String> = []
     @State private var responseMessage = ""
@@ -125,6 +127,36 @@ struct MatchView: View {
                         resetInactivityTimer()
                     }
             }
+
+            if showGuideOverlay {
+                Color.black.opacity(0.84)
+                    .ignoresSafeArea()
+                    .onTapGesture {
+                        showGuideOverlay = false
+                        resetInactivityTimer()
+                    }
+
+                HowToUseView(
+                    isPresented: $showGuideOverlay,
+                    registerActivity: resetInactivityTimer
+                )
+                .zIndex(5)
+            }
+
+            if showRulesOverlay {
+                Color.black.opacity(0.84)
+                    .ignoresSafeArea()
+                    .onTapGesture {
+                        showRulesOverlay = false
+                        resetInactivityTimer()
+                    }
+
+                RulesSlideshowView(
+                    isPresented: $showRulesOverlay,
+                    registerActivity: resetInactivityTimer
+                )
+                .zIndex(5)
+            }
             
         }.onTapGesture {
             withAnimation {
@@ -185,6 +217,8 @@ struct MatchView: View {
             logout: { api.logout() },
             showMatchesOverlay: $showMatchesOverlay,
             showActionsOverlay: $showActionsOverlay,
+            showGuideOverlay: $showGuideOverlay,
+            showRulesOverlay: $showRulesOverlay,
             isCompact: isCompact
         )
     }
@@ -203,7 +237,7 @@ struct MatchView: View {
                 showKeyboard = false
             }
 
-            if targetNumber == api.number {
+            if targetNumber.normalizedEventNumber == api.number.normalizedEventNumber {
                 responseMessage = "Du kannst keine Aktion an dich selbst senden 😅"
                 return
             }
