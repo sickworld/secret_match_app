@@ -33,11 +33,11 @@ struct MatchInputBox: View {
                     .foregroundStyle(SecretMatchTheme.secondary)
 
                 Text("Was möchtest du senden?")
-                    .font(.system(size: 32, weight: .bold, design: .rounded))
+                    .font(.system(size: 34, weight: .bold, design: .rounded))
                     .foregroundStyle(.white)
 
                 Text("Wähle eine oder mehrere Aktionen und gib die Event-Nummer ein.")
-                    .font(.subheadline)
+                    .font(.system(size: 17, weight: .medium, design: .rounded))
                     .foregroundStyle(SecretMatchTheme.muted)
                     .multilineTextAlignment(.center)
             }
@@ -49,15 +49,16 @@ struct MatchInputBox: View {
             }
 
             VStack(alignment: .leading, spacing: 8) {
-                Text("An welche Nummer?")
-                    .font(.caption2.bold())
+                Text("ZIEL-NUMMER")
+                    .font(.system(size: 14, weight: .bold, design: .rounded))
                     .tracking(1.2)
-                    .foregroundStyle(SecretMatchTheme.muted)
+                    .foregroundStyle(SecretMatchTheme.secondary)
 
-                Text(targetNumber.isEmpty ? "Nummer eingeben" : targetNumber)
+                Text(targetNumber.isEmpty ? "Ziel-Nummer eingeben" : targetNumber)
                     .foregroundStyle(targetNumber.isEmpty ? SecretMatchTheme.muted : .white)
-                    .font(.system(size: 30, weight: .bold, design: .rounded))
+                    .font(.system(size: 34, weight: .bold, design: .rounded))
                     .multilineTextAlignment(.center)
+                    .minimumScaleFactor(0.78)
                     .secretInput(highlighted: showKeyboard)
                     .onTapGesture {
                         withAnimation(.easeOut(duration: 0.2)) {
@@ -89,7 +90,7 @@ struct MatchInputBox: View {
                     .overlay(RoundedRectangle(cornerRadius: 14).stroke(SecretMatchTheme.primary.opacity(0.3)))
             }
         }
-        .frame(maxWidth: 740)
+        .frame(maxWidth: 780)
         .padding(.horizontal, 24)
         .secretCard(cornerRadius: 24, padding: 30)
     }

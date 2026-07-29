@@ -20,7 +20,7 @@ struct LoginView: View {
                     Image("logo")
                         .resizable()
                         .scaledToFit()
-                        .frame(width: 270, height: 220)
+                        .frame(width: 300, height: 240)
                         .shadow(color: SecretMatchTheme.primary.opacity(0.22), radius: 24)
                         .onLongPressGesture(minimumDuration: 3) {
                             UIImpactFeedbackGenerator(style: .medium).impactOccurred()
@@ -34,20 +34,21 @@ struct LoginView: View {
                             .foregroundStyle(SecretMatchTheme.secondary)
 
                         Text("Bereit für Match&Play?")
-                            .font(.system(size: 36, weight: .bold, design: .rounded))
+                            .font(.system(size: 40, weight: .bold, design: .rounded))
                             .foregroundStyle(SecretMatchTheme.text)
 
                         Text("Gib deine Event-Nummer ein und entdecke, wer mit dir matcht.")
-                            .font(.system(size: 18, weight: .medium, design: .rounded))
+                            .font(.system(size: 20, weight: .medium, design: .rounded))
                             .foregroundStyle(SecretMatchTheme.muted)
                             .multilineTextAlignment(.center)
                     }
 
                     VStack(alignment: .leading, spacing: 9) {
-                        Text(number.isEmpty ? "Nummer eingeben" : number)
+                        Text(number.isEmpty ? "Deine Nummer eingeben" : number)
                             .foregroundStyle(number.isEmpty ? SecretMatchTheme.muted : SecretMatchTheme.text)
-                            .font(.system(size: 32, weight: .bold, design: .rounded))
+                            .font(.system(size: 36, weight: .bold, design: .rounded))
                             .multilineTextAlignment(.center)
+                            .minimumScaleFactor(0.75)
                             .secretInput(highlighted: showKeyboard)
                             .onTapGesture {
                                 withAnimation(.easeOut(duration: 0.2)) {
@@ -79,8 +80,8 @@ struct LoginView: View {
                     .disabled(isLoading || number.isEmpty)
                     .opacity(number.isEmpty ? 0.55 : 1)
                 }
-                .frame(maxWidth: 620)
-                .secretCard(cornerRadius: 28, padding: 40)
+                .frame(maxWidth: 680)
+                .secretCard(cornerRadius: 30, padding: 44)
 
                 Spacer()
             }
