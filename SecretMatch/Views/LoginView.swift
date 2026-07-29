@@ -117,7 +117,7 @@ struct LoginView: View {
                         ) {
                             submitLogin()
                         }
-                        .frame(maxWidth: 520)
+                        .frame(maxWidth: 740)
                         .cornerRadius(16)
                         .shadow(radius: 20)
                     }

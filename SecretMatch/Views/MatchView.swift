@@ -91,7 +91,7 @@ struct MatchView: View {
                         showKeyboard = false
                         resetInactivityTimer()
                     }
-                    .frame(maxWidth: 460)
+                    .frame(maxWidth: 740)
                     .padding()
                     .cornerRadius(16)
                     .shadow(radius: 20)

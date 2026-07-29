@@ -46,7 +46,7 @@ struct CustomNumberKeyboard: View {
                 }
             }
         }
-        .frame(maxWidth: 570)
+        .frame(maxWidth: 700)
         .secretCard(cornerRadius: 30, padding: 32)
         .overlay(
             RoundedRectangle(cornerRadius: 28)
