@@ -106,7 +106,7 @@ struct SidebarView: View {
             Button {
                 logout()
             } label: {
-                Label("Event verlassen", systemImage: "rectangle.portrait.and.arrow.right")
+                Label("Abmelden", systemImage: "rectangle.portrait.and.arrow.right")
             }
             .buttonStyle(LogoutButtonStyle())
 
