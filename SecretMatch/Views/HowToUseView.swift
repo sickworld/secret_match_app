@@ -73,12 +73,12 @@ struct HowToUseView: View {
                     Group {
                         if isCompact {
                             VStack(spacing: 18) {
-                                keyboardExplanation
+                                header
                                 demoPopupKeyboard
                             }
                         } else {
                             HStack(spacing: 28) {
-                                keyboardExplanation
+                                header
                                     .frame(width: min(320, proxy.size.width * 0.26))
                                 demoPopupKeyboard
                             }
@@ -233,29 +233,6 @@ struct HowToUseView: View {
 
     private var showsDemoKeyboard: Bool {
         (step == 2 || step == 3) && !isDemoKeyboardDismissed
-    }
-
-    private var keyboardExplanation: some View {
-        VStack(spacing: 14) {
-            Text(stepTitle)
-                .font(.system(size: 32, weight: .bold, design: .rounded))
-                .foregroundStyle(.white)
-                .multilineTextAlignment(.center)
-
-            Text(stepText)
-                .font(.system(size: 19, weight: .medium, design: .rounded))
-                .foregroundStyle(SecretMatchTheme.muted)
-                .multilineTextAlignment(.center)
-                .fixedSize(horizontal: false, vertical: true)
-        }
-        .padding(24)
-        .frame(maxWidth: 440)
-        .background(SecretMatchTheme.surface.opacity(0.96))
-        .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
-        .overlay(
-            RoundedRectangle(cornerRadius: 24, style: .continuous)
-                .stroke(SecretMatchTheme.border, lineWidth: 1)
-        )
     }
 
     private var demoPopupKeyboard: some View {
