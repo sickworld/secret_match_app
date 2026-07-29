@@ -42,6 +42,9 @@ struct ActionListView: View {
                     Text("Gesendet \(sentCount)").tag("sent")
                 }
                 .pickerStyle(.segmented)
+                .controlSize(.large)
+                .font(.system(size: 18, weight: .bold, design: .rounded))
+                .frame(minHeight: 58)
 
                 if filteredActions.isEmpty {
                     ContentUnavailableView(

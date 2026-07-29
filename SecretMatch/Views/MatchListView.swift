@@ -38,6 +38,9 @@ struct MatchListView: View {
                     Text("🍆 Fuck \(hotCount)").tag("hot")
                 }
                 .pickerStyle(.segmented)
+                .controlSize(.large)
+                .font(.system(size: 18, weight: .bold, design: .rounded))
+                .frame(minHeight: 58)
 
                 if filteredMatches.isEmpty {
                     ContentUnavailableView(
