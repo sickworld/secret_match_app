@@ -54,6 +54,12 @@ struct AdminBillboardView: View {
             .accessibilityLabel("Billboard schließen")
         }
         .statusBarHidden()
+        .onAppear {
+            UIApplication.shared.isIdleTimerDisabled = true
+        }
+        .onDisappear {
+            UIApplication.shared.isIdleTimerDisabled = false
+        }
         .task {
             loadBillboard()
         }
@@ -76,11 +82,16 @@ struct AdminBillboardView: View {
 private struct BillboardWebView: UIViewRepresentable {
     let url: URL
 
+    func makeCoordinator() -> Coordinator {
+        Coordinator()
+    }
+
     func makeUIView(context: Context) -> WKWebView {
         let configuration = WKWebViewConfiguration()
         configuration.websiteDataStore = .default()
 
         let webView = WKWebView(frame: .zero, configuration: configuration)
+        webView.navigationDelegate = context.coordinator
         webView.isOpaque = false
         webView.backgroundColor = .black
         webView.scrollView.backgroundColor = .black
@@ -92,4 +103,41 @@ private struct BillboardWebView: UIViewRepresentable {
     }
 
     func updateUIView(_ webView: WKWebView, context: Context) {}
+
+    final class Coordinator: NSObject, WKNavigationDelegate {
+        private var retryWorkItem: DispatchWorkItem?
+
+        func webView(
+            _ webView: WKWebView,
+            didFinish navigation: WKNavigation?
+        ) {
+            retryWorkItem?.cancel()
+        }
+
+        func webView(
+            _ webView: WKWebView,
+            didFail navigation: WKNavigation?,
+            withError error: Error
+        ) {
+            scheduleRetry(for: webView)
+        }
+
+        func webView(
+            _ webView: WKWebView,
+            didFailProvisionalNavigation navigation: WKNavigation?,
+            withError error: Error
+        ) {
+            scheduleRetry(for: webView)
+        }
+
+        private func scheduleRetry(for webView: WKWebView) {
+            retryWorkItem?.cancel()
+
+            let workItem = DispatchWorkItem { [weak webView] in
+                webView?.reload()
+            }
+            retryWorkItem = workItem
+            DispatchQueue.main.asyncAfter(deadline: .now() + 8, execute: workItem)
+        }
+    }
 }
