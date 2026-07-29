@@ -32,15 +32,11 @@ struct MatchListView: View {
                     closeButton
                 }
 
-                Picker("Match-Typ", selection: $selectedType) {
-                    Text("Alle \(matches.count)").tag("all")
-                    Text("❤️ Hot \(normalCount)").tag("normal")
-                    Text("🍆 Fuck \(hotCount)").tag("hot")
+                HStack(spacing: 10) {
+                    matchFilterButton("Alle \(matches.count)", type: "all", color: SecretMatchTheme.secondary)
+                    matchFilterButton("❤️ Hot \(normalCount)", type: "normal", color: Color(hex: "#E83E8C"))
+                    matchFilterButton("🍆 Fuck \(hotCount)", type: "hot", color: Color(hex: "#8E63D2"))
                 }
-                .pickerStyle(.segmented)
-                .controlSize(.large)
-                .font(.system(size: 18, weight: .bold, design: .rounded))
-                .frame(minHeight: 58)
 
                 if filteredMatches.isEmpty {
                     ContentUnavailableView(
@@ -126,6 +122,29 @@ struct MatchListView: View {
 
     private var normalCount: Int { matches.filter { $0.type == "normal" }.count }
     private var hotCount: Int { matches.filter { $0.type == "hot" }.count }
+
+    private func matchFilterButton(_ title: String, type: String, color: Color) -> some View {
+        let isSelected = selectedType == type
+
+        return Button {
+            withAnimation(.easeOut(duration: 0.18)) {
+                selectedType = type
+            }
+        } label: {
+            Text(title)
+                .font(.system(size: 20, weight: .bold, design: .rounded))
+                .foregroundStyle(.white)
+                .frame(maxWidth: .infinity, minHeight: 64)
+                .background(isSelected ? color.opacity(0.9) : color.opacity(0.14))
+                .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 16, style: .continuous)
+                        .stroke(color.opacity(isSelected ? 1 : 0.55), lineWidth: isSelected ? 2 : 1)
+                )
+                .shadow(color: isSelected ? color.opacity(0.28) : .clear, radius: 10)
+        }
+        .buttonStyle(.plain)
+    }
 
     @MainActor
     private func loadMatches() async {

@@ -36,15 +36,11 @@ struct ActionListView: View {
                     closeButton
                 }
 
-                Picker("Richtung", selection: $selectedDirection) {
-                    Text("Alle \(api.actions.count)").tag("all")
-                    Text("Erhalten \(receivedCount)").tag("received")
-                    Text("Gesendet \(sentCount)").tag("sent")
+                HStack(spacing: 10) {
+                    actionFilterButton("Alle \(api.actions.count)", direction: "all", color: SecretMatchTheme.secondary)
+                    actionFilterButton("Erhalten \(receivedCount)", direction: "received", color: SecretMatchTheme.primary)
+                    actionFilterButton("Gesendet \(sentCount)", direction: "sent", color: Color(hex: "#3E9ED6"))
                 }
-                .pickerStyle(.segmented)
-                .controlSize(.large)
-                .font(.system(size: 18, weight: .bold, design: .rounded))
-                .frame(minHeight: 58)
 
                 if filteredActions.isEmpty {
                     ContentUnavailableView(
@@ -117,6 +113,29 @@ struct ActionListView: View {
 
     private var sentCount: Int {
         api.actions.filter { $0.sender_number == api.number }.count
+    }
+
+    private func actionFilterButton(_ title: String, direction: String, color: Color) -> some View {
+        let isSelected = selectedDirection == direction
+
+        return Button {
+            withAnimation(.easeOut(duration: 0.18)) {
+                selectedDirection = direction
+            }
+        } label: {
+            Text(title)
+                .font(.system(size: 20, weight: .bold, design: .rounded))
+                .foregroundStyle(.white)
+                .frame(maxWidth: .infinity, minHeight: 64)
+                .background(isSelected ? color.opacity(0.9) : color.opacity(0.14))
+                .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 16, style: .continuous)
+                        .stroke(color.opacity(isSelected ? 1 : 0.55), lineWidth: isSelected ? 2 : 1)
+                )
+                .shadow(color: isSelected ? color.opacity(0.28) : .clear, radius: 10)
+        }
+        .buttonStyle(.plain)
     }
 
     // MARK: - Einzelne Action-Zeile
