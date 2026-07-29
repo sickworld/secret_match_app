@@ -20,6 +20,37 @@ struct SidebarView: View {
                 .frame(height: isCompact ? 86 : 142)
                 .shadow(color: SecretMatchTheme.primary.opacity(0.16), radius: 18)
 
+            HStack(spacing: 10) {
+                Circle()
+                    .fill(secondsRemaining <= 10 ? SecretMatchTheme.secondary : SecretMatchTheme.primary)
+                    .frame(width: 10, height: 10)
+                    .shadow(
+                        color: (secondsRemaining <= 10 ? SecretMatchTheme.secondary : SecretMatchTheme.primary).opacity(0.5),
+                        radius: 6
+                    )
+
+                Text("Auto-Logout in \(secondsRemaining)s")
+                    .font(.system(size: 17, weight: .bold, design: .rounded))
+                    .foregroundStyle(.white)
+                    .monospacedDigit()
+            }
+            .padding(.horizontal, 16)
+            .frame(maxWidth: .infinity, minHeight: 48)
+            .background(
+                (secondsRemaining <= 10 ? SecretMatchTheme.secondary : SecretMatchTheme.primary)
+                    .opacity(0.14)
+            )
+            .clipShape(Capsule())
+            .overlay(
+                Capsule()
+                    .stroke(
+                        (secondsRemaining <= 10 ? SecretMatchTheme.secondary : SecretMatchTheme.primary)
+                            .opacity(0.55),
+                        lineWidth: 1.2
+                    )
+            )
+            .accessibilityLabel("Automatischer Logout in \(secondsRemaining) Sekunden")
+
             VStack(alignment: .leading, spacing: 8) {
                 Text("DEIN EVENT PASS")
                     .font(.caption2.bold())
@@ -78,15 +109,6 @@ struct SidebarView: View {
                 Label("Event verlassen", systemImage: "rectangle.portrait.and.arrow.right")
             }
             .buttonStyle(LogoutButtonStyle())
-
-            HStack(spacing: 7) {
-                Circle()
-                    .fill(secondsRemaining <= 10 ? SecretMatchTheme.secondary : SecretMatchTheme.primary)
-                    .frame(width: 7, height: 7)
-                Text("Auto-Logout in \(secondsRemaining)s")
-                    .font(.caption2.weight(.medium))
-                    .foregroundStyle(SecretMatchTheme.muted)
-            }
 
             if !isCompact {
                 Spacer()
