@@ -13,51 +13,77 @@ struct AdminActionListView: View {
                 .ignoresSafeArea()
                 .onTapGesture { isPresented = false }
 
-            VStack(spacing: 20) {
-                Text("EVENT CONTROL")
-                    .font(.caption2.bold())
-                    .tracking(2)
-                    .foregroundStyle(SecretMatchTheme.secondary)
-
-                Text("Alle Aktionen")
-                    .font(.system(size: 26, weight: .bold, design: .rounded))
-                    .foregroundStyle(.white)
-
-                TextField("Nummer suchen", text: $searchText)
-                    .textFieldStyle(.roundedBorder)
-
-                Picker("Typ", selection: $selectedType) {
-                    Text("Alle").tag("all")
-                    Text("❤️ Hot").tag("normal")
-                    Text("🍆 Fuck").tag("hot")
-                    Text("👄 Blow").tag("bjob")
-                    Text("✋ Hand").tag("hjob")
-                    Text("👅 Lick").tag("ljob")
+            VStack(spacing: 18) {
+                HStack(alignment: .top) {
+                    VStack(alignment: .leading, spacing: 5) {
+                        Text("EVENT CONTROL · \(filteredActions.count) EINTRÄGE")
+                            .font(.caption.bold())
+                            .tracking(1.8)
+                            .foregroundStyle(SecretMatchTheme.secondary)
+                        Text("Aktionen verwalten")
+                            .font(.system(size: 32, weight: .bold, design: .rounded))
+                            .foregroundStyle(.white)
+                    }
+                    Spacer()
+                    Button {
+                        isPresented = false
+                    } label: {
+                        Image(systemName: "xmark")
+                            .font(.title3.bold())
+                            .frame(width: 50, height: 50)
+                            .foregroundStyle(.white)
+                            .background(SecretMatchTheme.surfaceRaised)
+                            .clipShape(Circle())
+                    }
                 }
-                .pickerStyle(.menu)
-                .tint(.white)
+
+                HStack(spacing: 12) {
+                    HStack {
+                        Image(systemName: "magnifyingglass")
+                            .foregroundStyle(SecretMatchTheme.muted)
+                        TextField("Sender- oder Zielnummer suchen", text: $searchText)
+                            .foregroundStyle(.white)
+                    }
+                    .padding(.horizontal, 16)
+                    .frame(minHeight: 54)
+                    .background(Color.black.opacity(0.25))
+                    .clipShape(RoundedRectangle(cornerRadius: 14))
+
+                    Picker("Typ", selection: $selectedType) {
+                        Text("Alle").tag("all")
+                        Text("❤️ Hot").tag("normal")
+                        Text("🍆 Fuck").tag("hot")
+                        Text("👄 Blow").tag("bjob")
+                        Text("✋ Hand").tag("hjob")
+                        Text("👅 Lick").tag("ljob")
+                    }
+                    .pickerStyle(.menu)
+                    .tint(.white)
+                    .frame(minWidth: 150, minHeight: 54)
+                    .background(SecretMatchTheme.surfaceRaised)
+                    .clipShape(RoundedRectangle(cornerRadius: 14))
+                }
 
                 if filteredActions.isEmpty {
-                    Text("Keine Aktionen vorhanden")
-                        .foregroundStyle(SecretMatchTheme.muted)
+                    ContentUnavailableView("Keine Aktionen", systemImage: "paperplane",
+                                           description: Text("Suche oder Filter anpassen."))
+                        .foregroundStyle(.white)
+                        .frame(maxHeight: .infinity)
                 } else {
                     ScrollView {
-                        VStack(spacing: 12) {
+                        LazyVGrid(columns: [GridItem(.adaptive(minimum: 360), spacing: 14)], spacing: 14) {
                             ForEach(filteredActions) { action in
                                 actionRow(action)
                             }
                         }
-                        .padding(.horizontal)
+                        .padding(.vertical, 2)
                     }
+                    .refreshable { await api.loadAdminActions() }
                 }
-
-                Button("Schließen") {
-                    isPresented = false
-                }
-                .buttonStyle(SecretPrimaryButtonStyle())
             }
-            .frame(maxWidth: 520)
-            .secretCard(cornerRadius: 24, padding: 28)
+            .frame(maxWidth: 1040, maxHeight: 780)
+            .secretCard(cornerRadius: 26, padding: 26)
+            .padding(24)
         }
         .task {
             await api.loadAdminActions()
@@ -98,6 +124,10 @@ struct AdminActionListView: View {
                 Text("Von \(action.sender_number) → \(action.receiver_number)")
                     .foregroundStyle(SecretMatchTheme.muted)
                     .font(.system(size: 16, weight: .semibold, design: .rounded))
+
+                Text(action.created_at)
+                    .font(.caption.monospacedDigit())
+                    .foregroundStyle(.white.opacity(0.48))
             }
 
             Spacer()

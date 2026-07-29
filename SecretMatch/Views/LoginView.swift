@@ -120,7 +120,7 @@ struct LoginView: View {
             }
         }
         .animation(.easeInOut(duration: 0.24), value: showKeyboard)
-        .sheet(isPresented: $showAdminLogin) {
+        .fullScreenCover(isPresented: $showAdminLogin) {
             AdminLoginView(isPresented: $showAdminLogin)
                 .environmentObject(api)
         }

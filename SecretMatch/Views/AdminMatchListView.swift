@@ -13,47 +13,71 @@ struct AdminMatchListView: View {
                 .ignoresSafeArea()
                 .onTapGesture { isPresented = false }
 
-            VStack(spacing: 20) {
-                Text("EVENT CONTROL")
-                    .font(.caption2.bold())
-                    .tracking(2)
-                    .foregroundStyle(SecretMatchTheme.secondary)
-
-                Text("Alle Matches")
-                    .font(.system(size: 26, weight: .bold, design: .rounded))
-                    .foregroundStyle(.white)
-
-                TextField("Nummer suchen", text: $searchText)
-                    .textFieldStyle(.roundedBorder)
-
-                Picker("Typ", selection: $selectedType) {
-                    Text("Alle").tag("all")
-                    Text("❤️ Hot-Match").tag("normal")
-                    Text("🍆 Fuck-Match").tag("hot")
+            VStack(spacing: 18) {
+                HStack(alignment: .top) {
+                    VStack(alignment: .leading, spacing: 5) {
+                        Text("EVENT CONTROL · \(filteredMatches.count) EINTRÄGE")
+                            .font(.caption.bold())
+                            .tracking(1.8)
+                            .foregroundStyle(SecretMatchTheme.secondary)
+                        Text("Matches verwalten")
+                            .font(.system(size: 32, weight: .bold, design: .rounded))
+                            .foregroundStyle(.white)
+                    }
+                    Spacer()
+                    Button {
+                        isPresented = false
+                    } label: {
+                        Image(systemName: "xmark")
+                            .font(.title3.bold())
+                            .frame(width: 50, height: 50)
+                            .foregroundStyle(.white)
+                            .background(SecretMatchTheme.surfaceRaised)
+                            .clipShape(Circle())
+                    }
                 }
-                .pickerStyle(.segmented)
+
+                HStack(spacing: 12) {
+                    HStack {
+                        Image(systemName: "magnifyingglass")
+                            .foregroundStyle(SecretMatchTheme.muted)
+                        TextField("Teilnehmernummer suchen", text: $searchText)
+                            .foregroundStyle(.white)
+                    }
+                    .padding(.horizontal, 16)
+                    .frame(minHeight: 54)
+                    .background(Color.black.opacity(0.25))
+                    .clipShape(RoundedRectangle(cornerRadius: 14))
+
+                    Picker("Typ", selection: $selectedType) {
+                        Text("Alle").tag("all")
+                        Text("❤️ Hot").tag("normal")
+                        Text("🍆 Fuck").tag("hot")
+                    }
+                    .pickerStyle(.segmented)
+                    .frame(maxWidth: 330)
+                }
 
                 if filteredMatches.isEmpty {
-                    Text("Keine Matches gefunden")
-                        .foregroundStyle(SecretMatchTheme.muted)
+                    ContentUnavailableView("Keine Matches", systemImage: "heart.slash",
+                                           description: Text("Suche oder Filter anpassen."))
+                        .foregroundStyle(.white)
+                        .frame(maxHeight: .infinity)
                 } else {
                     ScrollView {
-                        VStack(spacing: 12) {
+                        LazyVGrid(columns: [GridItem(.adaptive(minimum: 360), spacing: 14)], spacing: 14) {
                             ForEach(filteredMatches) { match in
                                 matchRow(match)
                             }
                         }
-                        .padding(.horizontal)
+                        .padding(.vertical, 2)
                     }
+                    .refreshable { await api.loadAdminMatches() }
                 }
-
-                Button("Schließen") {
-                    isPresented = false
-                }
-                .buttonStyle(SecretPrimaryButtonStyle())
             }
-            .frame(maxWidth: 520)
-            .secretCard(cornerRadius: 24, padding: 28)
+            .frame(maxWidth: 1040, maxHeight: 780)
+            .secretCard(cornerRadius: 26, padding: 26)
+            .padding(24)
         }
         .task {
             await api.loadAdminMatches()
@@ -94,11 +118,9 @@ struct AdminMatchListView: View {
                 Text("\(match.number_a) ↔ \(match.number_b)")
                     .foregroundStyle(SecretMatchTheme.muted)
                     .font(.system(size: 16, weight: .semibold, design: .rounded))
-
-                // Datum optional, bewusst weggelassen
-                // Text(match.created_at)
-                //     .font(.caption2)
-                //     .foregroundColor(.white.opacity(0.4))
+                Text(match.created_at)
+                    .font(.caption.monospacedDigit())
+                    .foregroundStyle(.white.opacity(0.48))
             }
 
             Spacer()
