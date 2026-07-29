@@ -4,6 +4,7 @@ struct ActionListView: View {
     @EnvironmentObject var api: APIService
     @Binding var isPresented: Bool
     @Environment(\.dismiss) private var dismiss
+    @State private var selectedDirection = "all"
 
     var groupedActions: [String: [SecretAction]] {
         Dictionary(
@@ -18,62 +19,101 @@ struct ActionListView: View {
             Color.black.opacity(0.6)
                 .ignoresSafeArea()
 
-            VStack(spacing: 20) {
-                Text("ACTIVITY")
-                    .font(.caption2.bold())
-                    .tracking(2)
-                    .foregroundStyle(SecretMatchTheme.secondary)
+            VStack(spacing: 18) {
+                HStack(alignment: .top) {
+                    VStack(alignment: .leading, spacing: 5) {
+                        Text("DEINE ACTIVITY · \(filteredActions.count)")
+                            .font(.caption.bold())
+                            .tracking(1.8)
+                            .foregroundStyle(SecretMatchTheme.secondary)
+                        Text("Aktionen")
+                            .font(.system(size: 34, weight: .bold, design: .rounded))
+                            .foregroundStyle(.white)
+                        Text("Alles, was du gesendet und erhalten hast.")
+                            .foregroundStyle(SecretMatchTheme.muted)
+                    }
+                    Spacer()
+                    closeButton
+                }
 
-                Text("Deine Aktionen")
-                    .font(.system(size: 32, weight: .bold, design: .rounded))
+                Picker("Richtung", selection: $selectedDirection) {
+                    Text("Alle \(api.actions.count)").tag("all")
+                    Text("Erhalten \(receivedCount)").tag("received")
+                    Text("Gesendet \(sentCount)").tag("sent")
+                }
+                .pickerStyle(.segmented)
+
+                if filteredActions.isEmpty {
+                    ContentUnavailableView(
+                        selectedDirection == "all" ? "Noch keine Aktionen" : "Hier ist noch nichts",
+                        systemImage: "paperplane",
+                        description: Text("Neue Aktionen erscheinen automatisch in dieser Übersicht.")
+                    )
                     .foregroundStyle(.white)
-
-                if api.actions.isEmpty {
-                    Text("Noch keine Aktionen")
-                        .foregroundStyle(SecretMatchTheme.muted)
-                        .padding(.top, 30)
+                    .frame(maxHeight: .infinity)
                 } else {
                     ScrollView {
-                        VStack(spacing: 24) {
-                            ForEach(groupedActions.keys.sorted(), id: \.self) { key in
-                                VStack(alignment: .leading, spacing: 8) {
-                                    Text(key)
-                                        .font(.title3.bold())
-                                        .foregroundStyle(.white)
-                                        .padding(.leading, 4)
-
-                                    ForEach(groupedActions[key] ?? [], id: \.id) { action in
-                                        actionRow(action)
-                                    }
-                                }
+                        LazyVGrid(columns: [GridItem(.adaptive(minimum: 340), spacing: 14)], spacing: 14) {
+                            ForEach(filteredActions) { action in
+                                actionRow(action)
                             }
                         }
-                        .padding(.horizontal, 4)
+                        .padding(.vertical, 2)
+                    }
+                    .refreshable {
+                        do {
+                            api.actions = try await api.loadActions()
+                        } catch {
+                            api.actions = []
+                        }
                     }
                 }
-
-                Button("Schließen") {
-                    isPresented = false
-                    dismiss()
-                }
-                .buttonStyle(SecretPrimaryButtonStyle())
-                .padding(.top, 20)
             }
-            .frame(maxWidth: 720, maxHeight: 680)
-            .secretCard(cornerRadius: 24, padding: 32)
-            .padding(28)
+            .frame(maxWidth: 980, maxHeight: 760)
+            .secretCard(cornerRadius: 26, padding: 28)
+            .padding(24)
         }
         .task(id: isPresented) {
             guard isPresented else { return }
 
             do {
-                print("🚀 loadActions triggered")
                 api.actions = try await api.loadActions()
             } catch {
-                print("❌ Fehler beim Laden der Aktionen:", error.localizedDescription)
                 api.actions = []
             }
         }
+    }
+
+    private var closeButton: some View {
+        Button {
+            isPresented = false
+            dismiss()
+        } label: {
+            Image(systemName: "xmark")
+                .font(.title3.bold())
+                .foregroundStyle(.white)
+                .frame(width: 50, height: 50)
+                .background(SecretMatchTheme.surfaceRaised)
+                .clipShape(Circle())
+        }
+    }
+
+    private var filteredActions: [SecretAction] {
+        api.actions.filter { action in
+            switch selectedDirection {
+            case "received": return action.sender_number != api.number
+            case "sent": return action.sender_number == api.number
+            default: return true
+            }
+        }
+    }
+
+    private var receivedCount: Int {
+        api.actions.filter { $0.sender_number != api.number }.count
+    }
+
+    private var sentCount: Int {
+        api.actions.filter { $0.sender_number == api.number }.count
     }
 
     // MARK: - Einzelne Action-Zeile
@@ -97,6 +137,10 @@ struct ActionListView: View {
                 Text(action.sender_number == api.number ? "Gesendet an" : "Erhalten von")
                     .font(.caption.weight(.semibold))
                     .foregroundStyle(SecretMatchTheme.muted)
+
+                Text(displayDate(action.created_at))
+                    .font(.caption.monospacedDigit())
+                    .foregroundStyle(.white.opacity(0.5))
             }
 
             Spacer()
@@ -164,5 +208,16 @@ struct ActionListView: View {
         df.dateStyle = .short
         df.timeStyle = .short
         return df.string(from: date)
+    }
+
+    private func displayDate(_ value: String) -> String {
+        let input = DateFormatter()
+        input.locale = Locale(identifier: "en_US_POSIX")
+        input.dateFormat = "yyyy-MM-dd HH:mm:ss"
+        guard let date = input.date(from: value) else { return value }
+        let output = DateFormatter()
+        output.locale = Locale(identifier: "de_DE")
+        output.dateFormat = "dd.MM. · HH:mm"
+        return output.string(from: date)
     }
 }

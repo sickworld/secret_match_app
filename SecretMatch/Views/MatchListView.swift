@@ -5,6 +5,7 @@ struct MatchListView: View {
     @State private var matches: [Match] = []
     @Environment(\.dismiss) private var dismiss
     @Binding var isPresented: Bool
+    @State private var selectedType = "all"
 
     var groupedMatches: [String: [Match]] {
         Dictionary(grouping: matches, by: { $0.type })
@@ -14,35 +15,43 @@ struct MatchListView: View {
         ZStack {
             Color.black.opacity(0.6).ignoresSafeArea()
 
-            VStack(spacing: 20) {
-                Text("CONNECTIONS")
-                    .font(.caption2.bold())
-                    .tracking(2)
-                    .foregroundStyle(SecretMatchTheme.secondary)
+            VStack(spacing: 18) {
+                HStack(alignment: .top) {
+                    VStack(alignment: .leading, spacing: 5) {
+                        Text("DEINE CONNECTIONS · \(filteredMatches.count)")
+                            .font(.caption.bold())
+                            .tracking(1.8)
+                            .foregroundStyle(SecretMatchTheme.secondary)
+                        Text("Matches")
+                            .font(.system(size: 34, weight: .bold, design: .rounded))
+                            .foregroundStyle(.white)
+                        Text("Diese Personen möchten dasselbe wie du.")
+                            .foregroundStyle(SecretMatchTheme.muted)
+                    }
+                    Spacer()
+                    closeButton
+                }
 
-                Text("Deine Matches")
-                    .font(.system(size: 32, weight: .bold, design: .rounded))
+                Picker("Match-Typ", selection: $selectedType) {
+                    Text("Alle \(matches.count)").tag("all")
+                    Text("❤️ Hot \(normalCount)").tag("normal")
+                    Text("🍆 Fuck \(hotCount)").tag("hot")
+                }
+                .pickerStyle(.segmented)
+
+                if filteredMatches.isEmpty {
+                    ContentUnavailableView(
+                        selectedType == "all" ? "Noch keine Matches" : "Keine Matches dieses Typs",
+                        systemImage: "heart",
+                        description: Text("Sobald es gegenseitig passt, erscheint das Match hier.")
+                    )
                     .foregroundStyle(.white)
-
-                if matches.isEmpty {
-                    Text("Noch keine Matches")
-                        .foregroundStyle(SecretMatchTheme.muted)
-                        .padding(.top, 30)
+                    .frame(maxHeight: .infinity)
                 } else {
                     ScrollView {
-                        VStack(spacing: 24) {
-                            ForEach(groupedMatches.keys.sorted(), id: \.self) { type in
-                                VStack(alignment: .leading, spacing: 8) {
-                                    HStack(spacing: 10) {
-                                        Text(typeEmoji(for: type))
-                                            .font(.title2)
-                                        Text(typeTitle(for: type))
-                                            .font(.title3.bold())
-                                            .foregroundStyle(.white)
-                                    }
-                                    .padding(.leading, 4)
-
-                                    ForEach(groupedMatches[type] ?? []) { match in
+                        LazyVGrid(columns: [GridItem(.adaptive(minimum: 340), spacing: 14)], spacing: 14) {
+                            ForEach(filteredMatches) { match in
+                                let type = match.type
                                         HStack(spacing: 18) {
                                             Text(typeEmoji(for: type))
                                                 .font(.system(size: 36))
@@ -58,6 +67,10 @@ struct MatchListView: View {
                                                 Text(typeTitle(for: type))
                                                     .font(.caption.weight(.semibold))
                                                     .foregroundStyle(SecretMatchTheme.muted)
+
+                                                Text(displayDate(match.created_at))
+                                                    .font(.caption.monospacedDigit())
+                                                    .foregroundStyle(.white.opacity(0.5))
                                             }
 
                                             Spacer()
@@ -74,34 +87,49 @@ struct MatchListView: View {
                                         .background(typeColor(for: type).opacity(0.14))
                                         .clipShape(RoundedRectangle(cornerRadius: 18))
                                         .overlay(RoundedRectangle(cornerRadius: 18).stroke(typeColor(for: type).opacity(0.65), lineWidth: 1.2))
-                                    }
-                                }
                             }
                         }
-                        .padding(.horizontal, 4)
+                        .padding(.vertical, 2)
                     }
+                    .refreshable { await loadMatches() }
                 }
-
-                Button("Schließen") {
-                    isPresented = false
-                    dismiss()
-                }
-                .buttonStyle(SecretPrimaryButtonStyle())
-                .padding(.top, 20)
             }
-            .frame(maxWidth: 720, maxHeight: 680)
-            .secretCard(cornerRadius: 24, padding: 32)
-            .padding(28)
+            .frame(maxWidth: 980, maxHeight: 760)
+            .secretCard(cornerRadius: 26, padding: 28)
+            .padding(24)
         }
         .onAppear {
-            Task {
-                do {
-                    let fetched = try await api.loadMatches()
-                    self.matches = fetched
-                } catch {
-                    print("❌ Fehler beim Laden der Matches: \(error.localizedDescription)")
-                }
-            }
+            Task { await loadMatches() }
+        }
+    }
+
+    private var closeButton: some View {
+        Button {
+            isPresented = false
+            dismiss()
+        } label: {
+            Image(systemName: "xmark")
+                .font(.title3.bold())
+                .foregroundStyle(.white)
+                .frame(width: 50, height: 50)
+                .background(SecretMatchTheme.surfaceRaised)
+                .clipShape(Circle())
+        }
+    }
+
+    private var filteredMatches: [Match] {
+        matches.filter { selectedType == "all" || $0.type == selectedType }
+    }
+
+    private var normalCount: Int { matches.filter { $0.type == "normal" }.count }
+    private var hotCount: Int { matches.filter { $0.type == "hot" }.count }
+
+    @MainActor
+    private func loadMatches() async {
+        do {
+            matches = try await api.loadMatches()
+        } catch {
+            matches = []
         }
     }
 
@@ -127,5 +155,16 @@ struct MatchListView: View {
         case "normal": return Color(hex: "#E83E8C")
         default: return SecretMatchTheme.secondary
         }
+    }
+
+    private func displayDate(_ value: String) -> String {
+        let input = DateFormatter()
+        input.locale = Locale(identifier: "en_US_POSIX")
+        input.dateFormat = "yyyy-MM-dd HH:mm:ss"
+        guard let date = input.date(from: value) else { return value }
+        let output = DateFormatter()
+        output.locale = Locale(identifier: "de_DE")
+        output.dateFormat = "dd.MM. · HH:mm"
+        return output.string(from: date)
     }
 }
