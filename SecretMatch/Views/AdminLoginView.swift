@@ -13,7 +13,9 @@ struct AdminLoginView: View {
         ZStack {
             BrandBackground()
 
-            VStack {
+            GeometryReader { proxy in
+                ScrollView {
+                    VStack {
                 HStack {
                     Spacer()
                     Button {
@@ -30,16 +32,16 @@ struct AdminLoginView: View {
                 }
                 .padding(28)
 
-                Spacer()
+                Spacer(minLength: 30)
 
-                VStack(spacing: 26) {
+                VStack(spacing: 34) {
                     Image("logo")
                         .resizable()
                         .scaledToFit()
                         .frame(width: 230, height: 150)
                         .shadow(color: SecretMatchTheme.primary.opacity(0.18), radius: 18)
 
-                    VStack(spacing: 8) {
+                    VStack(spacing: 12) {
                         Text("EVENT CONTROL")
                             .font(.caption.bold())
                             .tracking(2.4)
@@ -104,10 +106,13 @@ struct AdminLoginView: View {
                     .opacity(password.isEmpty ? 0.55 : 1)
                 }
                 .frame(maxWidth: 560)
-                .secretCard(cornerRadius: 30, padding: 42)
+                .secretCard(cornerRadius: 30, padding: 50)
                 .padding(.horizontal, 28)
 
-                Spacer()
+                Spacer(minLength: 34)
+                    }
+                    .frame(maxWidth: .infinity, minHeight: proxy.size.height)
+                }
             }
         }
     }

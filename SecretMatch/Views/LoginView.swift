@@ -13,10 +13,12 @@ struct LoginView: View {
         ZStack {
             BrandBackground()
 
-            VStack(spacing: 0) {
-                Spacer()
+            GeometryReader { proxy in
+                ScrollView {
+                    VStack {
+                        Spacer(minLength: 28)
 
-                VStack(spacing: 24) {
+                VStack(spacing: 34) {
                     Image("logo")
                         .resizable()
                         .scaledToFit()
@@ -27,7 +29,7 @@ struct LoginView: View {
                             showAdminLogin = true
                         }
 
-                    VStack(spacing: 7) {
+                    VStack(spacing: 12) {
                         Text("DEIN EVENT. DEIN MATCH.")
                             .font(.system(size: 12, weight: .bold, design: .rounded))
                             .tracking(2.2)
@@ -43,7 +45,7 @@ struct LoginView: View {
                             .multilineTextAlignment(.center)
                     }
 
-                    VStack(alignment: .leading, spacing: 9) {
+                    VStack(alignment: .leading, spacing: 14) {
                         Text(number.isEmpty ? "Deine Nummer eingeben" : number)
                             .foregroundStyle(number.isEmpty ? SecretMatchTheme.muted : SecretMatchTheme.text)
                             .font(.system(size: 36, weight: .bold, design: .rounded))
@@ -81,11 +83,14 @@ struct LoginView: View {
                     .opacity(number.isEmpty ? 0.55 : 1)
                 }
                 .frame(maxWidth: 680)
-                .secretCard(cornerRadius: 30, padding: 44)
+                .secretCard(cornerRadius: 30, padding: 50)
 
-                Spacer()
+                        Spacer(minLength: 28)
+                    }
+                    .frame(maxWidth: .infinity, minHeight: proxy.size.height)
+                    .padding(.horizontal, 28)
+                }
             }
-            .padding(28)
 
             if isLoading {
                 LoadingOverlay(message: "Wird angemeldet…")
