@@ -67,16 +67,26 @@ struct HowToUseView: View {
                     }
                     .zIndex(20)
 
-                CustomNumberKeyboard(
-                    text: $demoKeyboardNumber,
-                    onActivity: registerActivity,
-                    onClose: dismissDemoKeyboard
-                ) {
-                    finishDemoKeyboardEntry()
+                GeometryReader { proxy in
+                    let isCompact = proxy.size.width < proxy.size.height
+
+                    Group {
+                        if isCompact {
+                            VStack(spacing: 18) {
+                                keyboardExplanation
+                                demoPopupKeyboard
+                            }
+                        } else {
+                            HStack(spacing: 28) {
+                                keyboardExplanation
+                                    .frame(width: min(320, proxy.size.width * 0.26))
+                                demoPopupKeyboard
+                            }
+                        }
+                    }
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .padding(24)
                 }
-                .frame(maxWidth: 740)
-                .padding()
-                .shadow(radius: 20)
                 .transition(.scale(scale: 0.92).combined(with: .opacity))
                 .zIndex(30)
             }
@@ -223,6 +233,41 @@ struct HowToUseView: View {
 
     private var showsDemoKeyboard: Bool {
         (step == 2 || step == 3) && !isDemoKeyboardDismissed
+    }
+
+    private var keyboardExplanation: some View {
+        VStack(spacing: 14) {
+            Text(stepTitle)
+                .font(.system(size: 32, weight: .bold, design: .rounded))
+                .foregroundStyle(.white)
+                .multilineTextAlignment(.center)
+
+            Text(stepText)
+                .font(.system(size: 19, weight: .medium, design: .rounded))
+                .foregroundStyle(SecretMatchTheme.muted)
+                .multilineTextAlignment(.center)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .padding(24)
+        .frame(maxWidth: 440)
+        .background(SecretMatchTheme.surface.opacity(0.96))
+        .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 24, style: .continuous)
+                .stroke(SecretMatchTheme.border, lineWidth: 1)
+        )
+    }
+
+    private var demoPopupKeyboard: some View {
+        CustomNumberKeyboard(
+            text: $demoKeyboardNumber,
+            onActivity: registerActivity,
+            onClose: dismissDemoKeyboard
+        ) {
+            finishDemoKeyboardEntry()
+        }
+        .frame(maxWidth: 740)
+        .shadow(radius: 20)
     }
 
     private var demoSendButton: some View {
