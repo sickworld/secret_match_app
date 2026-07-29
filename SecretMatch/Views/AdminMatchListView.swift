@@ -51,23 +51,23 @@ struct AdminMatchListView: View {
 
     @ViewBuilder
     private func matchRow(_ match: AdminMatch) -> some View {
-        HStack(alignment: .top, spacing: 14) {
+        let color = matchColor(for: match.type)
 
-            Image(systemName: icon(for: match.type))
-                .font(.system(size: 22, weight: .bold))
-                .foregroundStyle(SecretMatchTheme.primary)
-                .frame(width: 44, height: 44)
-                .background(SecretMatchTheme.primary.opacity(0.12))
+        HStack(alignment: .top, spacing: 14) {
+            Text(matchEmoji(for: match.type))
+                .font(.system(size: 30))
+                .frame(width: 54, height: 54)
+                .background(color.opacity(0.2))
                 .clipShape(RoundedRectangle(cornerRadius: 12))
 
             VStack(alignment: .leading, spacing: 6) {
                 Text(prettyMatchType(match.type))
-                    .font(.headline)
+                    .font(.system(size: 19, weight: .bold, design: .rounded))
                     .foregroundStyle(.white)
 
                 Text("\(match.number_a) ↔ \(match.number_b)")
                     .foregroundStyle(SecretMatchTheme.muted)
-                    .font(.subheadline)
+                    .font(.system(size: 16, weight: .semibold, design: .rounded))
 
                 // Datum optional, bewusst weggelassen
                 // Text(match.created_at)
@@ -78,16 +78,16 @@ struct AdminMatchListView: View {
             Spacer()
         }
         .padding()
-        .background(SecretMatchTheme.surfaceRaised)
+        .background(color.opacity(0.14))
         .clipShape(RoundedRectangle(cornerRadius: 14))
-        .overlay(RoundedRectangle(cornerRadius: 14).stroke(SecretMatchTheme.border))
+        .overlay(RoundedRectangle(cornerRadius: 14).stroke(color.opacity(0.65), lineWidth: 1.2))
     }
 
     // MARK: - Mapping
 
     private func prettyMatchType(_ type: String) -> String {
         switch type {
-        case "hot":
+        case "hot", "F-":
             return "Fuck-Match"
         case "normal":
             return "Hot-Match"
@@ -96,14 +96,19 @@ struct AdminMatchListView: View {
         }
     }
 
-    private func icon(for type: String) -> String {
+    private func matchEmoji(for type: String) -> String {
         switch type {
-        case "hot":
-            return "flame.fill"
-        case "normal":
-            return "sparkles"
-        default:
-            return "circle.hexagongrid.fill"
+        case "hot", "F-": return "🍆"
+        case "normal": return "❤️"
+        default: return "✨"
+        }
+    }
+
+    private func matchColor(for type: String) -> Color {
+        switch type {
+        case "hot", "F-": return Color(hex: "#8E63D2")
+        case "normal": return Color(hex: "#E83E8C")
+        default: return SecretMatchTheme.secondary
         }
     }
 }

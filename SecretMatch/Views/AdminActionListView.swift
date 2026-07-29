@@ -51,51 +51,63 @@ struct AdminActionListView: View {
 
     @ViewBuilder
     private func actionRow(_ action: AdminAction) -> some View {
-        HStack(alignment: .top, spacing: 14) {
+        let color = actionColor(for: action.action_type)
 
-            // kleines Icon links
-            Image(systemName: icon(for: action.action_type))
-                .font(.system(size: 22, weight: .bold))
-                .foregroundStyle(SecretMatchTheme.primary)
-                .frame(width: 44, height: 44)
-                .background(SecretMatchTheme.primary.opacity(0.12))
+        HStack(alignment: .top, spacing: 14) {
+            Text(actionEmoji(for: action.action_type))
+                .font(.system(size: 30))
+                .frame(width: 54, height: 54)
+                .background(color.opacity(0.2))
                 .clipShape(RoundedRectangle(cornerRadius: 12))
 
             VStack(alignment: .leading, spacing: 6) {
                 Text(prettyAction(action.action_type))
-                    .font(.headline)
+                    .font(.system(size: 19, weight: .bold, design: .rounded))
                     .foregroundStyle(.white)
 
                 Text("Von \(action.sender_number) → \(action.receiver_number)")
                     .foregroundStyle(SecretMatchTheme.muted)
-                    .font(.subheadline)
+                    .font(.system(size: 16, weight: .semibold, design: .rounded))
             }
 
             Spacer()
         }
         .padding()
-        .background(SecretMatchTheme.surfaceRaised)
+        .background(color.opacity(0.14))
         .clipShape(RoundedRectangle(cornerRadius: 14))
-        .overlay(RoundedRectangle(cornerRadius: 14).stroke(SecretMatchTheme.border))
+        .overlay(RoundedRectangle(cornerRadius: 14).stroke(color.opacity(0.65), lineWidth: 1.2))
     }
 
-    // MARK: - Icon je Action
-
-    private func icon(for type: String) -> String {
+    private func actionEmoji(for type: String) -> String {
         switch type {
-        case "bjob": return "mouth.fill"
-        case "hjob": return "hand.raised.fill"
-        case "ljob": return "sparkles"
-        default:     return "paperplane.fill"
+        case "normal": return "❤️"
+        case "hot": return "🍆"
+        case "bjob": return "👄"
+        case "hjob": return "✋"
+        case "ljob": return "👅"
+        default: return "💌"
         }
     }
     
-    func prettyAction(_ type: String) -> String {
+    private func prettyAction(_ type: String) -> String {
         switch type {
-        case "bjob": return "Blowjob"
-        case "hjob": return "Handjob"
-        case "ljob": return "Lickjob"
-        default:     return type.capitalized
+        case "normal": return "Hot Match"
+        case "hot": return "Fuck Match"
+        case "bjob": return "Blow-Job"
+        case "hjob": return "Hand-Job"
+        case "ljob": return "Lick-Job"
+        default: return type.capitalized
+        }
+    }
+
+    private func actionColor(for type: String) -> Color {
+        switch type {
+        case "normal": return Color(hex: "#E83E8C")
+        case "hot": return Color(hex: "#8E63D2")
+        case "bjob": return Color(hex: "#3E9ED6")
+        case "hjob": return Color(hex: "#E6923E")
+        case "ljob": return Color(hex: "#D65C8D")
+        default: return SecretMatchTheme.primary
         }
     }
 }
