@@ -15,49 +15,25 @@ struct CustomNumberKeyboard: View {
     ]
 
     var body: some View {
-        VStack(spacing: 20) {
-            HStack {
-                VStack(alignment: .leading, spacing: 3) {
-                    Text("NUMMER EINGEBEN")
-                        .font(.caption.bold())
-                        .tracking(1.8)
-                        .foregroundStyle(SecretMatchTheme.secondary)
-                    Text("Event-Tastatur")
-                        .font(.system(size: 22, weight: .bold, design: .rounded))
-                        .foregroundStyle(.white)
-                }
-                Spacer()
-                Button {
-                    onActivity()
-                    onClose()
-                } label: {
-                    Image(systemName: "xmark")
-                        .font(.headline.bold())
-                        .foregroundStyle(.white)
-                        .frame(width: 46, height: 46)
-                        .background(SecretMatchTheme.surfaceRaised)
-                        .clipShape(Circle())
-                }
-                .accessibilityLabel("Tastatur schließen")
-            }
-
+        VStack(spacing: 24) {
             Text(text.isEmpty ? "Nummer…" : text)
-                .font(.system(size: 34, weight: .bold, design: .rounded))
+                .font(.system(size: 44, weight: .bold, design: .rounded))
                 .foregroundStyle(.white)
                 .frame(maxWidth: .infinity)
+                .padding(.trailing, 44)
 
-            VStack(spacing: 12) {
+            VStack(spacing: 14) {
                 ForEach(keys, id: \.self) { row in
-                    HStack(spacing: 12) {
+                    HStack(spacing: 14) {
                         ForEach(row, id: \.self) { key in
                             Button(action: {
                                 handleTap(key)
                             }) {
                                 Text(key)
-                                    .frame(maxWidth: .infinity, minHeight: 78)
+                                    .frame(maxWidth: .infinity, minHeight: 94)
                                     .background(key == "✓" ? SecretMatchTheme.primary : SecretMatchTheme.surfaceRaised)
                                     .foregroundStyle(.white)
-                                    .font(.system(size: 34, weight: .bold, design: .rounded))
+                                    .font(.system(size: 40, weight: .bold, design: .rounded))
                                     .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
                                     .overlay(
                                         RoundedRectangle(cornerRadius: 16)
@@ -69,17 +45,28 @@ struct CustomNumberKeyboard: View {
                     }
                 }
             }
-
-            Text("✓  \(doneLabel)")
-                .font(.system(size: 16, weight: .bold, design: .rounded))
-                .foregroundStyle(SecretMatchTheme.muted)
         }
-        .frame(maxWidth: 480)
-        .secretCard(cornerRadius: 28, padding: 28)
+        .frame(maxWidth: 570)
+        .secretCard(cornerRadius: 30, padding: 32)
         .overlay(
             RoundedRectangle(cornerRadius: 28)
                 .stroke(Color.white.opacity(0.12), lineWidth: 1)
         )
+        .overlay(alignment: .topTrailing) {
+            Button {
+                onActivity()
+                onClose()
+            } label: {
+                Image(systemName: "xmark")
+                    .font(.headline.bold())
+                    .foregroundStyle(.white)
+                    .frame(width: 48, height: 48)
+                    .background(SecretMatchTheme.surfaceRaised)
+                    .clipShape(Circle())
+            }
+            .accessibilityLabel("Tastatur schließen")
+            .padding(20)
+        }
         .padding(.horizontal, 20)
     }
 
