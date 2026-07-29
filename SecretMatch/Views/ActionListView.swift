@@ -38,9 +38,9 @@ struct ActionListView: View {
                             ForEach(groupedActions.keys.sorted(), id: \.self) { key in
                                 VStack(alignment: .leading, spacing: 8) {
                                     Text(key)
-                                        .font(.headline)
-                                        .foregroundStyle(SecretMatchTheme.muted)
-                                        .padding(.leading)
+                                        .font(.title3.bold())
+                                        .foregroundStyle(.white)
+                                        .padding(.leading, 4)
 
                                     ForEach(groupedActions[key] ?? [], id: \.id) { action in
                                         actionRow(action)
@@ -48,7 +48,7 @@ struct ActionListView: View {
                                 }
                             }
                         }
-                        .padding(.horizontal)
+                        .padding(.horizontal, 4)
                     }
                 }
 
@@ -59,8 +59,9 @@ struct ActionListView: View {
                 .buttonStyle(SecretPrimaryButtonStyle())
                 .padding(.top, 20)
             }
-            .frame(maxWidth: 400)
-            .secretCard(cornerRadius: 24, padding: 28)
+            .frame(maxWidth: 720, maxHeight: 680)
+            .secretCard(cornerRadius: 24, padding: 32)
+            .padding(28)
         }
         .task(id: isPresented) {
             guard isPresented else { return }
@@ -79,33 +80,81 @@ struct ActionListView: View {
 
     @ViewBuilder
     private func actionRow(_ action: SecretAction) -> some View {
-        VStack(alignment: .leading, spacing: 6) {
-            HStack {
+        let color = actionColor(for: action.action_type)
+
+        HStack(spacing: 18) {
+            actionIcon(for: action.action_type)
+                .font(.system(size: 27, weight: .bold))
+                .frame(width: 54, height: 54)
+                .background(color.opacity(0.2))
+                .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+
+            VStack(alignment: .leading, spacing: 5) {
                 Text(actionLabel(for: action.action_type))
                     .foregroundStyle(.white)
-                    .fontWeight(.medium)
+                    .font(.system(size: 20, weight: .bold, design: .rounded))
 
-                Spacer()
-
-                Text(partner(for: action))
+                Text(action.sender_number == api.number ? "Gesendet an" : "Erhalten von")
+                    .font(.caption.weight(.semibold))
                     .foregroundStyle(SecretMatchTheme.muted)
-                    .font(.caption)
             }
+
+            Spacer()
+
+            Text("#\(partner(for: action))")
+                .foregroundStyle(.white)
+                .font(.system(size: 19, weight: .bold, design: .monospaced))
+                .padding(.horizontal, 14)
+                .padding(.vertical, 10)
+                .background(Color.black.opacity(0.24))
+                .clipShape(Capsule())
         }
-        .padding()
-        .background(SecretMatchTheme.surfaceRaised)
-        .clipShape(RoundedRectangle(cornerRadius: 14))
-        .overlay(RoundedRectangle(cornerRadius: 14).stroke(SecretMatchTheme.border))
+        .padding(18)
+        .background(color.opacity(0.14))
+        .clipShape(RoundedRectangle(cornerRadius: 18))
+        .overlay(RoundedRectangle(cornerRadius: 18).stroke(color.opacity(0.65), lineWidth: 1.2))
     }
 
     // MARK: - Helpers
 
     private func actionLabel(for type: String) -> String {
         switch type {
+        case "normal": return "Hot Match"
+        case "hot": return "Fuck Match"
         case "bjob": return "Blow-Job"
         case "hjob": return "Hand-Job"
         case "ljob": return "Lick-Job"
         default: return type.capitalized
+        }
+    }
+
+    @ViewBuilder
+    private func actionIcon(for type: String) -> some View {
+        if type == "hot" {
+            Text("🍆")
+        } else {
+            Image(systemName: actionSymbol(for: type))
+        }
+    }
+
+    private func actionSymbol(for type: String) -> String {
+        switch type {
+        case "normal": return "heart.fill"
+        case "bjob": return "wind"
+        case "hjob": return "hand.raised.fill"
+        case "ljob": return "mouth.fill"
+        default: return "paperplane.fill"
+        }
+    }
+
+    private func actionColor(for type: String) -> Color {
+        switch type {
+        case "normal": return Color(hex: "#E83E8C")
+        case "hot": return Color(hex: "#8E63D2")
+        case "bjob": return Color(hex: "#3E9ED6")
+        case "hjob": return Color(hex: "#E6923E")
+        case "ljob": return Color(hex: "#D65C8D")
+        default: return SecretMatchTheme.primary
         }
     }
 

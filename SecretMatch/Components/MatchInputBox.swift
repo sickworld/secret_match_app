@@ -3,7 +3,9 @@ import SwiftUI
 private struct ActionOption: Identifiable {
     let type: String
     let title: String
-    let icon: String
+    let symbol: String
+    let usesEmoji: Bool
+    let color: Color
 
     var id: String { type }
 }
@@ -16,11 +18,11 @@ struct MatchInputBox: View {
     let onSend: () -> Void
 
     private let options = [
-        ActionOption(type: "normal", title: "Hot Match", icon: "flame.fill"),
-        ActionOption(type: "hot", title: "Fuck Match", icon: "heart.fill"),
-        ActionOption(type: "bjob", title: "Blow-Job", icon: "wind"),
-        ActionOption(type: "hjob", title: "Hand-Job", icon: "hand.raised.fill"),
-        ActionOption(type: "ljob", title: "Lick-Job", icon: "mouth.fill")
+        ActionOption(type: "normal", title: "Hot Match", symbol: "heart.fill", usesEmoji: false, color: Color(hex: "#E83E8C")),
+        ActionOption(type: "hot", title: "Fuck Match", symbol: "🍆", usesEmoji: true, color: Color(hex: "#8E63D2")),
+        ActionOption(type: "bjob", title: "Blow-Job", symbol: "wind", usesEmoji: false, color: Color(hex: "#3E9ED6")),
+        ActionOption(type: "hjob", title: "Hand-Job", symbol: "hand.raised.fill", usesEmoji: false, color: Color(hex: "#E6923E")),
+        ActionOption(type: "ljob", title: "Lick-Job", symbol: "mouth.fill", usesEmoji: false, color: Color(hex: "#D65C8D"))
     ]
 
     var body: some View {
@@ -103,27 +105,39 @@ struct MatchInputBox: View {
                 selectedActions.insert(option.type)
             }
         } label: {
-            HStack(spacing: 10) {
-                Image(systemName: option.icon)
+            HStack(spacing: 14) {
+                Group {
+                    if option.usesEmoji {
+                        Text(option.symbol)
+                    } else {
+                        Image(systemName: option.symbol)
+                    }
+                }
+                .font(.system(size: 24, weight: .bold))
+                .frame(width: 34)
+
                 Text(option.title)
-                    .fontWeight(.semibold)
+                    .font(.system(size: 17, weight: .bold, design: .rounded))
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.8)
                 Spacer()
                 Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
+                    .font(.system(size: 19, weight: .semibold))
             }
             .foregroundColor(.white)
-            .padding(.horizontal, 14)
-            .frame(maxWidth: .infinity, minHeight: 54)
+            .padding(.horizontal, 16)
+            .frame(maxWidth: .infinity, minHeight: 66)
             .background(
                 isSelected
-                    ? SecretMatchTheme.primary.opacity(0.92)
-                    : SecretMatchTheme.surfaceRaised
+                    ? option.color.opacity(0.9)
+                    : option.color.opacity(0.16)
             )
             .overlay(
                 RoundedRectangle(cornerRadius: 15)
-                    .stroke(isSelected ? SecretMatchTheme.primaryHover : SecretMatchTheme.border, lineWidth: 1.2)
+                    .stroke(option.color.opacity(isSelected ? 1 : 0.55), lineWidth: isSelected ? 2 : 1.2)
             )
             .cornerRadius(15)
-            .shadow(color: isSelected ? SecretMatchTheme.primary.opacity(0.24) : .clear, radius: 12)
+            .shadow(color: isSelected ? option.color.opacity(0.28) : .clear, radius: 12)
         }
         .buttonStyle(.plain)
         .scaleEffect(isSelected ? 1.015 : 1)

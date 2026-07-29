@@ -3,7 +3,8 @@ import SwiftUI
 private struct DemoActionOption: Identifiable {
     let type: String
     let title: String
-    let icon: String
+    let symbol: String
+    let usesEmoji: Bool
 
     var id: String { type }
 }
@@ -18,27 +19,41 @@ struct HowToUseView: View {
 
     private let maxStep = 5
     private let options = [
-        DemoActionOption(type: "normal", title: "Hot Match", icon: "flame.fill"),
-        DemoActionOption(type: "hot", title: "Fuck Match", icon: "heart.fill"),
-        DemoActionOption(type: "bjob", title: "Blow-Job", icon: "wind"),
-        DemoActionOption(type: "hjob", title: "Hand-Job", icon: "hand.raised.fill"),
-        DemoActionOption(type: "ljob", title: "Lick-Job", icon: "mouth.fill")
+        DemoActionOption(type: "normal", title: "Hot Match", symbol: "heart.fill", usesEmoji: false),
+        DemoActionOption(type: "hot", title: "Fuck Match", symbol: "🍆", usesEmoji: true),
+        DemoActionOption(type: "bjob", title: "Blow-Job", symbol: "wind", usesEmoji: false),
+        DemoActionOption(type: "hjob", title: "Hand-Job", symbol: "hand.raised.fill", usesEmoji: false),
+        DemoActionOption(type: "ljob", title: "Lick-Job", symbol: "mouth.fill", usesEmoji: false)
     ]
 
     var body: some View {
         GeometryReader { proxy in
             let isCompact = proxy.size.width < proxy.size.height
 
-            ScrollView {
-                VStack(spacing: isCompact ? 18 : 22) {
-                    header
-                    demoPlayer(isCompact: isCompact)
-                    controls
+            if isCompact {
+                ScrollView {
+                    VStack(spacing: 18) {
+                        header
+                        demoPlayer(isCompact: true)
+                        controls
+                    }
+                    .padding(18)
+                    .frame(maxWidth: .infinity)
                 }
-                .padding(isCompact ? 18 : 30)
-                .frame(maxWidth: .infinity)
+            } else {
+                HStack(spacing: 24) {
+                    header
+                        .frame(width: min(280, proxy.size.width * 0.27))
+
+                    VStack(spacing: 12) {
+                        demoPlayer(isCompact: false)
+                        controls
+                    }
+                    .frame(maxWidth: 720)
+                }
+                .padding(20)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
         .onAppear {
             startPlayback()
@@ -84,15 +99,15 @@ struct HowToUseView: View {
     }
 
     private func demoPlayer(isCompact: Bool) -> some View {
-        VStack(spacing: 18) {
+        VStack(spacing: isCompact ? 18 : 10) {
             progressBar
 
-            VStack(spacing: 20) {
-                demoActionGrid
+            VStack(spacing: isCompact ? 20 : 10) {
+                demoActionGrid(isCompact: isCompact)
                 demoNumberInput
 
                 if step >= 2 && step <= 3 {
-                    demoKeyboard
+                    demoKeyboard(isCompact: isCompact)
                         .transition(.move(edge: .bottom).combined(with: .opacity))
                 }
 
@@ -104,9 +119,9 @@ struct HowToUseView: View {
                 }
             }
             .frame(maxWidth: 650)
-            .secretCard(cornerRadius: 24, padding: isCompact ? 20 : 28)
+            .secretCard(cornerRadius: 24, padding: isCompact ? 20 : 16)
         }
-        .padding(.horizontal, 24)
+        .padding(.horizontal, isCompact ? 24 : 0)
         .animation(.easeOut(duration: 0.26), value: step)
     }
 
@@ -128,24 +143,30 @@ struct HowToUseView: View {
         .padding(.bottom, 16)
     }
 
-    private var demoActionGrid: some View {
+    private func demoActionGrid(isCompact: Bool) -> some View {
         VStack(spacing: 10) {
             demoSectionTitle("Aktion auswählen", icon: "hand.tap.fill")
 
-            LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 12) {
+            LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: isCompact ? 12 : 7) {
                 ForEach(options) { option in
-                    demoActionCard(option)
+                    demoActionCard(option, isCompact: isCompact)
                 }
             }
         }
         .highlighted(step == 1)
     }
 
-    private func demoActionCard(_ option: DemoActionOption) -> some View {
+    private func demoActionCard(_ option: DemoActionOption, isCompact: Bool) -> some View {
         let isSelected = step >= 1 && option.type == "hot"
 
         return HStack(spacing: 10) {
-            Image(systemName: option.icon)
+            Group {
+                if option.usesEmoji {
+                    Text(option.symbol)
+                } else {
+                    Image(systemName: option.symbol)
+                }
+            }
             Text(option.title)
                 .fontWeight(.semibold)
                 .lineLimit(1)
@@ -155,7 +176,7 @@ struct HowToUseView: View {
         }
         .foregroundStyle(.white)
         .padding(.horizontal, 14)
-        .frame(maxWidth: .infinity, minHeight: 54)
+        .frame(maxWidth: .infinity, minHeight: isCompact ? 54 : 42)
         .background(isSelected ? SecretMatchTheme.primary.opacity(0.92) : SecretMatchTheme.surfaceRaised)
         .clipShape(RoundedRectangle(cornerRadius: 15, style: .continuous))
         .overlay(
@@ -186,15 +207,15 @@ struct HowToUseView: View {
         }
     }
 
-    private var demoKeyboard: some View {
-        VStack(spacing: 12) {
+    private func demoKeyboard(isCompact: Bool) -> some View {
+        VStack(spacing: isCompact ? 12 : 5) {
             ForEach([["1", "2", "3"], ["4", "5", "6"], ["7", "8", "9"], ["←", "0", "✓"]], id: \.self) { row in
-                HStack(spacing: 10) {
+                HStack(spacing: isCompact ? 10 : 6) {
                     ForEach(row, id: \.self) { key in
                         Text(key)
                             .font(.system(size: 22, weight: .bold, design: .rounded))
                             .foregroundStyle(.white)
-                            .frame(maxWidth: .infinity, minHeight: 48)
+                            .frame(maxWidth: .infinity, minHeight: isCompact ? 48 : 32)
                             .background(key == "✓" ? SecretMatchTheme.primary : SecretMatchTheme.surfaceRaised)
                             .clipShape(RoundedRectangle(cornerRadius: 13, style: .continuous))
                             .overlay(
@@ -205,7 +226,7 @@ struct HowToUseView: View {
                 }
             }
         }
-        .padding(14)
+        .padding(isCompact ? 14 : 8)
         .background(Color.black.opacity(0.24))
         .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
     }
@@ -342,7 +363,7 @@ struct HowToUseView: View {
         playbackTask = Task { @MainActor in
             while !Task.isCancelled && isPlaying {
                 do {
-                    try await Task.sleep(for: .milliseconds(1450))
+                    try await Task.sleep(for: .milliseconds(2400))
                 } catch {
                     return
                 }
