@@ -37,6 +37,7 @@ struct HowToUseView: View {
                     ScrollView {
                         VStack(spacing: 18) {
                             header
+                                .opacity(showsDemoKeyboard ? 0 : 1)
                             demoPlayer(isCompact: true)
                             controls
                         }
@@ -46,6 +47,7 @@ struct HowToUseView: View {
                 } else {
                     HStack(spacing: 24) {
                         header
+                            .opacity(showsDemoKeyboard ? 0 : 1)
                             .frame(width: min(280, proxy.size.width * 0.27))
 
                         VStack(spacing: 12) {
