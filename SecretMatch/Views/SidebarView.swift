@@ -12,7 +12,7 @@ struct SidebarView: View {
     var isCompact = false
 
     var body: some View {
-        VStack(alignment: .leading, spacing: isCompact ? 12 : 18) {
+        VStack(alignment: .leading, spacing: isCompact ? 14 : 20) {
             Image("logo")
                 .resizable()
                 .scaledToFit()
@@ -126,7 +126,7 @@ struct SidebarView: View {
             .frame(maxWidth: isCompact ? .infinity : nil)
         }
         .padding(isCompact ? 16 : 22)
-        .frame(width: isCompact ? nil : 290)
+        .frame(width: isCompact ? nil : 304)
         .frame(maxWidth: isCompact ? .infinity : nil)
         .background(SecretMatchTheme.surface.opacity(0.97))
         .overlay(alignment: isCompact ? .bottom : .trailing) {
