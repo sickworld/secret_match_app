@@ -90,7 +90,7 @@ struct RulesSlideshowView: View {
             .clipShape(Capsule())
 
             Text("So funktioniert das Event")
-                .font(.system(size: 28, weight: .bold, design: .rounded))
+                .font(.system(size: 32, weight: .bold, design: .rounded))
                 .foregroundStyle(.white)
                 .multilineTextAlignment(.center)
         }
@@ -104,10 +104,10 @@ struct RulesSlideshowView: View {
             ZStack {
                 Circle()
                     .fill(SecretMatchTheme.primary.opacity(0.14))
-                    .frame(width: 104, height: 104)
+                    .frame(width: 112, height: 112)
 
                 Image(systemName: selectedSlide.icon)
-                    .font(.system(size: 44, weight: .bold))
+                    .font(.system(size: 48, weight: .bold))
                     .foregroundStyle(SecretMatchTheme.secondary)
             }
             .padding(.top, 4)
@@ -125,7 +125,7 @@ struct RulesSlideshowView: View {
                     .minimumScaleFactor(0.82)
 
                 Text(selectedSlide.text)
-                    .font(.system(size: 16, weight: .medium, design: .rounded))
+                    .font(.system(size: 18, weight: .medium, design: .rounded))
                     .foregroundStyle(SecretMatchTheme.muted)
                     .multilineTextAlignment(.center)
                     .lineSpacing(3)
@@ -138,7 +138,7 @@ struct RulesSlideshowView: View {
                         Image(systemName: "checkmark.circle.fill")
                             .foregroundStyle(SecretMatchTheme.primary)
                         Text(highlight)
-                            .font(.subheadline.weight(.semibold))
+                            .font(.system(size: 16, weight: .semibold, design: .rounded))
                             .foregroundStyle(.white)
                         Spacer()
                     }
@@ -222,8 +222,8 @@ struct RulesSlideshowView: View {
 private struct RuleIconButtonStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
-            .font(.system(size: 16, weight: .bold, design: .rounded))
-            .frame(width: 48, height: 50)
+            .font(.system(size: 18, weight: .bold, design: .rounded))
+            .frame(width: 54, height: 56)
             .foregroundStyle(.white)
             .background(configuration.isPressed ? SecretMatchTheme.primary.opacity(0.8) : SecretMatchTheme.surfaceRaised)
             .clipShape(RoundedRectangle(cornerRadius: 15, style: .continuous))

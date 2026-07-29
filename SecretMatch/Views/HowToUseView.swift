@@ -80,13 +80,13 @@ struct HowToUseView: View {
             .clipShape(Capsule())
 
             Text(stepTitle)
-                .font(.system(size: 28, weight: .bold, design: .rounded))
+                .font(.system(size: 32, weight: .bold, design: .rounded))
                 .foregroundStyle(.white)
                 .multilineTextAlignment(.center)
                 .contentTransition(.opacity)
 
             Text(stepText)
-                .font(.subheadline)
+                .font(.system(size: 17, weight: .medium, design: .rounded))
                 .foregroundStyle(SecretMatchTheme.muted)
                 .multilineTextAlignment(.center)
                 .frame(maxWidth: 540)
@@ -320,7 +320,7 @@ struct HowToUseView: View {
             Text(title)
             Spacer()
         }
-        .font(.caption2.bold())
+        .font(.system(size: 13, weight: .bold, design: .rounded))
         .tracking(1.2)
         .foregroundStyle(SecretMatchTheme.muted)
     }
@@ -408,8 +408,8 @@ struct HowToUseView: View {
 private struct SecretIconButtonStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
-            .font(.system(size: 16, weight: .bold, design: .rounded))
-            .frame(width: 48, height: 50)
+            .font(.system(size: 18, weight: .bold, design: .rounded))
+            .frame(width: 54, height: 56)
             .foregroundStyle(.white)
             .background(configuration.isPressed ? SecretMatchTheme.primary.opacity(0.8) : SecretMatchTheme.surfaceRaised)
             .clipShape(RoundedRectangle(cornerRadius: 15, style: .continuous))
