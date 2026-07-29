@@ -4,6 +4,7 @@ private struct DemoActionOption: Identifiable {
     let type: String
     let title: String
     let emoji: String
+    let color: Color
 
     var id: String { type }
 }
@@ -18,11 +19,11 @@ struct HowToUseView: View {
 
     private let maxStep = 5
     private let options = [
-        DemoActionOption(type: "normal", title: "Hot Match", emoji: "❤️"),
-        DemoActionOption(type: "hot", title: "Fuck Match", emoji: "🍆"),
-        DemoActionOption(type: "bjob", title: "Blow-Job", emoji: "👄"),
-        DemoActionOption(type: "hjob", title: "Hand-Job", emoji: "✋"),
-        DemoActionOption(type: "ljob", title: "Lick-Job", emoji: "👅")
+        DemoActionOption(type: "normal", title: "Hot Match", emoji: "❤️", color: Color(hex: "#E83E8C")),
+        DemoActionOption(type: "hot", title: "Fuck Match", emoji: "🍆", color: Color(hex: "#8E63D2")),
+        DemoActionOption(type: "bjob", title: "Blow-Job", emoji: "👄", color: Color(hex: "#3E9ED6")),
+        DemoActionOption(type: "hjob", title: "Hand-Job", emoji: "✋", color: Color(hex: "#E6923E")),
+        DemoActionOption(type: "ljob", title: "Lick-Job", emoji: "👅", color: Color(hex: "#D65C8D"))
     ]
 
     var body: some View {
@@ -171,13 +172,13 @@ struct HowToUseView: View {
         .foregroundStyle(.white)
         .padding(.horizontal, 14)
         .frame(maxWidth: .infinity, minHeight: isCompact ? 54 : 42)
-        .background(isSelected ? SecretMatchTheme.primary.opacity(0.92) : SecretMatchTheme.surfaceRaised)
+        .background(isSelected ? option.color.opacity(0.92) : option.color.opacity(0.16))
         .clipShape(RoundedRectangle(cornerRadius: 15, style: .continuous))
         .overlay(
             RoundedRectangle(cornerRadius: 15, style: .continuous)
-                .stroke(isSelected ? SecretMatchTheme.primaryHover : SecretMatchTheme.border, lineWidth: 1.2)
+                .stroke(option.color.opacity(isSelected ? 1 : 0.58), lineWidth: isSelected ? 2 : 1.2)
         )
-        .shadow(color: isSelected ? SecretMatchTheme.primary.opacity(0.25) : .clear, radius: 12)
+        .shadow(color: isSelected ? option.color.opacity(0.3) : .clear, radius: 12)
         .scaleEffect(isSelected ? 1.015 : 1)
     }
 

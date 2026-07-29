@@ -72,11 +72,22 @@ struct MatchView: View {
             if showKeyboard {
                 Color.black.opacity(0.6)
                     .ignoresSafeArea()
+                    .onTapGesture {
+                        showKeyboard = false
+                        resetInactivityTimer()
+                    }
                     .zIndex(20)
                 VStack {
                     Spacer()
 
-                    CustomNumberKeyboard(text: $targetNumber, onActivity: resetInactivityTimer) {
+                    CustomNumberKeyboard(
+                        text: $targetNumber,
+                        onActivity: resetInactivityTimer,
+                        onClose: {
+                            showKeyboard = false
+                            resetInactivityTimer()
+                        }
+                    ) {
                         showKeyboard = false
                         resetInactivityTimer()
                     }
@@ -87,7 +98,7 @@ struct MatchView: View {
 
                     Spacer()
                 }
-                .transition(.move(edge: .bottom))
+                .transition(.scale(scale: 0.92).combined(with: .opacity))
                 .zIndex(30)
             }
 

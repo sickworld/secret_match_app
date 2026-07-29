@@ -4,6 +4,7 @@ struct CustomNumberKeyboard: View {
     @Binding var text: String
     var doneLabel = "Fertig"
     var onActivity: () -> Void = {}
+    var onClose: () -> Void = {}
     var onDone: () -> Void
 
     let keys: [[String]] = [
@@ -15,10 +16,30 @@ struct CustomNumberKeyboard: View {
 
     var body: some View {
         VStack(spacing: 20) {
-            Text("EVENT-NUMMER")
-                .font(.caption2.bold())
-                .tracking(1.8)
-                .foregroundStyle(SecretMatchTheme.secondary)
+            HStack {
+                VStack(alignment: .leading, spacing: 3) {
+                    Text("NUMMER EINGEBEN")
+                        .font(.caption.bold())
+                        .tracking(1.8)
+                        .foregroundStyle(SecretMatchTheme.secondary)
+                    Text("Event-Tastatur")
+                        .font(.system(size: 22, weight: .bold, design: .rounded))
+                        .foregroundStyle(.white)
+                }
+                Spacer()
+                Button {
+                    onActivity()
+                    onClose()
+                } label: {
+                    Image(systemName: "xmark")
+                        .font(.headline.bold())
+                        .foregroundStyle(.white)
+                        .frame(width: 46, height: 46)
+                        .background(SecretMatchTheme.surfaceRaised)
+                        .clipShape(Circle())
+                }
+                .accessibilityLabel("Tastatur schließen")
+            }
 
             Text(text.isEmpty ? "Nummer…" : text)
                 .font(.system(size: 34, weight: .bold, design: .rounded))
@@ -54,7 +75,11 @@ struct CustomNumberKeyboard: View {
                 .foregroundStyle(SecretMatchTheme.muted)
         }
         .frame(maxWidth: 480)
-        .secretCard(cornerRadius: 22, padding: 24)
+        .secretCard(cornerRadius: 28, padding: 28)
+        .overlay(
+            RoundedRectangle(cornerRadius: 28)
+                .stroke(Color.white.opacity(0.12), lineWidth: 1)
+        )
         .padding(.horizontal, 20)
     }
 

@@ -110,7 +110,11 @@ struct LoginView: View {
                 VStack {
                     Spacer()
                     VStack(spacing: 10) {
-                        CustomNumberKeyboard(text: $number, doneLabel: "Einloggen") {
+                        CustomNumberKeyboard(
+                            text: $number,
+                            doneLabel: "Einloggen",
+                            onClose: { withAnimation { showKeyboard = false } }
+                        ) {
                             submitLogin()
                         }
                         .frame(maxWidth: 520)
@@ -121,7 +125,7 @@ struct LoginView: View {
                     Spacer()
                 }
                 .zIndex(30)
-                .transition(.move(edge: .bottom))
+                .transition(.scale(scale: 0.92).combined(with: .opacity))
             }
         }
         .animation(.easeInOut(duration: 0.24), value: showKeyboard)
