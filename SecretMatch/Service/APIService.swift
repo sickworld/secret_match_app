@@ -14,6 +14,7 @@ class APIService: ObservableObject {
     @Published var isAdmin: Bool = false
     @Published var adminActions: [AdminAction] = []
     @Published var adminMatches: [AdminMatch] = []
+    private var adminToken: String?
     private let baseURL = URL(string: "https://secret-match.de/wp-json/secretmatch/v1")!
 
     func login(number: String) async throws {
@@ -22,7 +23,7 @@ class APIService: ObservableObject {
         let url = baseURL.appendingPathComponent("login")
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
-        request.httpBody = "secretmatch_number=\(normalizedNumber)".data(using: .utf8)
+        request.httpBody = formBody(["secretmatch_number": normalizedNumber])
         request.setValue("application/x-www-form-urlencoded", forHTTPHeaderField: "Content-Type")
 
         let (_, response) = try await URLSession.shared.data(for: request)
@@ -39,8 +40,10 @@ class APIService: ObservableObject {
         let url = baseURL.appendingPathComponent("match")
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
-        let body = "target_number=\(normalizedTargetNumber)&match_type=\(type)"
-        request.httpBody = body.data(using: .utf8)
+        request.httpBody = formBody([
+            "target_number": normalizedTargetNumber,
+            "match_type": type
+        ])
         request.setValue("application/x-www-form-urlencoded", forHTTPHeaderField: "Content-Type")
 
         let (data, response) = try await URLSession.shared.data(for: request)
@@ -114,13 +117,15 @@ class APIService: ObservableObject {
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
         request.setValue("application/x-www-form-urlencoded", forHTTPHeaderField: "Content-Type")
-        request.httpBody = "password=\(password)".data(using: .utf8)
+        request.httpBody = formBody(["password": password])
 
         do {
-            let (_, response) = try await URLSession.shared.data(for: request)
+            let (data, response) = try await URLSession.shared.data(for: request)
             let success = (response as? HTTPURLResponse)?.statusCode == 200
 
             if success {
+                let login = try JSONDecoder().decode(AdminLoginResponse.self, from: data)
+                adminToken = login.token
                 isAdmin = true
                 isLoggedIn = false
                 number = ""
@@ -139,8 +144,9 @@ class APIService: ObservableObject {
         let url = baseURL.appendingPathComponent("admin/actions")
 
         do {
-            let (data, response) = try await URLSession.shared.data(from: url)
-            guard (response as? HTTPURLResponse)?.statusCode == 200 else {
+            let (data, response) = try await URLSession.shared.data(for: adminRequest(url: url))
+            guard let http = response as? HTTPURLResponse, http.statusCode == 200 else {
+                handleExpiredAdminToken(response)
                 print("❌ AdminActions HTTP Fehler")
                 return
             }
@@ -157,8 +163,9 @@ class APIService: ObservableObject {
         let url = baseURL.appendingPathComponent("admin/matches")
 
         do {
-            let (data, response) = try await URLSession.shared.data(from: url)
-            guard (response as? HTTPURLResponse)?.statusCode == 200 else {
+            let (data, response) = try await URLSession.shared.data(for: adminRequest(url: url))
+            guard let http = response as? HTTPURLResponse, http.statusCode == 200 else {
+                handleExpiredAdminToken(response)
                 print("❌ AdminMatches HTTP Fehler")
                 return
             }
@@ -172,11 +179,12 @@ class APIService: ObservableObject {
 
     func createBillboardAccessURL() async throws -> URL {
         let url = baseURL.appendingPathComponent("admin/billboard-access")
-        var request = URLRequest(url: url)
+        var request = try adminRequest(url: url)
         request.httpMethod = "POST"
 
         let (data, response) = try await URLSession.shared.data(for: request)
         guard let http = response as? HTTPURLResponse, http.statusCode == 200 else {
+            handleExpiredAdminToken(response)
             throw URLError(.userAuthenticationRequired)
         }
 
@@ -188,12 +196,54 @@ class APIService: ObservableObject {
     }
 
     func logout() {
+        if let adminToken {
+            var request = URLRequest(url: baseURL.appendingPathComponent("admin/logout"))
+            request.httpMethod = "POST"
+            request.setValue("Bearer \(adminToken)", forHTTPHeaderField: "Authorization")
+            Task {
+                _ = try? await URLSession.shared.data(for: request)
+            }
+        }
+
+        adminToken = nil
         self.isLoggedIn = false
         self.number = ""
         self.matches = []
         self.actions = []
         self.isAdmin = false
     }
+
+    private func adminRequest(url: URL) throws -> URLRequest {
+        guard let adminToken else {
+            throw URLError(.userAuthenticationRequired)
+        }
+
+        var request = URLRequest(url: url)
+        request.setValue("Bearer \(adminToken)", forHTTPHeaderField: "Authorization")
+        return request
+    }
+
+    private func formBody(_ values: [String: String]) -> Data? {
+        var components = URLComponents()
+        components.queryItems = values.map {
+            URLQueryItem(name: $0.key, value: $0.value)
+        }
+        return components.percentEncodedQuery?.data(using: .utf8)
+    }
+
+    private func handleExpiredAdminToken(_ response: URLResponse) {
+        guard let statusCode = (response as? HTTPURLResponse)?.statusCode,
+              statusCode == 401 || statusCode == 403 else {
+            return
+        }
+
+        adminToken = nil
+        isAdmin = false
+    }
+}
+
+private struct AdminLoginResponse: Decodable {
+    let token: String
 }
 
 private struct BillboardAccessResponse: Decodable {
