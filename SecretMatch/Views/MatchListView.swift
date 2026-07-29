@@ -21,7 +21,7 @@ struct MatchListView: View {
                     .foregroundStyle(SecretMatchTheme.secondary)
 
                 Text("Deine Matches")
-                    .font(.system(size: 26, weight: .bold, design: .rounded))
+                    .font(.system(size: 32, weight: .bold, design: .rounded))
                     .foregroundStyle(.white)
 
                 if matches.isEmpty {
@@ -33,28 +33,52 @@ struct MatchListView: View {
                         VStack(spacing: 24) {
                             ForEach(groupedMatches.keys.sorted(), id: \.self) { type in
                                 VStack(alignment: .leading, spacing: 8) {
-                                    Text(typeTitle(for: type))
-                                        .font(.headline)
-                                        .foregroundStyle(SecretMatchTheme.muted)
-                                        .padding(.leading)
+                                    HStack(spacing: 10) {
+                                        Text(typeEmoji(for: type))
+                                            .font(.title2)
+                                        Text(typeTitle(for: type))
+                                            .font(.title3.bold())
+                                            .foregroundStyle(.white)
+                                    }
+                                    .padding(.leading, 4)
 
                                     ForEach(groupedMatches[type] ?? []) { match in
-                                        HStack {
-                                            Text("\(match.other)")
-                                                .foregroundStyle(.white)
-                                                .fontWeight(.medium)
+                                        HStack(spacing: 18) {
+                                            Text(typeEmoji(for: type))
+                                                .font(.system(size: 36))
+                                                .frame(width: 60, height: 60)
+                                                .background(typeColor(for: type).opacity(0.2))
+                                                .clipShape(RoundedRectangle(cornerRadius: 17, style: .continuous))
+
+                                            VStack(alignment: .leading, spacing: 4) {
+                                                Text("Du hast ein Match!")
+                                                    .font(.system(size: 20, weight: .bold, design: .rounded))
+                                                    .foregroundStyle(.white)
+
+                                                Text(typeTitle(for: type))
+                                                    .font(.caption.weight(.semibold))
+                                                    .foregroundStyle(SecretMatchTheme.muted)
+                                            }
 
                                             Spacer()
+
+                                            Text("#\(match.other)")
+                                                .font(.system(size: 20, weight: .bold, design: .monospaced))
+                                                .foregroundStyle(.white)
+                                                .padding(.horizontal, 15)
+                                                .padding(.vertical, 11)
+                                                .background(Color.black.opacity(0.24))
+                                                .clipShape(Capsule())
                                         }
-                                        .padding()
-                                        .background(SecretMatchTheme.surfaceRaised)
-                                        .clipShape(RoundedRectangle(cornerRadius: 14))
-                                        .overlay(RoundedRectangle(cornerRadius: 14).stroke(SecretMatchTheme.border))
+                                        .padding(18)
+                                        .background(typeColor(for: type).opacity(0.14))
+                                        .clipShape(RoundedRectangle(cornerRadius: 18))
+                                        .overlay(RoundedRectangle(cornerRadius: 18).stroke(typeColor(for: type).opacity(0.65), lineWidth: 1.2))
                                     }
                                 }
                             }
                         }
-                        .padding(.horizontal)
+                        .padding(.horizontal, 4)
                     }
                 }
 
@@ -65,8 +89,9 @@ struct MatchListView: View {
                 .buttonStyle(SecretPrimaryButtonStyle())
                 .padding(.top, 20)
             }
-            .frame(maxWidth: 400)
-            .secretCard(cornerRadius: 24, padding: 28)
+            .frame(maxWidth: 720, maxHeight: 680)
+            .secretCard(cornerRadius: 24, padding: 32)
+            .padding(28)
         }
         .onAppear {
             Task {
@@ -85,6 +110,22 @@ struct MatchListView: View {
             case "hot": return "Fuck-Matches"
             case "normal": return "Hot-Matches"
             default: return "Andere"
+        }
+    }
+
+    private func typeEmoji(for type: String) -> String {
+        switch type {
+        case "hot": return "🍆"
+        case "normal": return "❤️"
+        default: return "✨"
+        }
+    }
+
+    private func typeColor(for type: String) -> Color {
+        switch type {
+        case "hot": return Color(hex: "#8E63D2")
+        case "normal": return Color(hex: "#E83E8C")
+        default: return SecretMatchTheme.secondary
         }
     }
 }

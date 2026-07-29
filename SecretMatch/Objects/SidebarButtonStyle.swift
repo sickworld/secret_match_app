@@ -3,8 +3,8 @@ import SwiftUI
 struct SidebarButtonStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
-            .font(.system(size: 15, weight: .semibold, design: .rounded))
-            .frame(maxWidth: .infinity, minHeight: 50, alignment: .leading)
+            .font(.system(size: 17, weight: .semibold, design: .rounded))
+            .frame(maxWidth: .infinity, minHeight: 56, alignment: .leading)
             .padding(.horizontal, 16)
             .background(configuration.isPressed ? SecretMatchTheme.primary.opacity(0.20) : SecretMatchTheme.surfaceRaised)
             .foregroundStyle(.white)

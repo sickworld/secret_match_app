@@ -3,8 +3,7 @@ import SwiftUI
 private struct DemoActionOption: Identifiable {
     let type: String
     let title: String
-    let symbol: String
-    let usesEmoji: Bool
+    let emoji: String
 
     var id: String { type }
 }
@@ -19,11 +18,11 @@ struct HowToUseView: View {
 
     private let maxStep = 5
     private let options = [
-        DemoActionOption(type: "normal", title: "Hot Match", symbol: "heart.fill", usesEmoji: false),
-        DemoActionOption(type: "hot", title: "Fuck Match", symbol: "🍆", usesEmoji: true),
-        DemoActionOption(type: "bjob", title: "Blow-Job", symbol: "wind", usesEmoji: false),
-        DemoActionOption(type: "hjob", title: "Hand-Job", symbol: "hand.raised.fill", usesEmoji: false),
-        DemoActionOption(type: "ljob", title: "Lick-Job", symbol: "mouth.fill", usesEmoji: false)
+        DemoActionOption(type: "normal", title: "Hot Match", emoji: "❤️"),
+        DemoActionOption(type: "hot", title: "Fuck Match", emoji: "🍆"),
+        DemoActionOption(type: "bjob", title: "Blow-Job", emoji: "👄"),
+        DemoActionOption(type: "hjob", title: "Hand-Job", emoji: "✋"),
+        DemoActionOption(type: "ljob", title: "Lick-Job", emoji: "👅")
     ]
 
     var body: some View {
@@ -160,13 +159,8 @@ struct HowToUseView: View {
         let isSelected = step >= 1 && option.type == "hot"
 
         return HStack(spacing: 10) {
-            Group {
-                if option.usesEmoji {
-                    Text(option.symbol)
-                } else {
-                    Image(systemName: option.symbol)
-                }
-            }
+            Text(option.emoji)
+                .font(.system(size: isCompact ? 22 : 18))
             Text(option.title)
                 .fontWeight(.semibold)
                 .lineLimit(1)

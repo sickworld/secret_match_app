@@ -45,7 +45,7 @@ struct SecretPrimaryButtonStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .font(.system(size: 16, weight: .bold, design: .rounded))
-            .frame(maxWidth: fullWidth ? .infinity : nil, minHeight: 54)
+            .frame(maxWidth: fullWidth ? .infinity : nil, minHeight: 60)
             .padding(.horizontal, 20)
             .foregroundStyle(.white)
             .background(
@@ -72,7 +72,7 @@ struct SecretSecondaryButtonStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .font(.system(size: 15, weight: .semibold, design: .rounded))
-            .frame(maxWidth: .infinity, minHeight: 50)
+            .frame(maxWidth: .infinity, minHeight: 56)
             .padding(.horizontal, 18)
             .foregroundStyle(SecretMatchTheme.text)
             .background(configuration.isPressed ? SecretMatchTheme.surfaceRaised : SecretMatchTheme.surface)
@@ -92,7 +92,7 @@ struct SecretInputModifier: ViewModifier {
     func body(content: Content) -> some View {
         content
             .padding(.horizontal, 18)
-            .frame(maxWidth: .infinity, minHeight: 58)
+            .frame(maxWidth: .infinity, minHeight: 72)
             .background(Color.black.opacity(0.28))
             .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
             .overlay(

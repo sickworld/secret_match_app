@@ -25,7 +25,7 @@ struct ActionListView: View {
                     .foregroundStyle(SecretMatchTheme.secondary)
 
                 Text("Deine Aktionen")
-                    .font(.system(size: 26, weight: .bold, design: .rounded))
+                    .font(.system(size: 32, weight: .bold, design: .rounded))
                     .foregroundStyle(.white)
 
                 if api.actions.isEmpty {
@@ -83,9 +83,9 @@ struct ActionListView: View {
         let color = actionColor(for: action.action_type)
 
         HStack(spacing: 18) {
-            actionIcon(for: action.action_type)
-                .font(.system(size: 27, weight: .bold))
-                .frame(width: 54, height: 54)
+            Text(actionEmoji(for: action.action_type))
+                .font(.system(size: 34))
+                .frame(width: 62, height: 62)
                 .background(color.opacity(0.2))
                 .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
 
@@ -128,22 +128,14 @@ struct ActionListView: View {
         }
     }
 
-    @ViewBuilder
-    private func actionIcon(for type: String) -> some View {
-        if type == "hot" {
-            Text("🍆")
-        } else {
-            Image(systemName: actionSymbol(for: type))
-        }
-    }
-
-    private func actionSymbol(for type: String) -> String {
+    private func actionEmoji(for type: String) -> String {
         switch type {
-        case "normal": return "heart.fill"
-        case "bjob": return "wind"
-        case "hjob": return "hand.raised.fill"
-        case "ljob": return "mouth.fill"
-        default: return "paperplane.fill"
+        case "normal": return "❤️"
+        case "hot": return "🍆"
+        case "bjob": return "👄"
+        case "hjob": return "✋"
+        case "ljob": return "👅"
+        default: return "💌"
         }
     }
 

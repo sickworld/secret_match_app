@@ -20,7 +20,7 @@ struct LoginView: View {
                     Image("logo")
                         .resizable()
                         .scaledToFit()
-                        .frame(width: 220, height: 190)
+                        .frame(width: 270, height: 220)
                         .shadow(color: SecretMatchTheme.primary.opacity(0.22), radius: 24)
                         .onLongPressGesture(minimumDuration: 3) {
                             UIImpactFeedbackGenerator(style: .medium).impactOccurred()
@@ -34,11 +34,11 @@ struct LoginView: View {
                             .foregroundStyle(SecretMatchTheme.secondary)
 
                         Text("Bereit für Match&Play?")
-                            .font(.system(size: 28, weight: .bold, design: .rounded))
+                            .font(.system(size: 36, weight: .bold, design: .rounded))
                             .foregroundStyle(SecretMatchTheme.text)
 
                         Text("Gib deine Event-Nummer ein und entdecke, wer mit dir matcht.")
-                            .font(.subheadline)
+                            .font(.system(size: 18, weight: .medium, design: .rounded))
                             .foregroundStyle(SecretMatchTheme.muted)
                             .multilineTextAlignment(.center)
                     }
@@ -46,7 +46,7 @@ struct LoginView: View {
                     VStack(alignment: .leading, spacing: 9) {
                         Text(number.isEmpty ? "Nummer eingeben" : number)
                             .foregroundStyle(number.isEmpty ? SecretMatchTheme.muted : SecretMatchTheme.text)
-                            .font(.system(size: 22, weight: .semibold, design: .rounded))
+                            .font(.system(size: 32, weight: .bold, design: .rounded))
                             .multilineTextAlignment(.center)
                             .secretInput(highlighted: showKeyboard)
                             .onTapGesture {
@@ -79,8 +79,8 @@ struct LoginView: View {
                     .disabled(isLoading || number.isEmpty)
                     .opacity(number.isEmpty ? 0.55 : 1)
                 }
-                .frame(maxWidth: 500)
-                .secretCard(cornerRadius: 24, padding: 32)
+                .frame(maxWidth: 620)
+                .secretCard(cornerRadius: 28, padding: 40)
 
                 Spacer()
             }
@@ -107,7 +107,7 @@ struct LoginView: View {
                         CustomNumberKeyboard(text: $number, doneLabel: "Einloggen") {
                             submitLogin()
                         }
-                        .frame(maxWidth: 460)
+                        .frame(maxWidth: 520)
                         .cornerRadius(16)
                         .shadow(radius: 20)
                     }

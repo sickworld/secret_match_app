@@ -3,8 +3,7 @@ import SwiftUI
 private struct ActionOption: Identifiable {
     let type: String
     let title: String
-    let symbol: String
-    let usesEmoji: Bool
+    let emoji: String
     let color: Color
 
     var id: String { type }
@@ -18,11 +17,11 @@ struct MatchInputBox: View {
     let onSend: () -> Void
 
     private let options = [
-        ActionOption(type: "normal", title: "Hot Match", symbol: "heart.fill", usesEmoji: false, color: Color(hex: "#E83E8C")),
-        ActionOption(type: "hot", title: "Fuck Match", symbol: "🍆", usesEmoji: true, color: Color(hex: "#8E63D2")),
-        ActionOption(type: "bjob", title: "Blow-Job", symbol: "wind", usesEmoji: false, color: Color(hex: "#3E9ED6")),
-        ActionOption(type: "hjob", title: "Hand-Job", symbol: "hand.raised.fill", usesEmoji: false, color: Color(hex: "#E6923E")),
-        ActionOption(type: "ljob", title: "Lick-Job", symbol: "mouth.fill", usesEmoji: false, color: Color(hex: "#D65C8D"))
+        ActionOption(type: "normal", title: "Hot Match", emoji: "❤️", color: Color(hex: "#E83E8C")),
+        ActionOption(type: "hot", title: "Fuck Match", emoji: "🍆", color: Color(hex: "#8E63D2")),
+        ActionOption(type: "bjob", title: "Blow-Job", emoji: "👄", color: Color(hex: "#3E9ED6")),
+        ActionOption(type: "hjob", title: "Hand-Job", emoji: "✋", color: Color(hex: "#E6923E")),
+        ActionOption(type: "ljob", title: "Lick-Job", emoji: "👅", color: Color(hex: "#D65C8D"))
     ]
 
     var body: some View {
@@ -34,7 +33,7 @@ struct MatchInputBox: View {
                     .foregroundStyle(SecretMatchTheme.secondary)
 
                 Text("Was möchtest du senden?")
-                    .font(.system(size: 28, weight: .bold, design: .rounded))
+                    .font(.system(size: 32, weight: .bold, design: .rounded))
                     .foregroundStyle(.white)
 
                 Text("Wähle eine oder mehrere Aktionen und gib die Event-Nummer ein.")
@@ -57,7 +56,7 @@ struct MatchInputBox: View {
 
                 Text(targetNumber.isEmpty ? "Nummer eingeben" : targetNumber)
                     .foregroundStyle(targetNumber.isEmpty ? SecretMatchTheme.muted : .white)
-                    .font(.system(size: 22, weight: .semibold, design: .rounded))
+                    .font(.system(size: 30, weight: .bold, design: .rounded))
                     .multilineTextAlignment(.center)
                     .secretInput(highlighted: showKeyboard)
                     .onTapGesture {
@@ -90,7 +89,7 @@ struct MatchInputBox: View {
                     .overlay(RoundedRectangle(cornerRadius: 14).stroke(SecretMatchTheme.primary.opacity(0.3)))
             }
         }
-        .frame(maxWidth: 650)
+        .frame(maxWidth: 740)
         .padding(.horizontal, 24)
         .secretCard(cornerRadius: 24, padding: 30)
     }
@@ -106,15 +105,9 @@ struct MatchInputBox: View {
             }
         } label: {
             HStack(spacing: 14) {
-                Group {
-                    if option.usesEmoji {
-                        Text(option.symbol)
-                    } else {
-                        Image(systemName: option.symbol)
-                    }
-                }
-                .font(.system(size: 24, weight: .bold))
-                .frame(width: 34)
+                Text(option.emoji)
+                    .font(.system(size: 30))
+                    .frame(width: 38)
 
                 Text(option.title)
                     .font(.system(size: 17, weight: .bold, design: .rounded))
@@ -126,7 +119,7 @@ struct MatchInputBox: View {
             }
             .foregroundColor(.white)
             .padding(.horizontal, 16)
-            .frame(maxWidth: .infinity, minHeight: 66)
+            .frame(maxWidth: .infinity, minHeight: 72)
             .background(
                 isSelected
                     ? option.color.opacity(0.9)

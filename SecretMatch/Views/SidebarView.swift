@@ -104,7 +104,7 @@ struct SidebarView: View {
             .frame(maxWidth: isCompact ? .infinity : nil)
         }
         .padding(isCompact ? 16 : 22)
-        .frame(width: isCompact ? nil : 260)
+        .frame(width: isCompact ? nil : 290)
         .frame(maxWidth: isCompact ? .infinity : nil)
         .background(SecretMatchTheme.surface.opacity(0.97))
         .overlay(alignment: isCompact ? .bottom : .trailing) {
