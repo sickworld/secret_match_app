@@ -5,6 +5,7 @@ struct AdminSidebarView: View {
 
     @Binding var showActions: Bool
     @Binding var showMatches: Bool
+    @Binding var showBillboard: Bool
     var logout: () -> Void
     var isCompact = false
 
@@ -35,6 +36,13 @@ struct AdminSidebarView: View {
                 showMatches = true
             } label: {
                 Label("Alle Matches", systemImage: "sparkles")
+            }
+            .buttonStyle(SidebarButtonStyle())
+
+            Button {
+                showBillboard = true
+            } label: {
+                Label("Billboard Vollbild", systemImage: "rectangle.inset.filled")
             }
             .buttonStyle(SidebarButtonStyle())
 

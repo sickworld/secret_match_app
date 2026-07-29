@@ -5,12 +5,17 @@ struct AdminMainView: View {
 
     @State private var showAdminActions = false
     @State private var showAdminMatches = false
+    @State private var showBillboard = false
 
     var body: some View {
         GeometryReader { proxy in
             let isCompact = proxy.size.width < proxy.size.height
 
             content(isCompact: isCompact)
+        }
+        .fullScreenCover(isPresented: $showBillboard) {
+            AdminBillboardView(isPresented: $showBillboard)
+                .environmentObject(api)
         }
     }
 
@@ -60,6 +65,7 @@ struct AdminMainView: View {
         AdminSidebarView(
             showActions: $showAdminActions,
             showMatches: $showAdminMatches,
+            showBillboard: $showBillboard,
             logout: { api.logout() },
             isCompact: isCompact
         )

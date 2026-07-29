@@ -170,12 +170,39 @@ class APIService: ObservableObject {
         }
     }
 
+    func createBillboardAccessURL() async throws -> URL {
+        let url = baseURL.appendingPathComponent("admin/billboard-access")
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+
+        let (data, response) = try await URLSession.shared.data(for: request)
+        guard let http = response as? HTTPURLResponse, http.statusCode == 200 else {
+            throw URLError(.userAuthenticationRequired)
+        }
+
+        let access = try JSONDecoder().decode(BillboardAccessResponse.self, from: data)
+        guard let accessURL = URL(string: access.url) else {
+            throw URLError(.badURL)
+        }
+        return accessURL
+    }
+
     func logout() {
         self.isLoggedIn = false
         self.number = ""
         self.matches = []
         self.actions = []
         self.isAdmin = false
+    }
+}
+
+private struct BillboardAccessResponse: Decodable {
+    let url: String
+    let expiresIn: Int
+
+    private enum CodingKeys: String, CodingKey {
+        case url
+        case expiresIn = "expires_in"
     }
 }
 
