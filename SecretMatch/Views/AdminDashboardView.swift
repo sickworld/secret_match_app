@@ -10,6 +10,8 @@ struct AdminDashboardView: View {
     @State private var statusMessage: String?
     @State private var errorMessage: String?
     @State private var confirmation: Confirmation?
+    @State private var showResetAssistant = false
+    @State private var resetConfirmation = ""
 
     private enum Confirmation: String, Identifiable {
         case createDummy, deleteDummy, revokeBillboard
@@ -20,10 +22,13 @@ struct AdminDashboardView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 22) {
                 header
+                liveStatus
                 metrics
                 controls
+                topPreview
                 participants
                 systemStatus
+                resetCard
             }
             .padding(24)
             .frame(maxWidth: 1180)
@@ -49,6 +54,32 @@ struct AdminDashboardView: View {
         } message: {
             Text(confirmationText)
         }
+        .sheet(isPresented: $showResetAssistant) {
+            resetAssistant
+        }
+    }
+
+    private var liveStatus: some View {
+        let online = api.adminDashboard?.billboardOnline == true
+        let testMode = api.adminDashboard?.topTestActive == true
+        let color: Color = online ? (testMode ? .yellow : .green) : .red
+        return HStack(spacing: 14) {
+            Circle().fill(color).frame(width: 16, height: 16)
+            VStack(alignment: .leading, spacing: 3) {
+                Text(online ? (testMode ? "TESTMODUS LÄUFT" : "EVENT LÄUFT") : "BILLBOARD OFFLINE")
+                    .font(.headline.bold())
+                    .foregroundStyle(color)
+                Text(online
+                     ? "TV verbunden · \(billboardResolution) · \(billboardModeLabel)"
+                     : "Seit mindestens 25 Sekunden kein Signal vom TV.")
+                    .foregroundStyle(.white.opacity(0.82))
+            }
+            Spacer()
+        }
+        .padding(16)
+        .background(color.opacity(0.13))
+        .overlay(RoundedRectangle(cornerRadius: 16).stroke(color.opacity(0.75), lineWidth: 2))
+        .clipShape(RoundedRectangle(cornerRadius: 16))
     }
 
     private var header: some View {
@@ -166,6 +197,81 @@ struct AdminDashboardView: View {
         .secretCard(cornerRadius: 20, padding: 20)
     }
 
+    private var topPreview: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            HStack {
+                Text("🏆 Top-16-Vorschau")
+                    .font(.title2.bold())
+                    .foregroundStyle(.white)
+                Spacer()
+                Text("\(api.adminDashboard?.topPeople?.count ?? 0) / 16")
+                    .foregroundStyle(SecretMatchTheme.secondary)
+            }
+            Text("Genau diese Nummern erscheinen im Top-16-Modus auf dem Billboard.")
+                .foregroundStyle(SecretMatchTheme.muted)
+            LazyVGrid(columns: [GridItem(.adaptive(minimum: 90), spacing: 10)], spacing: 10) {
+                ForEach(Array((api.adminDashboard?.topPeople ?? []).enumerated()), id: \.offset) { index, number in
+                    Text("\(index + 1).  #\(number)")
+                        .font(.headline.monospacedDigit())
+                        .foregroundStyle(.white)
+                        .padding(10)
+                        .frame(maxWidth: .infinity)
+                        .background(SecretMatchTheme.primary.opacity(0.16))
+                        .clipShape(RoundedRectangle(cornerRadius: 10))
+                }
+            }
+            if api.adminDashboard?.topPeople?.isEmpty != false {
+                Text("Noch keine Top-16-Daten vorhanden.")
+                    .foregroundStyle(SecretMatchTheme.muted)
+            }
+        }
+        .secretCard(cornerRadius: 20, padding: 20)
+    }
+
+    private var resetCard: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text("🚨 Neues Event vorbereiten")
+                .font(.title2.bold())
+                .foregroundStyle(.white)
+            Text("Erstellt zuerst ein Backup, leert Matches, Anfragen und Aktionen, beendet Sessions und setzt das Billboard zurück. Freigegebene Nummern und Einstellungen bleiben erhalten.")
+                .foregroundStyle(SecretMatchTheme.muted)
+            Button("Event-Reset-Assistent öffnen", role: .destructive) {
+                resetConfirmation = ""
+                showResetAssistant = true
+            }
+            .foregroundStyle(.red)
+        }
+        .secretCard(cornerRadius: 20, padding: 20)
+    }
+
+    private var resetAssistant: some View {
+        NavigationStack {
+            Form {
+                Section("Der Assistent führt diese Schritte aus") {
+                    Label("Backup des aktuellen Events erstellen", systemImage: "archivebox")
+                    Label("Matches, Anfragen und Aktionen leeren", systemImage: "trash")
+                    Label("Teilnehmer- und Billboard-Sessions beenden", systemImage: "person.crop.circle.badge.xmark")
+                    Label("Top-16-Testmodus zurücksetzen", systemImage: "rectangle.on.rectangle.slash")
+                }
+                Section("Sicherheitsbestätigung") {
+                    Text("Zum Ausführen exakt EVENT RESET eingeben.")
+                    TextField("EVENT RESET", text: $resetConfirmation)
+                        .textInputAutocapitalization(.characters)
+                    Button("Backup erstellen und Event zurücksetzen", role: .destructive) {
+                        Task { await performReset() }
+                    }
+                    .disabled(resetConfirmation != "EVENT RESET" || isWorking)
+                }
+            }
+            .navigationTitle("Event-Reset")
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Abbrechen") { showResetAssistant = false }
+                }
+            }
+        }
+    }
+
     private var systemStatus: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text("⚙️ Systemstatus")
@@ -214,6 +320,16 @@ struct AdminDashboardView: View {
         let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "–"
         let build = Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? "–"
         return "\(version).\(build)"
+    }
+
+    private var billboardResolution: String {
+        let width = api.adminDashboard?.billboardWidth ?? 0
+        let height = api.adminDashboard?.billboardHeight ?? 0
+        return width > 0 && height > 0 ? "\(width) × \(height)" : "Auflösung unbekannt"
+    }
+
+    private var billboardModeLabel: String {
+        api.adminDashboard?.billboardMode == "top" ? "Top 16" : "Normalbetrieb"
     }
 
     private func metric(_ emoji: String, _ title: String, _ value: Int, _ color: Color) -> some View {
@@ -308,6 +424,20 @@ struct AdminDashboardView: View {
             errorMessage = nil
         } catch {
             errorMessage = "Aktion fehlgeschlagen: \(error.localizedDescription)"
+        }
+        isWorking = false
+    }
+
+    @MainActor
+    private func performReset() async {
+        isWorking = true
+        do {
+            let result = try await api.resetEvent(confirmation: resetConfirmation)
+            statusMessage = "Event zurückgesetzt. Backup: \(result.backupCreatedAt) · \(result.deleted.matches) Matches und \(result.deleted.actions) Aktionen entfernt."
+            errorMessage = nil
+            showResetAssistant = false
+        } catch {
+            errorMessage = "Event-Reset fehlgeschlagen: \(error.localizedDescription)"
         }
         isWorking = false
     }

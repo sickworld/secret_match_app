@@ -269,6 +269,21 @@ class APIService: ObservableObject {
         try await participantCommand(number: number, suffix: nil, method: "DELETE")
     }
 
+    func resetEvent(confirmation: String) async throws -> EventResetResponse {
+        let url = baseURL.appendingPathComponent("admin/event-reset")
+        var request = try adminRequest(url: url)
+        request.httpMethod = "POST"
+        request.httpBody = try JSONSerialization.data(withJSONObject: ["confirmation": confirmation])
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        let (data, response) = try await URLSession.shared.data(for: request)
+        try validateAdminResponse(response)
+        let result = try JSONDecoder().decode(EventResetResponse.self, from: data)
+        adminActions = []
+        adminMatches = []
+        try await refreshAdminControlData()
+        return result
+    }
+
     func refreshAdminControlData() async throws {
         try await loadAdminDashboard()
         try await loadAdminParticipants()

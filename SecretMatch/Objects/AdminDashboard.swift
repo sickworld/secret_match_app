@@ -14,6 +14,12 @@ struct AdminDashboard: Decodable {
     let pluginVersion: String
     let wordpressTime: String
     let apiOK: Bool
+    let billboardOnline: Bool?
+    let billboardLastSeen: Int?
+    let billboardWidth: Int?
+    let billboardHeight: Int?
+    let billboardMode: String?
+    let topPeople: [String]?
 
     private enum CodingKeys: String, CodingKey {
         case activeParticipants = "active_participants"
@@ -29,6 +35,28 @@ struct AdminDashboard: Decodable {
         case pluginVersion = "plugin_version"
         case wordpressTime = "wordpress_time"
         case apiOK = "api_ok"
+        case billboardOnline = "billboard_online"
+        case billboardLastSeen = "billboard_last_seen"
+        case billboardWidth = "billboard_width"
+        case billboardHeight = "billboard_height"
+        case billboardMode = "billboard_mode"
+        case topPeople = "top_people"
+    }
+}
+
+struct EventResetResponse: Decodable {
+    let backupCreatedAt: String
+    let deleted: DeletedCounts
+
+    struct DeletedCounts: Decodable {
+        let matches: Int
+        let requests: Int
+        let actions: Int
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case backupCreatedAt = "backup_created_at"
+        case deleted
     }
 }
 
