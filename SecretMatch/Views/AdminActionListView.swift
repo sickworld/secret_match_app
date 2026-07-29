@@ -3,6 +3,9 @@ import SwiftUI
 struct AdminActionListView: View {
     @EnvironmentObject var api: APIService
     @Binding var isPresented: Bool
+    @State private var searchText = ""
+    @State private var selectedType = "all"
+    @State private var pendingDelete: AdminAction?
 
     var body: some View {
         ZStack {
@@ -20,13 +23,27 @@ struct AdminActionListView: View {
                     .font(.system(size: 26, weight: .bold, design: .rounded))
                     .foregroundStyle(.white)
 
-                if api.adminActions.isEmpty {
+                TextField("Nummer suchen", text: $searchText)
+                    .textFieldStyle(.roundedBorder)
+
+                Picker("Typ", selection: $selectedType) {
+                    Text("Alle").tag("all")
+                    Text("❤️ Hot").tag("normal")
+                    Text("🍆 Fuck").tag("hot")
+                    Text("👄 Blow").tag("bjob")
+                    Text("✋ Hand").tag("hjob")
+                    Text("👅 Lick").tag("ljob")
+                }
+                .pickerStyle(.menu)
+                .tint(.white)
+
+                if filteredActions.isEmpty {
                     Text("Keine Aktionen vorhanden")
                         .foregroundStyle(SecretMatchTheme.muted)
                 } else {
                     ScrollView {
                         VStack(spacing: 12) {
-                            ForEach(api.adminActions) { action in
+                            ForEach(filteredActions) { action in
                                 actionRow(action)
                             }
                         }
@@ -44,6 +61,19 @@ struct AdminActionListView: View {
         }
         .task {
             await api.loadAdminActions()
+        }
+        .alert("Aktion löschen?", isPresented: Binding(
+            get: { pendingDelete != nil },
+            set: { if !$0 { pendingDelete = nil } }
+        )) {
+            Button("Abbrechen", role: .cancel) {}
+            Button("Löschen", role: .destructive) {
+                guard let action = pendingDelete else { return }
+                pendingDelete = nil
+                Task { try? await api.deleteAdminAction(id: action.id) }
+            }
+        } message: {
+            Text("Dieser Eintrag wird dauerhaft entfernt.")
         }
     }
 
@@ -71,11 +101,30 @@ struct AdminActionListView: View {
             }
 
             Spacer()
+
+            Button(role: .destructive) {
+                pendingDelete = action
+            } label: {
+                Image(systemName: "trash")
+                    .font(.title3.bold())
+                    .foregroundStyle(.red)
+                    .padding(10)
+            }
         }
         .padding()
         .background(color.opacity(0.14))
         .clipShape(RoundedRectangle(cornerRadius: 14))
         .overlay(RoundedRectangle(cornerRadius: 14).stroke(color.opacity(0.65), lineWidth: 1.2))
+    }
+
+    private var filteredActions: [AdminAction] {
+        api.adminActions.filter { action in
+            let matchesType = selectedType == "all" || action.action_type == selectedType
+            let matchesSearch = searchText.isEmpty
+                || action.sender_number.localizedCaseInsensitiveContains(searchText)
+                || action.receiver_number.localizedCaseInsensitiveContains(searchText)
+            return matchesType && matchesSearch
+        }
     }
 
     private func actionEmoji(for type: String) -> String {

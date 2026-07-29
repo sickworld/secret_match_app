@@ -14,6 +14,8 @@ class APIService: ObservableObject {
     @Published var isAdmin: Bool = false
     @Published var adminActions: [AdminAction] = []
     @Published var adminMatches: [AdminMatch] = []
+    @Published var adminDashboard: AdminDashboard?
+    @Published var adminParticipants = AdminParticipants(allowed: [], active: [])
     private var adminToken: String?
     private let baseURL = URL(string: "https://secret-match.de/wp-json/secretmatch/v1")!
 
@@ -195,6 +197,83 @@ class APIService: ObservableObject {
         return accessURL
     }
 
+    func loadAdminDashboard() async throws {
+        let url = baseURL.appendingPathComponent("admin/dashboard")
+        let (data, response) = try await URLSession.shared.data(for: adminRequest(url: url))
+        try validateAdminResponse(response)
+        adminDashboard = try JSONDecoder().decode(AdminDashboard.self, from: data)
+    }
+
+    func loadAdminParticipants() async throws {
+        let url = baseURL.appendingPathComponent("admin/participants")
+        let (data, response) = try await URLSession.shared.data(for: adminRequest(url: url))
+        try validateAdminResponse(response)
+        adminParticipants = try JSONDecoder().decode(AdminParticipants.self, from: data)
+    }
+
+    func controlBillboard(action: String, seconds: Int? = nil) async throws {
+        let url = baseURL.appendingPathComponent("admin/billboard-control")
+        var request = try adminRequest(url: url)
+        request.httpMethod = "POST"
+        var body: [String: Any] = ["action": action]
+        if let seconds {
+            body["seconds"] = seconds
+        }
+        request.httpBody = try JSONSerialization.data(withJSONObject: body)
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        let (_, response) = try await URLSession.shared.data(for: request)
+        try validateAdminResponse(response)
+        try await loadAdminDashboard()
+    }
+
+    func manageDummyData(action: String) async throws {
+        let url = baseURL.appendingPathComponent("admin/dummy-data")
+        var request = try adminRequest(url: url)
+        request.httpMethod = "POST"
+        request.httpBody = try JSONSerialization.data(withJSONObject: ["action": action])
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        let (_, response) = try await URLSession.shared.data(for: request)
+        try validateAdminResponse(response)
+        try await refreshAdminControlData()
+    }
+
+    func deleteAdminAction(id: String) async throws {
+        let url = baseURL
+            .appendingPathComponent("admin/actions")
+            .appendingPathComponent(id)
+        var request = try adminRequest(url: url)
+        request.httpMethod = "DELETE"
+        let (_, response) = try await URLSession.shared.data(for: request)
+        try validateAdminResponse(response)
+        adminActions.removeAll { $0.id == id }
+        try await loadAdminDashboard()
+    }
+
+    func deleteAdminMatch(id: String) async throws {
+        let url = baseURL
+            .appendingPathComponent("admin/matches")
+            .appendingPathComponent(id)
+        var request = try adminRequest(url: url)
+        request.httpMethod = "DELETE"
+        let (_, response) = try await URLSession.shared.data(for: request)
+        try validateAdminResponse(response)
+        adminMatches.removeAll { $0.id == id }
+        try await loadAdminDashboard()
+    }
+
+    func logoutParticipant(number: String) async throws {
+        try await participantCommand(number: number, suffix: "logout", method: "POST")
+    }
+
+    func blockParticipant(number: String) async throws {
+        try await participantCommand(number: number, suffix: nil, method: "DELETE")
+    }
+
+    func refreshAdminControlData() async throws {
+        try await loadAdminDashboard()
+        try await loadAdminParticipants()
+    }
+
     func logout() {
         if let adminToken {
             var request = URLRequest(url: baseURL.appendingPathComponent("admin/logout"))
@@ -221,6 +300,27 @@ class APIService: ObservableObject {
         var request = URLRequest(url: url)
         request.setValue("Bearer \(adminToken)", forHTTPHeaderField: "Authorization")
         return request
+    }
+
+    private func participantCommand(number: String, suffix: String?, method: String) async throws {
+        var url = baseURL
+            .appendingPathComponent("admin/participants")
+            .appendingPathComponent(number)
+        if let suffix {
+            url.appendPathComponent(suffix)
+        }
+        var request = try adminRequest(url: url)
+        request.httpMethod = method
+        let (_, response) = try await URLSession.shared.data(for: request)
+        try validateAdminResponse(response)
+        try await refreshAdminControlData()
+    }
+
+    private func validateAdminResponse(_ response: URLResponse) throws {
+        guard let http = response as? HTTPURLResponse, http.statusCode == 200 else {
+            handleExpiredAdminToken(response)
+            throw URLError(.badServerResponse)
+        }
     }
 
     private func formBody(_ values: [String: String]) -> Data? {

@@ -3,6 +3,9 @@ import SwiftUI
 struct AdminMatchListView: View {
     @EnvironmentObject var api: APIService
     @Binding var isPresented: Bool
+    @State private var searchText = ""
+    @State private var selectedType = "all"
+    @State private var pendingDelete: AdminMatch?
 
     var body: some View {
         ZStack {
@@ -20,13 +23,23 @@ struct AdminMatchListView: View {
                     .font(.system(size: 26, weight: .bold, design: .rounded))
                     .foregroundStyle(.white)
 
-                if api.adminMatches.isEmpty {
+                TextField("Nummer suchen", text: $searchText)
+                    .textFieldStyle(.roundedBorder)
+
+                Picker("Typ", selection: $selectedType) {
+                    Text("Alle").tag("all")
+                    Text("❤️ Hot-Match").tag("normal")
+                    Text("🍆 Fuck-Match").tag("hot")
+                }
+                .pickerStyle(.segmented)
+
+                if filteredMatches.isEmpty {
                     Text("Keine Matches gefunden")
                         .foregroundStyle(SecretMatchTheme.muted)
                 } else {
                     ScrollView {
                         VStack(spacing: 12) {
-                            ForEach(api.adminMatches) { match in
+                            ForEach(filteredMatches) { match in
                                 matchRow(match)
                             }
                         }
@@ -44,6 +57,19 @@ struct AdminMatchListView: View {
         }
         .task {
             await api.loadAdminMatches()
+        }
+        .alert("Match löschen?", isPresented: Binding(
+            get: { pendingDelete != nil },
+            set: { if !$0 { pendingDelete = nil } }
+        )) {
+            Button("Abbrechen", role: .cancel) {}
+            Button("Löschen", role: .destructive) {
+                guard let match = pendingDelete else { return }
+                pendingDelete = nil
+                Task { try? await api.deleteAdminMatch(id: match.id) }
+            }
+        } message: {
+            Text("Dieser Match-Eintrag wird dauerhaft entfernt.")
         }
     }
 
@@ -76,11 +102,31 @@ struct AdminMatchListView: View {
             }
 
             Spacer()
+
+            Button(role: .destructive) {
+                pendingDelete = match
+            } label: {
+                Image(systemName: "trash")
+                    .font(.title3.bold())
+                    .foregroundStyle(.red)
+                    .padding(10)
+            }
         }
         .padding()
         .background(color.opacity(0.14))
         .clipShape(RoundedRectangle(cornerRadius: 14))
         .overlay(RoundedRectangle(cornerRadius: 14).stroke(color.opacity(0.65), lineWidth: 1.2))
+    }
+
+    private var filteredMatches: [AdminMatch] {
+        api.adminMatches.filter { match in
+            let normalizedType = (match.type == "F-") ? "hot" : match.type
+            let matchesType = selectedType == "all" || normalizedType == selectedType
+            let matchesSearch = searchText.isEmpty
+                || match.number_a.localizedCaseInsensitiveContains(searchText)
+                || match.number_b.localizedCaseInsensitiveContains(searchText)
+            return matchesType && matchesSearch
+        }
     }
 
     // MARK: - Mapping

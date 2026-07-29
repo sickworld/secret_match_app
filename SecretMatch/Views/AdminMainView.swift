@@ -43,10 +43,8 @@ struct AdminMainView: View {
             ScrollView {
                 VStack(spacing: 0) {
                     sidebar(isCompact: true)
-                    emptyState
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 56)
-                        .padding(.horizontal, 18)
+                    AdminDashboardView(showBillboard: $showBillboard)
+                        .environmentObject(api)
                 }
             }
         } else {
@@ -55,7 +53,8 @@ struct AdminMainView: View {
 
                 Divider().background(Color.white.opacity(0.3))
 
-                emptyState
+                AdminDashboardView(showBillboard: $showBillboard)
+                    .environmentObject(api)
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
         }
@@ -72,18 +71,4 @@ struct AdminMainView: View {
         .environmentObject(api)
     }
 
-    private var emptyState: some View {
-        VStack(spacing: 14) {
-            Image(systemName: "sparkles")
-                .font(.system(size: 34, weight: .bold))
-                .foregroundStyle(SecretMatchTheme.primary)
-            Text("SecretMatch Event Control")
-                .font(.system(size: 28, weight: .bold, design: .rounded))
-                .foregroundStyle(.white)
-                .multilineTextAlignment(.center)
-            Text("Wähle Aktionen oder Matches aus.")
-                .foregroundStyle(SecretMatchTheme.muted)
-                .multilineTextAlignment(.center)
-        }
-    }
 }
