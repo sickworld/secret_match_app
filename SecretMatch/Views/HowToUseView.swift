@@ -16,6 +16,8 @@ struct HowToUseView: View {
     @State private var step = 0
     @State private var isPlaying = true
     @State private var playbackTask: Task<Void, Never>?
+    @State private var demoKeyboardNumber = ""
+    @State private var isDemoKeyboardDismissed = false
 
     private let maxStep = 5
     private let options = [
@@ -27,32 +29,56 @@ struct HowToUseView: View {
     ]
 
     var body: some View {
-        GeometryReader { proxy in
-            let isCompact = proxy.size.width < proxy.size.height
+        ZStack {
+            GeometryReader { proxy in
+                let isCompact = proxy.size.width < proxy.size.height
 
-            if isCompact {
-                ScrollView {
-                    VStack(spacing: 18) {
+                if isCompact {
+                    ScrollView {
+                        VStack(spacing: 18) {
+                            header
+                            demoPlayer(isCompact: true)
+                            controls
+                        }
+                        .padding(18)
+                        .frame(maxWidth: .infinity)
+                    }
+                } else {
+                    HStack(spacing: 24) {
                         header
-                        demoPlayer(isCompact: true)
-                        controls
-                    }
-                    .padding(18)
-                    .frame(maxWidth: .infinity)
-                }
-            } else {
-                HStack(spacing: 24) {
-                    header
-                        .frame(width: min(280, proxy.size.width * 0.27))
+                            .frame(width: min(280, proxy.size.width * 0.27))
 
-                    VStack(spacing: 12) {
-                        demoPlayer(isCompact: false)
-                        controls
+                        VStack(spacing: 12) {
+                            demoPlayer(isCompact: false)
+                            controls
+                        }
+                        .frame(maxWidth: 720)
                     }
-                    .frame(maxWidth: 720)
+                    .padding(20)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
                 }
-                .padding(20)
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
+            }
+
+            if showsDemoKeyboard {
+                Color.black.opacity(0.6)
+                    .ignoresSafeArea()
+                    .onTapGesture {
+                        dismissDemoKeyboard()
+                    }
+                    .zIndex(20)
+
+                CustomNumberKeyboard(
+                    text: $demoKeyboardNumber,
+                    onActivity: registerActivity,
+                    onClose: dismissDemoKeyboard
+                ) {
+                    finishDemoKeyboardEntry()
+                }
+                .frame(maxWidth: 740)
+                .padding()
+                .shadow(radius: 20)
+                .transition(.scale(scale: 0.92).combined(with: .opacity))
+                .zIndex(30)
             }
         }
         .onAppear {
@@ -64,6 +90,11 @@ struct HowToUseView: View {
         .onTapGesture {
             registerActivity()
         }
+        .onChange(of: step) { _, newStep in
+            demoKeyboardNumber = newStep >= 3 ? "42" : ""
+            isDemoKeyboardDismissed = false
+        }
+        .animation(.easeInOut(duration: 0.24), value: showsDemoKeyboard)
     }
 
     private var header: some View {
@@ -105,11 +136,6 @@ struct HowToUseView: View {
             VStack(spacing: isCompact ? 20 : 10) {
                 demoActionGrid(isCompact: isCompact)
                 demoNumberInput
-
-                if step >= 2 && step <= 3 {
-                    demoKeyboard(isCompact: isCompact)
-                        .transition(.move(edge: .bottom).combined(with: .opacity))
-                }
 
                 demoSendButton
 
@@ -186,8 +212,8 @@ struct HowToUseView: View {
         VStack(alignment: .leading, spacing: 8) {
             demoSectionTitle("Event-Nummer eingeben", icon: "number")
 
-            Text(demoNumber)
-                .foregroundStyle(demoNumber == "Nummer eingeben" ? SecretMatchTheme.muted : .white)
+            Text(demoKeyboardNumber.isEmpty ? "Nummer eingeben" : demoKeyboardNumber)
+                .foregroundStyle(demoKeyboardNumber.isEmpty ? SecretMatchTheme.muted : .white)
                 .font(.system(size: 22, weight: .semibold, design: .rounded))
                 .multilineTextAlignment(.center)
                 .secretInput(highlighted: step == 2 || step == 3)
@@ -195,35 +221,8 @@ struct HowToUseView: View {
         .highlighted(step == 2 || step == 3)
     }
 
-    private var demoNumber: String {
-        switch step {
-        case 3...maxStep: return "42"
-        default: return "Nummer eingeben"
-        }
-    }
-
-    private func demoKeyboard(isCompact: Bool) -> some View {
-        VStack(spacing: isCompact ? 12 : 5) {
-            ForEach([["1", "2", "3"], ["4", "5", "6"], ["7", "8", "9"], ["←", "0", "✓"]], id: \.self) { row in
-                HStack(spacing: isCompact ? 10 : 6) {
-                    ForEach(row, id: \.self) { key in
-                        Text(key)
-                            .font(.system(size: 22, weight: .bold, design: .rounded))
-                            .foregroundStyle(.white)
-                            .frame(maxWidth: .infinity, minHeight: isCompact ? 48 : 32)
-                            .background(key == "✓" ? SecretMatchTheme.primary : SecretMatchTheme.surfaceRaised)
-                            .clipShape(RoundedRectangle(cornerRadius: 13, style: .continuous))
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 13, style: .continuous)
-                                    .stroke(keyHighlight(for: key) ? SecretMatchTheme.secondary : SecretMatchTheme.border, lineWidth: keyHighlight(for: key) ? 2 : 1)
-                            )
-                    }
-                }
-            }
-        }
-        .padding(isCompact ? 14 : 8)
-        .background(Color.black.opacity(0.24))
-        .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+    private var showsDemoKeyboard: Bool {
+        (step == 2 || step == 3) && !isDemoKeyboardDismissed
     }
 
     private var demoSendButton: some View {
@@ -348,8 +347,16 @@ struct HowToUseView: View {
         }
     }
 
-    private func keyHighlight(for key: String) -> Bool {
-        (step == 3 && (key == "4" || key == "2")) || (step == 4 && key == "✓")
+    private func dismissDemoKeyboard() {
+        isDemoKeyboardDismissed = true
+        registerActivity()
+    }
+
+    private func finishDemoKeyboardEntry() {
+        playbackTask?.cancel()
+        isPlaying = false
+        step = 4
+        registerActivity()
     }
 
     private func startPlayback() {
