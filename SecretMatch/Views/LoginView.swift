@@ -73,7 +73,7 @@ struct LoginView: View {
 
                     Button(action: submitLogin) {
                         HStack {
-                            Text("Event betreten")
+                            Text("Anmelden")
                             Spacer()
                             Image(systemName: "arrow.right")
                         }
