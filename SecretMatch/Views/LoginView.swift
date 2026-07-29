@@ -76,7 +76,7 @@ struct LoginView: View {
                             Image(systemName: "arrow.right")
                         }
                     }
-                    .buttonStyle(SecretPrimaryButtonStyle())
+                    .buttonStyle(SecretPrimaryButtonStyle(fontSize: 21, minHeight: 78))
                     .disabled(isLoading || number.isEmpty)
                     .opacity(number.isEmpty ? 0.55 : 1)
                 }

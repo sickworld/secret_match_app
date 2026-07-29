@@ -51,7 +51,7 @@ struct AdminLoginView: View {
                             .fontWeight(.bold)
                     }
                 }
-                .buttonStyle(SecretPrimaryButtonStyle())
+                .buttonStyle(SecretPrimaryButtonStyle(fontSize: 20, minHeight: 74))
                 .disabled(password.isEmpty || isLoading)
 
                 Button("Abbrechen") {

@@ -41,11 +41,13 @@ extension View {
 
 struct SecretPrimaryButtonStyle: ButtonStyle {
     var fullWidth = true
+    var fontSize: CGFloat = 16
+    var minHeight: CGFloat = 60
 
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
-            .font(.system(size: 16, weight: .bold, design: .rounded))
-            .frame(maxWidth: fullWidth ? .infinity : nil, minHeight: 60)
+            .font(.system(size: fontSize, weight: .bold, design: .rounded))
+            .frame(maxWidth: fullWidth ? .infinity : nil, minHeight: minHeight)
             .padding(.horizontal, 20)
             .foregroundStyle(.white)
             .background(

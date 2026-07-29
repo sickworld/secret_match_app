@@ -74,7 +74,7 @@ struct MatchInputBox: View {
                     Image(systemName: "paperplane.fill")
                 }
             }
-            .buttonStyle(SecretPrimaryButtonStyle())
+            .buttonStyle(SecretPrimaryButtonStyle(fontSize: 21, minHeight: 80))
             .disabled(selectedActions.isEmpty || targetNumber.isEmpty)
             .opacity(selectedActions.isEmpty || targetNumber.isEmpty ? 0.5 : 1)
 

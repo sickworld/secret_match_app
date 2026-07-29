@@ -33,10 +33,10 @@ struct CustomNumberKeyboard: View {
                                 handleTap(key)
                             }) {
                                 Text(key)
-                                    .frame(width: 104, height: 68)
+                                    .frame(maxWidth: .infinity, minHeight: 78)
                                     .background(key == "✓" ? SecretMatchTheme.primary : SecretMatchTheme.surfaceRaised)
                                     .foregroundStyle(.white)
-                                    .font(.system(size: 30, weight: .bold, design: .rounded))
+                                    .font(.system(size: 34, weight: .bold, design: .rounded))
                                     .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
                                     .overlay(
                                         RoundedRectangle(cornerRadius: 16)
@@ -50,10 +50,10 @@ struct CustomNumberKeyboard: View {
             }
 
             Text("✓  \(doneLabel)")
-                .font(.caption.weight(.semibold))
+                .font(.system(size: 16, weight: .bold, design: .rounded))
                 .foregroundStyle(SecretMatchTheme.muted)
         }
-        .frame(maxWidth: 430)
+        .frame(maxWidth: 480)
         .secretCard(cornerRadius: 22, padding: 24)
         .padding(.horizontal, 20)
     }
