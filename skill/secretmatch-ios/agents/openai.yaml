@@ -1,0 +1,4 @@
+interface:
+  display_name: "SecretMatch iOS"
+  short_description: "Build and review the SecretMatch SwiftUI app"
+  default_prompt: "Work on the SecretMatch iOS app using its SwiftUI, API, security, build, and repository conventions."

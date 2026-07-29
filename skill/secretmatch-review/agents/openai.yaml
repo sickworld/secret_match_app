@@ -1,0 +1,4 @@
+interface:
+  display_name: "SecretMatch Review"
+  short_description: "Review SecretMatch changes before delivery"
+  default_prompt: "Review the current SecretMatch changes for correctness, regressions, security, UX, and release readiness."
