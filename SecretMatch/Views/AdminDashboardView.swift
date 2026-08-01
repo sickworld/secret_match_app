@@ -24,6 +24,7 @@ struct AdminDashboardView: View {
                 header
                 liveStatus
                 metrics
+                liveFeed
                 controls
                 topPreview
                 participants
@@ -112,6 +113,118 @@ struct AdminDashboardView: View {
             metric("❤️", "Matches", api.adminDashboard?.matches ?? 0, Color(hex: "#E83E8C"))
             metric("💌", "Aktionen", api.adminDashboard?.actions ?? 0, Color(hex: "#3E9ED6"))
             metric("#️⃣", "Freigegeben", api.adminDashboard?.allowedParticipants ?? 0, Color(hex: "#E6923E"))
+        }
+    }
+
+    private var liveFeed: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            HStack(alignment: .firstTextBaseline) {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("LIVEFEED")
+                        .font(.caption.bold())
+                        .tracking(1.8)
+                        .foregroundStyle(SecretMatchTheme.secondary)
+                    Text("Was gerade passiert")
+                        .font(.title2.bold())
+                        .foregroundStyle(.white)
+                }
+                Spacer()
+                Label("alle 10 Sek.", systemImage: "dot.radiowaves.left.and.right")
+                    .font(.caption.bold())
+                    .foregroundStyle(.green)
+            }
+
+            if liveFeedEntries.isEmpty {
+                Label("Noch keine Aktionen oder Matches vorhanden.", systemImage: "waveform.path")
+                    .foregroundStyle(SecretMatchTheme.muted)
+                    .frame(maxWidth: .infinity, minHeight: 70, alignment: .leading)
+            } else {
+                ForEach(liveFeedEntries.prefix(8)) { entry in
+                    HStack(alignment: .top, spacing: 12) {
+                        Text(entry.emoji)
+                            .font(.title2)
+                            .frame(width: 44, height: 44)
+                            .background(entry.color.opacity(0.18))
+                            .clipShape(RoundedRectangle(cornerRadius: 12))
+
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text(entry.title)
+                                .font(.headline)
+                                .foregroundStyle(.white)
+                            Text(entry.detail)
+                                .font(.subheadline.weight(.semibold))
+                                .foregroundStyle(SecretMatchTheme.muted)
+                            Text(entry.createdAt)
+                                .font(.caption2.monospacedDigit())
+                                .foregroundStyle(.white.opacity(0.48))
+                        }
+                        Spacer(minLength: 0)
+                    }
+                    .padding(12)
+                    .background(entry.color.opacity(0.09))
+                    .clipShape(RoundedRectangle(cornerRadius: 14))
+                    .overlay(RoundedRectangle(cornerRadius: 14).stroke(entry.color.opacity(0.32)))
+                }
+            }
+        }
+        .secretCard(cornerRadius: 20, padding: 20)
+    }
+
+    private var liveFeedEntries: [LiveFeedEntry] {
+        let actions = api.adminActions.map { action in
+            LiveFeedEntry(
+                id: "action-\(action.id)",
+                createdAt: action.created_at,
+                emoji: actionEmoji(action.action_type),
+                title: actionTitle(action.action_type),
+                detail: "\(action.sender_number) → \(action.receiver_number)",
+                color: actionColor(action.action_type)
+            )
+        }
+        let matches = api.adminMatches.map { match in
+            let isHot = match.type == "hot" || match.type == "F-"
+            return LiveFeedEntry(
+                id: "match-\(match.id)",
+                createdAt: match.created_at,
+                emoji: isHot ? "🍆" : "❤️",
+                title: isHot ? "Fuck-Match entstanden" : "Hot-Match entstanden",
+                detail: "\(match.number_a) ↔ \(match.number_b)",
+                color: isHot ? Color(hex: "#8E63D2") : Color(hex: "#E83E8C")
+            )
+        }
+        return (actions + matches).sorted { $0.createdAt > $1.createdAt }
+    }
+
+    private func actionEmoji(_ type: String) -> String {
+        switch type {
+        case "normal": return "❤️"
+        case "hot": return "🍆"
+        case "bjob": return "👄"
+        case "hjob": return "✋"
+        case "ljob": return "👅"
+        default: return "💌"
+        }
+    }
+
+    private func actionTitle(_ type: String) -> String {
+        switch type {
+        case "normal": return "Hot-Aktion gesendet"
+        case "hot": return "Fuck-Aktion gesendet"
+        case "bjob": return "Blow-Job-Aktion gesendet"
+        case "hjob": return "Hand-Job-Aktion gesendet"
+        case "ljob": return "Lick-Job-Aktion gesendet"
+        default: return "Aktion gesendet"
+        }
+    }
+
+    private func actionColor(_ type: String) -> Color {
+        switch type {
+        case "normal": return Color(hex: "#E83E8C")
+        case "hot": return Color(hex: "#8E63D2")
+        case "bjob": return Color(hex: "#3E9ED6")
+        case "hjob": return Color(hex: "#E6923E")
+        case "ljob": return Color(hex: "#D65C8D")
+        default: return SecretMatchTheme.primary
         }
     }
 
@@ -379,6 +492,8 @@ struct AdminDashboardView: View {
         } catch {
             if showErrors { errorMessage = "Aktualisierung fehlgeschlagen." }
         }
+        try? await api.loadAdminActions()
+        try? await api.loadAdminMatches()
         isWorking = false
     }
 
@@ -441,4 +556,13 @@ struct AdminDashboardView: View {
         }
         isWorking = false
     }
+}
+
+private struct LiveFeedEntry: Identifiable {
+    let id: String
+    let createdAt: String
+    let emoji: String
+    let title: String
+    let detail: String
+    let color: Color
 }
