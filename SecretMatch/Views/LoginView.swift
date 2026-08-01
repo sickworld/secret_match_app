@@ -24,7 +24,7 @@ struct LoginView: View {
                         .scaledToFit()
                         .frame(width: 300, height: 240)
                         .shadow(color: SecretMatchTheme.primary.opacity(0.22), radius: 24)
-                        .onLongPressGesture(minimumDuration: 3) {
+                        .onTapGesture(count: 2) {
                             UIImpactFeedbackGenerator(style: .medium).impactOccurred()
                             showAdminLogin = true
                         }
