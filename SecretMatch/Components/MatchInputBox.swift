@@ -67,7 +67,7 @@ struct MatchInputBox: View {
                         }
                     }
             }
-            .padding(.top, 12)
+            .padding(.top, 24)
 
             Button(action: onSend) {
                 HStack {

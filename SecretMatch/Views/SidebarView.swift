@@ -71,6 +71,7 @@ struct SidebarView: View {
                 .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
                 .overlay(RoundedRectangle(cornerRadius: 16).stroke(SecretMatchTheme.border))
             }
+            .padding(.top, isShort ? 10 : 14)
 
             Button {
                 registerActivity()
@@ -79,6 +80,7 @@ struct SidebarView: View {
                 Label("Deine Matches", systemImage: "sparkles")
             }
             .buttonStyle(SidebarButtonStyle(compact: isShort))
+            .padding(.top, isShort ? 10 : 14)
             
             Button {
                 registerActivity()
