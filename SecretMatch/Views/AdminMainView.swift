@@ -7,6 +7,8 @@ struct AdminMainView: View {
     @State private var showAdminMatches = false
     @State private var showBillboard = false
     @State private var showAdminMenu = false
+    @State private var showLiveFeed = false
+    @State private var dashboardSection: AdminDashboardSection = .overview
 
     var body: some View {
         GeometryReader { proxy in
@@ -33,6 +35,12 @@ struct AdminMainView: View {
         .onChange(of: showAdminMatches) { _, isShown in
             if isShown { showAdminMenu = false }
         }
+        .onChange(of: showLiveFeed) { _, isShown in
+            if isShown { showAdminMenu = false }
+        }
+        .onChange(of: dashboardSection) { _, _ in
+            showAdminMenu = false
+        }
         .onChange(of: showBillboard) { _, isShown in
             if isShown { showAdminMenu = false }
         }
@@ -54,6 +62,13 @@ struct AdminMainView: View {
                 AdminMatchListView(isPresented: $showAdminMatches)
                     .environmentObject(api)
             }
+
+#if ADMIN_APP
+            if showLiveFeed {
+                AdminLiveFeedView(isPresented: $showLiveFeed)
+                    .environmentObject(api)
+            }
+#endif
         }
     }
 
@@ -96,6 +111,7 @@ struct AdminMainView: View {
             }
 
             AdminDashboardView(showBillboard: $showBillboard)
+                .environment(\.adminDashboardSection, dashboardSection)
                 .environmentObject(api)
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
@@ -127,6 +143,9 @@ struct AdminMainView: View {
             showActions: $showAdminActions,
             showMatches: $showAdminMatches,
             showBillboard: $showBillboard,
+            showLiveFeed: $showLiveFeed,
+            dashboardSection: $dashboardSection,
+            dismissMenu: { showAdminMenu = false },
             logout: { api.logout() },
             isCompact: isCompact
         )

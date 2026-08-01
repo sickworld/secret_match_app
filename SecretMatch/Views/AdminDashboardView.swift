@@ -1,7 +1,23 @@
 import SwiftUI
 
+enum AdminDashboardSection {
+    case overview, controls, participants, system
+}
+
+private struct AdminDashboardSectionKey: EnvironmentKey {
+    static let defaultValue = AdminDashboardSection.overview
+}
+
+extension EnvironmentValues {
+    var adminDashboardSection: AdminDashboardSection {
+        get { self[AdminDashboardSectionKey.self] }
+        set { self[AdminDashboardSectionKey.self] = newValue }
+    }
+}
+
 struct AdminDashboardView: View {
     @EnvironmentObject private var api: APIService
+    @Environment(\.adminDashboardSection) private var dashboardSection
     @Binding var showBillboard: Bool
 
     @State private var participantSearch = ""
@@ -21,6 +37,9 @@ struct AdminDashboardView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 22) {
+#if ADMIN_APP
+                adminAppContent
+#else
                 header
                 liveStatus
                 metrics
@@ -30,6 +49,7 @@ struct AdminDashboardView: View {
                 participants
                 systemStatus
                 resetCard
+#endif
             }
             .padding(24)
             .frame(maxWidth: 1180)
@@ -59,6 +79,44 @@ struct AdminDashboardView: View {
             resetAssistant
         }
     }
+
+#if ADMIN_APP
+    @ViewBuilder
+    private var adminAppContent: some View {
+        switch dashboardSection {
+        case .overview:
+            header
+            liveStatus
+            metrics
+            topPreview
+        case .controls:
+            sectionHeading("Eventsteuerung", subtitle: "Billboard und Testdaten verwalten")
+            controls
+            topPreview
+        case .participants:
+            sectionHeading("Teilnehmer", subtitle: "Nummern suchen, abmelden oder sperren")
+            participants
+        case .system:
+            sectionHeading("System & Reset", subtitle: "Systemzustand prüfen und Events vorbereiten")
+            systemStatus
+            resetCard
+        }
+    }
+
+    private func sectionHeading(_ title: String, subtitle: String) -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text("EVENT CONTROL")
+                .font(.caption.bold())
+                .tracking(2)
+                .foregroundStyle(SecretMatchTheme.secondary)
+            Text(title)
+                .font(.system(size: 32, weight: .bold, design: .rounded))
+                .foregroundStyle(.white)
+            Text(subtitle)
+                .foregroundStyle(SecretMatchTheme.muted)
+        }
+    }
+#endif
 
     private var liveStatus: some View {
         let online = api.adminDashboard?.billboardOnline == true

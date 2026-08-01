@@ -6,6 +6,9 @@ struct AdminSidebarView: View {
     @Binding var showActions: Bool
     @Binding var showMatches: Bool
     @Binding var showBillboard: Bool
+    @Binding var showLiveFeed: Bool
+    @Binding var dashboardSection: AdminDashboardSection
+    var dismissMenu: () -> Void = {}
     var logout: () -> Void
     var isCompact = false
 
@@ -24,6 +27,47 @@ struct AdminSidebarView: View {
                 .foregroundStyle(SecretMatchTheme.secondary)
 
             Divider().background(Color.white.opacity(0.3))
+
+#if ADMIN_APP
+            Button {
+                dashboardSection = .overview
+                dismissMenu()
+            } label: {
+                Label("Dashboard", systemImage: "gauge.with.dots.needle.50percent")
+            }
+            .buttonStyle(SidebarButtonStyle())
+
+            Button {
+                showLiveFeed = true
+            } label: {
+                Label("Livefeed", systemImage: "dot.radiowaves.left.and.right")
+            }
+            .buttonStyle(SidebarButtonStyle())
+
+            Button {
+                dashboardSection = .controls
+                dismissMenu()
+            } label: {
+                Label("Eventsteuerung", systemImage: "slider.horizontal.3")
+            }
+            .buttonStyle(SidebarButtonStyle())
+
+            Button {
+                dashboardSection = .participants
+                dismissMenu()
+            } label: {
+                Label("Teilnehmer", systemImage: "person.3.fill")
+            }
+            .buttonStyle(SidebarButtonStyle())
+
+            Button {
+                dashboardSection = .system
+                dismissMenu()
+            } label: {
+                Label("System & Reset", systemImage: "gearshape.2.fill")
+            }
+            .buttonStyle(SidebarButtonStyle())
+#endif
 
             Button {
                 showActions = true
