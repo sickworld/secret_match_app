@@ -104,6 +104,10 @@ struct SidebarView: View {
             }
             .buttonStyle(SidebarButtonStyle(compact: isShort))
 
+            if !isCompact {
+                Spacer(minLength: isShort ? 12 : 24)
+            }
+
             Button {
                 logout()
             } label: {
@@ -111,12 +115,10 @@ struct SidebarView: View {
             }
             .buttonStyle(LogoutButtonStyle(compact: isShort))
 
-            if !isCompact {
-                Spacer()
-            }
-
-            VStack(alignment: isCompact ? .center : .leading, spacing: 18) {
-                Spacer()
+            HStack {
+                if isCompact {
+                    Spacer()
+                }
                 Image("hot-chili")
                     .resizable()
                     .scaledToFit()
@@ -126,8 +128,10 @@ struct SidebarView: View {
                     )
                     .shadow(color: SecretMatchTheme.primary.opacity(0.18), radius: 12)
                     .accessibilityLabel("Hot Chili Events")
+                if isCompact {
+                    Spacer()
+                }
             }
-            .frame(maxWidth: isCompact ? .infinity : nil)
         }
         .padding(isCompact ? 16 : (isShort ? 14 : 22))
         .frame(width: isCompact ? nil : 304)

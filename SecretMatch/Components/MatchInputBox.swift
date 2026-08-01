@@ -67,6 +67,7 @@ struct MatchInputBox: View {
                         }
                     }
             }
+            .padding(.top, 12)
 
             Button(action: onSend) {
                 HStack {
@@ -78,6 +79,7 @@ struct MatchInputBox: View {
             .buttonStyle(SecretPrimaryButtonStyle(fontSize: 21, minHeight: 80))
             .disabled(selectedActions.isEmpty || targetNumber.isEmpty)
             .opacity(selectedActions.isEmpty || targetNumber.isEmpty ? 0.5 : 1)
+            .padding(.top, 6)
 
             if !responseMessage.isEmpty {
                 Text(responseMessage)

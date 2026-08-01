@@ -75,7 +75,7 @@ struct RulesSlideshowView: View {
             } else {
                 HStack(spacing: 20) {
                     header(isLeading: true)
-                        .frame(width: min(240, proxy.size.width * 0.24))
+                        .frame(width: min(210, proxy.size.width * 0.22))
 
                     VStack(spacing: 16) {
                         ScrollView {
@@ -125,20 +125,15 @@ struct RulesSlideshowView: View {
             if isCompact {
                 ruleIcon(size: 112, iconSize: 48)
                 ruleCopy(isCompact: true)
-                highlights
+                highlights(isCompact: true)
             } else {
-                HStack(alignment: .top, spacing: 24) {
-                    ruleIcon(size: 96, iconSize: 40)
-
-                    VStack(alignment: .leading, spacing: 18) {
-                        ruleCopy(isCompact: false)
-                        highlights
-                    }
-                }
+                ruleIcon(size: 116, iconSize: 50)
+                ruleCopy(isCompact: false)
+                highlights(isCompact: false)
             }
         }
-        .frame(maxWidth: 720)
-        .secretCard(cornerRadius: 24, padding: isCompact ? 22 : 26)
+        .frame(maxWidth: isCompact ? 720 : 640)
+        .secretCard(cornerRadius: 24, padding: isCompact ? 22 : 28)
         .padding(.horizontal, isCompact ? 24 : 0)
         .animation(.easeOut(duration: 0.24), value: selectedIndex)
     }
@@ -157,40 +152,40 @@ struct RulesSlideshowView: View {
     }
 
     private func ruleCopy(isCompact: Bool) -> some View {
-        VStack(alignment: isCompact ? .center : .leading, spacing: 10) {
+        VStack(spacing: isCompact ? 10 : 12) {
             Text(selectedSlide.eyebrow)
                 .font(.caption2.bold())
                 .tracking(2)
                 .foregroundStyle(SecretMatchTheme.secondary)
 
             Text(selectedSlide.title)
-                .font(.system(size: isCompact ? 25 : 29, weight: .heavy, design: .rounded))
+                .font(.system(size: isCompact ? 25 : 32, weight: .heavy, design: .rounded))
                 .foregroundStyle(.white)
-                .multilineTextAlignment(isCompact ? .center : .leading)
+                .multilineTextAlignment(.center)
                 .minimumScaleFactor(0.82)
 
             Text(selectedSlide.text)
-                .font(.system(size: 18, weight: .medium, design: .rounded))
+                .font(.system(size: isCompact ? 18 : 19, weight: .medium, design: .rounded))
                 .foregroundStyle(SecretMatchTheme.muted)
-                .multilineTextAlignment(isCompact ? .center : .leading)
+                .multilineTextAlignment(.center)
                 .lineSpacing(3)
-                .frame(maxWidth: 520, alignment: isCompact ? .center : .leading)
+                .frame(maxWidth: 540)
         }
     }
 
-    private var highlights: some View {
+    private func highlights(isCompact: Bool) -> some View {
         VStack(spacing: 10) {
             ForEach(selectedSlide.highlights, id: \.self) { highlight in
                 HStack(spacing: 10) {
                     Image(systemName: "checkmark.circle.fill")
                         .foregroundStyle(SecretMatchTheme.primary)
                     Text(highlight)
-                        .font(.system(size: 16, weight: .semibold, design: .rounded))
+                        .font(.system(size: isCompact ? 16 : 18, weight: .semibold, design: .rounded))
                         .foregroundStyle(.white)
                     Spacer()
                 }
                 .padding(.horizontal, 14)
-                .frame(maxWidth: .infinity, minHeight: 44)
+                .frame(maxWidth: .infinity, minHeight: isCompact ? 44 : 50)
                 .background(SecretMatchTheme.surfaceRaised)
                 .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
                 .overlay(RoundedRectangle(cornerRadius: 14).stroke(SecretMatchTheme.border))
