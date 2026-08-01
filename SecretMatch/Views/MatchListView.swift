@@ -6,6 +6,7 @@ struct MatchListView: View {
     @Environment(\.dismiss) private var dismiss
     @Binding var isPresented: Bool
     @State private var selectedType = "all"
+    @State private var loadErrorMessage: String?
 
     var groupedMatches: [String: [Match]] {
         Dictionary(grouping: matches, by: { $0.type })
@@ -13,7 +14,9 @@ struct MatchListView: View {
 
     var body: some View {
         ZStack {
-            Color.black.opacity(0.6).ignoresSafeArea()
+            Color.black.opacity(0.6)
+                .ignoresSafeArea()
+                .onTapGesture { isPresented = false }
 
             VStack(spacing: 18) {
                 HStack(alignment: .top) {
@@ -38,7 +41,9 @@ struct MatchListView: View {
                     matchFilterButton("🍆 Fuck \(hotCount)", type: "hot", color: Color(hex: "#8E63D2"))
                 }
 
-                if filteredMatches.isEmpty {
+                if let loadErrorMessage {
+                    loadErrorState(message: loadErrorMessage)
+                } else if filteredMatches.isEmpty {
                     ContentUnavailableView(
                         selectedType == "all" ? "Noch keine Matches" : "Keine Matches dieses Typs",
                         systemImage: "heart",
@@ -116,6 +121,21 @@ struct MatchListView: View {
         }
     }
 
+    private func loadErrorState(message: String) -> some View {
+        ContentUnavailableView {
+            Label("Matches konnten nicht geladen werden", systemImage: "wifi.exclamationmark")
+        } description: {
+            Text(message)
+        } actions: {
+            Button("Erneut versuchen") {
+                Task { await loadMatches() }
+            }
+            .buttonStyle(SecretPrimaryButtonStyle(fullWidth: false))
+        }
+        .foregroundStyle(.white)
+        .frame(maxHeight: .infinity)
+    }
+
     private var filteredMatches: [Match] {
         matches.filter { selectedType == "all" || $0.type == selectedType }
     }
@@ -148,10 +168,11 @@ struct MatchListView: View {
 
     @MainActor
     private func loadMatches() async {
+        loadErrorMessage = nil
         do {
             matches = try await api.loadMatches()
         } catch {
-            matches = []
+            loadErrorMessage = "Bitte prüfe die Netzwerkverbindung und versuche es erneut."
         }
     }
 

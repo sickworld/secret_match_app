@@ -55,12 +55,13 @@ struct MatchView: View {
     var body: some View {
         GeometryReader { proxy in
             let isCompact = proxy.size.width < proxy.size.height
+            let isShort = !isCompact && proxy.size.height < 850
 
-            content(isCompact: isCompact)
+            content(isCompact: isCompact, isShort: isShort)
         }
     }
 
-    private func content(isCompact: Bool) -> some View {
+    private func content(isCompact: Bool, isShort: Bool) -> some View {
         ZStack {
             BrandBackground()
 
@@ -102,41 +103,21 @@ struct MatchView: View {
                 .zIndex(30)
             }
 
-            mainLayout(isCompact: isCompact)
+            mainLayout(isCompact: isCompact, isShort: isShort)
                 .onAppear {
                     resetInactivityTimer()
                 }
             
             if showMatchesOverlay {
-                Color.black.opacity(0.6)
-                    .ignoresSafeArea()
-                    .onTapGesture {
-                        showMatchesOverlay = false
-                        resetInactivityTimer()
-                    }
-
                 MatchListView(isPresented: $showMatchesOverlay)
                     .environmentObject(api)
                     .zIndex(5)
-                    .onTapGesture {
-                        showMatchesOverlay = false
-                        resetInactivityTimer()
-                    }
             }
 
             if showActionsOverlay {
-                Color.black.opacity(0.6).ignoresSafeArea().onTapGesture {
-                    showActionsOverlay = false
-                    resetInactivityTimer()
-                }
-
                 ActionListView(isPresented: $showActionsOverlay)
                     .environmentObject(api)
                     .zIndex(5)
-                    .onTapGesture {
-                        showActionsOverlay = false
-                        resetInactivityTimer()
-                    }
             }
 
             if showGuideOverlay {
@@ -181,11 +162,11 @@ struct MatchView: View {
     }
 
     @ViewBuilder
-    private func mainLayout(isCompact: Bool) -> some View {
+    private func mainLayout(isCompact: Bool, isShort: Bool) -> some View {
         if isCompact {
             ScrollView {
                 VStack(spacing: 0) {
-                    sidebar(isCompact: true)
+                    sidebar(isCompact: true, isShort: false)
 
                     MatchInputBox(
                         targetNumber: $targetNumber,
@@ -199,7 +180,7 @@ struct MatchView: View {
             }
         } else {
             HStack(spacing: 0) {
-                sidebar(isCompact: false)
+                sidebar(isCompact: false, isShort: isShort)
 
                 Divider().background(Color.white.opacity(0.3))
 
@@ -219,7 +200,7 @@ struct MatchView: View {
         }
     }
 
-    private func sidebar(isCompact: Bool) -> some View {
+    private func sidebar(isCompact: Bool, isShort: Bool) -> some View {
         SidebarView(
             secondsRemaining: secondsRemaining,
             registerActivity: resetInactivityTimer,
@@ -228,7 +209,8 @@ struct MatchView: View {
             showActionsOverlay: $showActionsOverlay,
             showGuideOverlay: $showGuideOverlay,
             showRulesOverlay: $showRulesOverlay,
-            isCompact: isCompact
+            isCompact: isCompact,
+            isShort: isShort
         )
     }
 

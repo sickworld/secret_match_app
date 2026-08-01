@@ -6,6 +6,7 @@ struct AdminMatchListView: View {
     @State private var searchText = ""
     @State private var selectedType = "all"
     @State private var pendingDelete: AdminMatch?
+    @State private var loadErrorMessage: String?
 
     var body: some View {
         ZStack {
@@ -58,7 +59,9 @@ struct AdminMatchListView: View {
                     .frame(maxWidth: 330)
                 }
 
-                if filteredMatches.isEmpty {
+                if let loadErrorMessage {
+                    loadErrorState(message: loadErrorMessage)
+                } else if filteredMatches.isEmpty {
                     ContentUnavailableView("Keine Matches", systemImage: "heart.slash",
                                            description: Text("Suche oder Filter anpassen."))
                         .foregroundStyle(.white)
@@ -72,7 +75,7 @@ struct AdminMatchListView: View {
                         }
                         .padding(.vertical, 2)
                     }
-                    .refreshable { await api.loadAdminMatches() }
+                    .refreshable { await loadMatches() }
                 }
             }
             .frame(maxWidth: 1040, maxHeight: 780)
@@ -80,7 +83,7 @@ struct AdminMatchListView: View {
             .padding(24)
         }
         .task {
-            await api.loadAdminMatches()
+            await loadMatches()
         }
         .alert("Match löschen?", isPresented: Binding(
             get: { pendingDelete != nil },
@@ -94,6 +97,31 @@ struct AdminMatchListView: View {
             }
         } message: {
             Text("Dieser Match-Eintrag wird dauerhaft entfernt.")
+        }
+    }
+
+    private func loadErrorState(message: String) -> some View {
+        ContentUnavailableView {
+            Label("Matches konnten nicht geladen werden", systemImage: "wifi.exclamationmark")
+        } description: {
+            Text(message)
+        } actions: {
+            Button("Erneut versuchen") {
+                Task { await loadMatches() }
+            }
+            .buttonStyle(SecretPrimaryButtonStyle(fullWidth: false))
+        }
+        .foregroundStyle(.white)
+        .frame(maxHeight: .infinity)
+    }
+
+    @MainActor
+    private func loadMatches() async {
+        loadErrorMessage = nil
+        do {
+            try await api.loadAdminMatches()
+        } catch {
+            loadErrorMessage = "Bitte Admin-Anmeldung und Netzwerkverbindung prüfen."
         }
     }
 

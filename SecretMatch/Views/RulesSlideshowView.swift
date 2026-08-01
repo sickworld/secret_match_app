@@ -62,21 +62,41 @@ struct RulesSlideshowView: View {
         GeometryReader { proxy in
             let isCompact = proxy.size.width < proxy.size.height
 
-            VStack(spacing: isCompact ? 18 : 22) {
-                header
-                slideCard(isCompact: isCompact)
-                controls
+            if isCompact {
+                ScrollView {
+                    VStack(spacing: 18) {
+                        header(isLeading: false)
+                        slideCard(isCompact: true)
+                        controls
+                    }
+                    .padding(18)
+                    .frame(maxWidth: .infinity)
+                }
+            } else {
+                HStack(spacing: 20) {
+                    header(isLeading: true)
+                        .frame(width: min(240, proxy.size.width * 0.24))
+
+                    VStack(spacing: 16) {
+                        ScrollView {
+                            slideCard(isCompact: false)
+                                .padding(.vertical, 4)
+                        }
+                        controls
+                    }
+                    .frame(maxWidth: 760)
+                }
+                .padding(24)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
-            .padding(isCompact ? 18 : 30)
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
         .onTapGesture {
             registerActivity()
         }
     }
 
-    private var header: some View {
-        VStack(spacing: 12) {
+    private func header(isLeading: Bool) -> some View {
+        VStack(alignment: isLeading ? .leading : .center, spacing: 12) {
             HStack(spacing: 8) {
                 Image(systemName: "list.bullet.clipboard.fill")
                 Text("SPIELREGELN")
@@ -92,68 +112,90 @@ struct RulesSlideshowView: View {
             Text("So funktioniert das Event")
                 .font(.system(size: 32, weight: .bold, design: .rounded))
                 .foregroundStyle(.white)
-                .multilineTextAlignment(.center)
+                .multilineTextAlignment(isLeading ? .leading : .center)
         }
-        .padding(.horizontal, 24)
+        .padding(.horizontal, isLeading ? 0 : 24)
     }
 
+    @ViewBuilder
     private func slideCard(isCompact: Bool) -> some View {
         VStack(spacing: isCompact ? 18 : 24) {
             slideProgress
 
-            ZStack {
-                Circle()
-                    .fill(SecretMatchTheme.primary.opacity(0.14))
-                    .frame(width: 112, height: 112)
+            if isCompact {
+                ruleIcon(size: 112, iconSize: 48)
+                ruleCopy(isCompact: true)
+                highlights
+            } else {
+                HStack(alignment: .top, spacing: 24) {
+                    ruleIcon(size: 96, iconSize: 40)
 
-                Image(systemName: selectedSlide.icon)
-                    .font(.system(size: 48, weight: .bold))
-                    .foregroundStyle(SecretMatchTheme.secondary)
-            }
-            .padding(.top, 4)
-
-            VStack(spacing: 10) {
-                Text(selectedSlide.eyebrow)
-                    .font(.caption2.bold())
-                    .tracking(2)
-                    .foregroundStyle(SecretMatchTheme.secondary)
-
-                Text(selectedSlide.title)
-                    .font(.system(size: isCompact ? 25 : 31, weight: .heavy, design: .rounded))
-                    .foregroundStyle(.white)
-                    .multilineTextAlignment(.center)
-                    .minimumScaleFactor(0.82)
-
-                Text(selectedSlide.text)
-                    .font(.system(size: 18, weight: .medium, design: .rounded))
-                    .foregroundStyle(SecretMatchTheme.muted)
-                    .multilineTextAlignment(.center)
-                    .lineSpacing(3)
-                    .frame(maxWidth: 520)
-            }
-
-            VStack(spacing: 10) {
-                ForEach(selectedSlide.highlights, id: \.self) { highlight in
-                    HStack(spacing: 10) {
-                        Image(systemName: "checkmark.circle.fill")
-                            .foregroundStyle(SecretMatchTheme.primary)
-                        Text(highlight)
-                            .font(.system(size: 16, weight: .semibold, design: .rounded))
-                            .foregroundStyle(.white)
-                        Spacer()
+                    VStack(alignment: .leading, spacing: 18) {
+                        ruleCopy(isCompact: false)
+                        highlights
                     }
-                    .padding(.horizontal, 14)
-                    .frame(maxWidth: .infinity, minHeight: 44)
-                    .background(SecretMatchTheme.surfaceRaised)
-                    .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
-                    .overlay(RoundedRectangle(cornerRadius: 14).stroke(SecretMatchTheme.border))
                 }
             }
         }
-        .frame(maxWidth: 650)
-        .secretCard(cornerRadius: 24, padding: isCompact ? 22 : 30)
-        .padding(.horizontal, 24)
+        .frame(maxWidth: 720)
+        .secretCard(cornerRadius: 24, padding: isCompact ? 22 : 26)
+        .padding(.horizontal, isCompact ? 24 : 0)
         .animation(.easeOut(duration: 0.24), value: selectedIndex)
+    }
+
+    private func ruleIcon(size: CGFloat, iconSize: CGFloat) -> some View {
+        ZStack {
+            Circle()
+                .fill(SecretMatchTheme.primary.opacity(0.14))
+                .frame(width: size, height: size)
+
+            Image(systemName: selectedSlide.icon)
+                .font(.system(size: iconSize, weight: .bold))
+                .foregroundStyle(SecretMatchTheme.secondary)
+        }
+        .padding(.top, 4)
+    }
+
+    private func ruleCopy(isCompact: Bool) -> some View {
+        VStack(alignment: isCompact ? .center : .leading, spacing: 10) {
+            Text(selectedSlide.eyebrow)
+                .font(.caption2.bold())
+                .tracking(2)
+                .foregroundStyle(SecretMatchTheme.secondary)
+
+            Text(selectedSlide.title)
+                .font(.system(size: isCompact ? 25 : 29, weight: .heavy, design: .rounded))
+                .foregroundStyle(.white)
+                .multilineTextAlignment(isCompact ? .center : .leading)
+                .minimumScaleFactor(0.82)
+
+            Text(selectedSlide.text)
+                .font(.system(size: 18, weight: .medium, design: .rounded))
+                .foregroundStyle(SecretMatchTheme.muted)
+                .multilineTextAlignment(isCompact ? .center : .leading)
+                .lineSpacing(3)
+                .frame(maxWidth: 520, alignment: isCompact ? .center : .leading)
+        }
+    }
+
+    private var highlights: some View {
+        VStack(spacing: 10) {
+            ForEach(selectedSlide.highlights, id: \.self) { highlight in
+                HStack(spacing: 10) {
+                    Image(systemName: "checkmark.circle.fill")
+                        .foregroundStyle(SecretMatchTheme.primary)
+                    Text(highlight)
+                        .font(.system(size: 16, weight: .semibold, design: .rounded))
+                        .foregroundStyle(.white)
+                    Spacer()
+                }
+                .padding(.horizontal, 14)
+                .frame(maxWidth: .infinity, minHeight: 44)
+                .background(SecretMatchTheme.surfaceRaised)
+                .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+                .overlay(RoundedRectangle(cornerRadius: 14).stroke(SecretMatchTheme.border))
+            }
+        }
     }
 
     private var slideProgress: some View {

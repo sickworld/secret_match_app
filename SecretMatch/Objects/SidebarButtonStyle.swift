@@ -1,16 +1,18 @@
 import SwiftUI
 
 struct SidebarButtonStyle: ButtonStyle {
+    var compact = false
+
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
-            .font(.system(size: 19, weight: .bold, design: .rounded))
-            .frame(maxWidth: .infinity, minHeight: 66, alignment: .leading)
-            .padding(.horizontal, 19)
+            .font(.system(size: compact ? 17 : 19, weight: .bold, design: .rounded))
+            .frame(maxWidth: .infinity, minHeight: compact ? 52 : 66, alignment: .leading)
+            .padding(.horizontal, compact ? 15 : 19)
             .background(configuration.isPressed ? SecretMatchTheme.primary.opacity(0.20) : SecretMatchTheme.surfaceRaised)
             .foregroundStyle(.white)
-            .clipShape(RoundedRectangle(cornerRadius: 17, style: .continuous))
+            .clipShape(RoundedRectangle(cornerRadius: compact ? 14 : 17, style: .continuous))
             .overlay(
-                RoundedRectangle(cornerRadius: 17, style: .continuous)
+                RoundedRectangle(cornerRadius: compact ? 14 : 17, style: .continuous)
                     .stroke(configuration.isPressed ? SecretMatchTheme.primary.opacity(0.7) : SecretMatchTheme.border, lineWidth: 1.2)
             )
             .scaleEffect(configuration.isPressed ? 0.98 : 1)

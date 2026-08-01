@@ -6,6 +6,7 @@ struct AdminActionListView: View {
     @State private var searchText = ""
     @State private var selectedType = "all"
     @State private var pendingDelete: AdminAction?
+    @State private var loadErrorMessage: String?
 
     var body: some View {
         ZStack {
@@ -64,7 +65,9 @@ struct AdminActionListView: View {
                     .clipShape(RoundedRectangle(cornerRadius: 14))
                 }
 
-                if filteredActions.isEmpty {
+                if let loadErrorMessage {
+                    loadErrorState(message: loadErrorMessage)
+                } else if filteredActions.isEmpty {
                     ContentUnavailableView("Keine Aktionen", systemImage: "paperplane",
                                            description: Text("Suche oder Filter anpassen."))
                         .foregroundStyle(.white)
@@ -78,7 +81,7 @@ struct AdminActionListView: View {
                         }
                         .padding(.vertical, 2)
                     }
-                    .refreshable { await api.loadAdminActions() }
+                    .refreshable { await loadActions() }
                 }
             }
             .frame(maxWidth: 1040, maxHeight: 780)
@@ -86,7 +89,7 @@ struct AdminActionListView: View {
             .padding(24)
         }
         .task {
-            await api.loadAdminActions()
+            await loadActions()
         }
         .alert("Aktion löschen?", isPresented: Binding(
             get: { pendingDelete != nil },
@@ -100,6 +103,31 @@ struct AdminActionListView: View {
             }
         } message: {
             Text("Dieser Eintrag wird dauerhaft entfernt.")
+        }
+    }
+
+    private func loadErrorState(message: String) -> some View {
+        ContentUnavailableView {
+            Label("Aktionen konnten nicht geladen werden", systemImage: "wifi.exclamationmark")
+        } description: {
+            Text(message)
+        } actions: {
+            Button("Erneut versuchen") {
+                Task { await loadActions() }
+            }
+            .buttonStyle(SecretPrimaryButtonStyle(fullWidth: false))
+        }
+        .foregroundStyle(.white)
+        .frame(maxHeight: .infinity)
+    }
+
+    @MainActor
+    private func loadActions() async {
+        loadErrorMessage = nil
+        do {
+            try await api.loadAdminActions()
+        } catch {
+            loadErrorMessage = "Bitte Admin-Anmeldung und Netzwerkverbindung prüfen."
         }
     }
 

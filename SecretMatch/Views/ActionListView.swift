@@ -5,6 +5,7 @@ struct ActionListView: View {
     @Binding var isPresented: Bool
     @Environment(\.dismiss) private var dismiss
     @State private var selectedDirection = "all"
+    @State private var loadErrorMessage: String?
 
     var groupedActions: [String: [SecretAction]] {
         Dictionary(
@@ -18,6 +19,7 @@ struct ActionListView: View {
             // Hintergrund
             Color.black.opacity(0.6)
                 .ignoresSafeArea()
+                .onTapGesture { isPresented = false }
 
             VStack(spacing: 18) {
                 HStack(alignment: .top) {
@@ -42,7 +44,9 @@ struct ActionListView: View {
                     actionFilterButton("Gesendet \(sentCount)", direction: "sent", color: Color(hex: "#3E9ED6"))
                 }
 
-                if filteredActions.isEmpty {
+                if let loadErrorMessage {
+                    loadErrorState(message: loadErrorMessage)
+                } else if filteredActions.isEmpty {
                     ContentUnavailableView(
                         selectedDirection == "all" ? "Noch keine Aktionen" : "Hier ist noch nichts",
                         systemImage: "paperplane",
@@ -59,13 +63,7 @@ struct ActionListView: View {
                         }
                         .padding(.vertical, 2)
                     }
-                    .refreshable {
-                        do {
-                            api.actions = try await api.loadActions()
-                        } catch {
-                            api.actions = []
-                        }
-                    }
+                    .refreshable { await loadActions() }
                 }
             }
             .frame(maxWidth: 980, maxHeight: 760)
@@ -75,11 +73,7 @@ struct ActionListView: View {
         .task(id: isPresented) {
             guard isPresented else { return }
 
-            do {
-                api.actions = try await api.loadActions()
-            } catch {
-                api.actions = []
-            }
+            await loadActions()
         }
     }
 
@@ -94,6 +88,31 @@ struct ActionListView: View {
                 .frame(width: 50, height: 50)
                 .background(SecretMatchTheme.surfaceRaised)
                 .clipShape(Circle())
+        }
+    }
+
+    private func loadErrorState(message: String) -> some View {
+        ContentUnavailableView {
+            Label("Aktionen konnten nicht geladen werden", systemImage: "wifi.exclamationmark")
+        } description: {
+            Text(message)
+        } actions: {
+            Button("Erneut versuchen") {
+                Task { await loadActions() }
+            }
+            .buttonStyle(SecretPrimaryButtonStyle(fullWidth: false))
+        }
+        .foregroundStyle(.white)
+        .frame(maxHeight: .infinity)
+    }
+
+    @MainActor
+    private func loadActions() async {
+        loadErrorMessage = nil
+        do {
+            api.actions = try await api.loadActions()
+        } catch {
+            loadErrorMessage = "Bitte prüfe die Netzwerkverbindung und versuche es erneut."
         }
     }
 

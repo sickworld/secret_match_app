@@ -142,41 +142,29 @@ class APIService: ObservableObject {
     }
     
     @MainActor
-    func loadAdminActions() async {
+    func loadAdminActions() async throws {
         let url = baseURL.appendingPathComponent("admin/actions")
 
-        do {
-            let (data, response) = try await URLSession.shared.data(for: adminRequest(url: url))
-            guard let http = response as? HTTPURLResponse, http.statusCode == 200 else {
-                handleExpiredAdminToken(response)
-                print("❌ AdminActions HTTP Fehler")
-                return
-            }
-
-            adminActions = try JSONDecoder().decode([AdminAction].self, from: data)
-        } catch {
-            print("❌ AdminActions Fehler:", error.localizedDescription)
-            adminActions = []
+        let (data, response) = try await URLSession.shared.data(for: adminRequest(url: url))
+        guard let http = response as? HTTPURLResponse, http.statusCode == 200 else {
+            handleExpiredAdminToken(response)
+            throw URLError(.badServerResponse)
         }
+
+        adminActions = try JSONDecoder().decode([AdminAction].self, from: data)
     }
     
     @MainActor
-    func loadAdminMatches() async {
+    func loadAdminMatches() async throws {
         let url = baseURL.appendingPathComponent("admin/matches")
 
-        do {
-            let (data, response) = try await URLSession.shared.data(for: adminRequest(url: url))
-            guard let http = response as? HTTPURLResponse, http.statusCode == 200 else {
-                handleExpiredAdminToken(response)
-                print("❌ AdminMatches HTTP Fehler")
-                return
-            }
-
-            adminMatches = try JSONDecoder().decode([AdminMatch].self, from: data)
-        } catch {
-            print("❌ AdminMatches Fehler:", error.localizedDescription)
-            adminMatches = []
+        let (data, response) = try await URLSession.shared.data(for: adminRequest(url: url))
+        guard let http = response as? HTTPURLResponse, http.statusCode == 200 else {
+            handleExpiredAdminToken(response)
+            throw URLError(.badServerResponse)
         }
+
+        adminMatches = try JSONDecoder().decode([AdminMatch].self, from: data)
     }
 
     func createBillboardAccessURL() async throws -> URL {

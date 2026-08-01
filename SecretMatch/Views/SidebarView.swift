@@ -10,14 +10,15 @@ struct SidebarView: View {
     @Binding var showGuideOverlay: Bool
     @Binding var showRulesOverlay: Bool
     var isCompact = false
+    var isShort = false
 
     var body: some View {
-        VStack(alignment: .leading, spacing: isCompact ? 14 : 20) {
+        VStack(alignment: .leading, spacing: isCompact ? 14 : (isShort ? 10 : 20)) {
             Image("logo")
                 .resizable()
                 .scaledToFit()
-                .frame(maxWidth: isCompact ? 132 : 174)
-                .frame(height: isCompact ? 86 : 142)
+                .frame(maxWidth: isCompact ? 132 : (isShort ? 142 : 174))
+                .frame(height: isCompact ? 86 : (isShort ? 86 : 142))
                 .shadow(color: SecretMatchTheme.primary.opacity(0.16), radius: 18)
 
             HStack(spacing: 10) {
@@ -35,7 +36,7 @@ struct SidebarView: View {
                     .monospacedDigit()
             }
             .padding(.horizontal, 16)
-            .frame(maxWidth: .infinity, minHeight: 48)
+            .frame(maxWidth: .infinity, minHeight: isShort ? 42 : 48)
             .background(
                 (secondsRemaining <= 10 ? SecretMatchTheme.secondary : SecretMatchTheme.primary)
                     .opacity(0.14)
@@ -77,7 +78,7 @@ struct SidebarView: View {
             } label: {
                 Label("Deine Matches", systemImage: "sparkles")
             }
-            .buttonStyle(SidebarButtonStyle())
+            .buttonStyle(SidebarButtonStyle(compact: isShort))
             
             Button {
                 registerActivity()
@@ -85,7 +86,7 @@ struct SidebarView: View {
             } label: {
                 Label("Deine Aktionen", systemImage: "paperplane.fill")
             }
-            .buttonStyle(SidebarButtonStyle())
+            .buttonStyle(SidebarButtonStyle(compact: isShort))
 
             Button {
                 registerActivity()
@@ -93,7 +94,7 @@ struct SidebarView: View {
             } label: {
                 Label("So funktioniert's", systemImage: "questionmark.circle.fill")
             }
-            .buttonStyle(SidebarButtonStyle())
+            .buttonStyle(SidebarButtonStyle(compact: isShort))
 
             Button {
                 registerActivity()
@@ -101,14 +102,14 @@ struct SidebarView: View {
             } label: {
                 Label("Spielregeln", systemImage: "list.bullet.clipboard.fill")
             }
-            .buttonStyle(SidebarButtonStyle())
+            .buttonStyle(SidebarButtonStyle(compact: isShort))
 
             Button {
                 logout()
             } label: {
                 Label("Abmelden", systemImage: "rectangle.portrait.and.arrow.right")
             }
-            .buttonStyle(LogoutButtonStyle())
+            .buttonStyle(LogoutButtonStyle(compact: isShort))
 
             if !isCompact {
                 Spacer()
@@ -119,13 +120,16 @@ struct SidebarView: View {
                 Image("hot-chili")
                     .resizable()
                     .scaledToFit()
-                    .frame(width: isCompact ? 82 : 112, height: isCompact ? 56 : 78)
+                    .frame(
+                        width: isCompact ? 82 : (isShort ? 72 : 112),
+                        height: isCompact ? 56 : (isShort ? 46 : 78)
+                    )
                     .shadow(color: SecretMatchTheme.primary.opacity(0.18), radius: 12)
                     .accessibilityLabel("Hot Chili Events")
             }
             .frame(maxWidth: isCompact ? .infinity : nil)
         }
-        .padding(isCompact ? 16 : 22)
+        .padding(isCompact ? 16 : (isShort ? 14 : 22))
         .frame(width: isCompact ? nil : 304)
         .frame(maxWidth: isCompact ? .infinity : nil)
         .background(SecretMatchTheme.surface.opacity(0.97))
