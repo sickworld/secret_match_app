@@ -16,6 +16,7 @@ struct MatchInputBox: View {
     @Binding var responseMessage: String
     let onSend: () -> Void
     var fillsAvailableSpace = false
+    var availableHeight: CGFloat?
 
     private let options = [
         ActionOption(type: "normal", title: "Hot Match", emoji: "❤️", color: Color(hex: "#E83E8C")),
@@ -26,7 +27,7 @@ struct MatchInputBox: View {
     ]
 
     private var content: some View {
-        VStack(spacing: 26) {
+        VStack(spacing: 0) {
             VStack(spacing: 6) {
                 Text("MAKE A MOVE")
                     .font(.caption2.bold())
@@ -43,11 +44,15 @@ struct MatchInputBox: View {
                     .multilineTextAlignment(.center)
             }
 
+            Spacer(minLength: fillsAvailableSpace ? 22 : 26)
+
             LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 12) {
                 ForEach(options) { option in
                     selectionButton(for: option)
                 }
             }
+
+            Spacer(minLength: fillsAvailableSpace ? 34 : 26)
 
             VStack(alignment: .leading, spacing: 8) {
                 Text("ZIEL-NUMMER")
@@ -67,7 +72,8 @@ struct MatchInputBox: View {
                         }
                     }
             }
-            .padding(.top, 24)
+
+            Spacer(minLength: fillsAvailableSpace ? 28 : 26)
 
             Button(action: onSend) {
                 HStack {
@@ -79,9 +85,10 @@ struct MatchInputBox: View {
             .buttonStyle(SecretPrimaryButtonStyle(fontSize: 21, minHeight: 80))
             .disabled(selectedActions.isEmpty || targetNumber.isEmpty)
             .opacity(selectedActions.isEmpty || targetNumber.isEmpty ? 0.5 : 1)
-            .padding(.top, 6)
 
             if !responseMessage.isEmpty {
+                Spacer(minLength: 20)
+
                 Text(responseMessage)
                     .font(.subheadline.weight(.semibold))
                     .foregroundStyle(.white)
@@ -93,7 +100,10 @@ struct MatchInputBox: View {
                     .overlay(RoundedRectangle(cornerRadius: 14).stroke(SecretMatchTheme.primary.opacity(0.3)))
             }
         }
-        .frame(maxWidth: 780)
+        .frame(
+            maxWidth: 780,
+            minHeight: fillsAvailableSpace ? max(0, (availableHeight ?? 0) - 54) : nil
+        )
     }
 
     @ViewBuilder

@@ -57,11 +57,11 @@ struct MatchView: View {
             let isCompact = proxy.size.width < proxy.size.height
             let isShort = !isCompact && proxy.size.height < 850
 
-            content(isCompact: isCompact, isShort: isShort)
+            content(isCompact: isCompact, isShort: isShort, availableHeight: proxy.size.height)
         }
     }
 
-    private func content(isCompact: Bool, isShort: Bool) -> some View {
+    private func content(isCompact: Bool, isShort: Bool, availableHeight: CGFloat) -> some View {
         ZStack {
             BrandBackground()
 
@@ -103,7 +103,7 @@ struct MatchView: View {
                 .zIndex(30)
             }
 
-            mainLayout(isCompact: isCompact, isShort: isShort)
+            mainLayout(isCompact: isCompact, isShort: isShort, availableHeight: availableHeight)
                 .onAppear {
                     resetInactivityTimer()
                 }
@@ -162,7 +162,7 @@ struct MatchView: View {
     }
 
     @ViewBuilder
-    private func mainLayout(isCompact: Bool, isShort: Bool) -> some View {
+    private func mainLayout(isCompact: Bool, isShort: Bool, availableHeight: CGFloat) -> some View {
         if isCompact {
             ScrollView {
                 VStack(spacing: 0) {
@@ -191,7 +191,8 @@ struct MatchView: View {
                         selectedActions: $selectedActions,
                         responseMessage: $responseMessage,
                         onSend: sendInteractions,
-                        fillsAvailableSpace: true
+                        fillsAvailableSpace: true,
+                        availableHeight: availableHeight
                     )
                 }
                 .frame(maxWidth: .infinity)

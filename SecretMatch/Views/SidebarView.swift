@@ -13,13 +13,15 @@ struct SidebarView: View {
     var isShort = false
 
     var body: some View {
-        VStack(alignment: .leading, spacing: isCompact ? 14 : (isShort ? 10 : 20)) {
+        VStack(alignment: .leading, spacing: 0) {
             Image("logo")
                 .resizable()
                 .scaledToFit()
                 .frame(maxWidth: isCompact ? 132 : (isShort ? 142 : 174))
                 .frame(height: isCompact ? 86 : (isShort ? 86 : 142))
                 .shadow(color: SecretMatchTheme.primary.opacity(0.16), radius: 18)
+
+            Spacer(minLength: isCompact ? 14 : (isShort ? 8 : 14))
 
             HStack(spacing: 10) {
                 Circle()
@@ -52,6 +54,8 @@ struct SidebarView: View {
             )
             .accessibilityLabel("Automatischer Logout in \(secondsRemaining) Sekunden")
 
+            Spacer(minLength: isCompact ? 18 : (isShort ? 16 : 24))
+
             VStack(alignment: .leading, spacing: 8) {
                 Text("DEIN EVENT PASS")
                     .font(.caption2.bold())
@@ -71,7 +75,8 @@ struct SidebarView: View {
                 .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
                 .overlay(RoundedRectangle(cornerRadius: 16).stroke(SecretMatchTheme.border))
             }
-            .padding(.top, isShort ? 10 : 14)
+
+            Spacer(minLength: isCompact ? 18 : (isShort ? 16 : 24))
 
             Button {
                 registerActivity()
@@ -80,8 +85,9 @@ struct SidebarView: View {
                 Label("Deine Matches", systemImage: "sparkles")
             }
             .buttonStyle(SidebarButtonStyle(compact: isShort))
-            .padding(.top, isShort ? 10 : 14)
-            
+
+            Spacer(minLength: isCompact ? 12 : (isShort ? 8 : 12))
+
             Button {
                 registerActivity()
                 showActionsOverlay = true
@@ -90,6 +96,8 @@ struct SidebarView: View {
             }
             .buttonStyle(SidebarButtonStyle(compact: isShort))
 
+            Spacer(minLength: isCompact ? 12 : (isShort ? 8 : 12))
+
             Button {
                 registerActivity()
                 showGuideOverlay = true
@@ -97,6 +105,8 @@ struct SidebarView: View {
                 Label("So funktioniert's", systemImage: "questionmark.circle.fill")
             }
             .buttonStyle(SidebarButtonStyle(compact: isShort))
+
+            Spacer(minLength: isCompact ? 12 : (isShort ? 8 : 12))
 
             Button {
                 registerActivity()
@@ -107,7 +117,9 @@ struct SidebarView: View {
             .buttonStyle(SidebarButtonStyle(compact: isShort))
 
             if !isCompact {
-                Spacer(minLength: isShort ? 12 : 24)
+                Spacer(minLength: isShort ? 16 : 28)
+            } else {
+                Spacer(minLength: 18)
             }
 
             Button {
@@ -116,6 +128,8 @@ struct SidebarView: View {
                 Label("Abmelden", systemImage: "rectangle.portrait.and.arrow.right")
             }
             .buttonStyle(LogoutButtonStyle(compact: isShort))
+
+            Spacer(minLength: isCompact ? 14 : (isShort ? 8 : 14))
 
             HStack {
                 if isCompact {
