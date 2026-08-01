@@ -6,6 +6,7 @@ struct AdminMainView: View {
     @State private var showAdminActions = false
     @State private var showAdminMatches = false
     @State private var showBillboard = false
+    @State private var showAdminMenu = false
 
     var body: some View {
         GeometryReader { proxy in
@@ -17,6 +18,25 @@ struct AdminMainView: View {
             AdminBillboardView(isPresented: $showBillboard)
                 .environmentObject(api)
         }
+#if ADMIN_APP
+        .sheet(isPresented: $showAdminMenu) {
+            ScrollView {
+                sidebar(isCompact: true)
+            }
+            .background(SecretMatchTheme.surface)
+            .presentationDetents([.medium, .large])
+            .presentationDragIndicator(.visible)
+        }
+        .onChange(of: showAdminActions) { _, isShown in
+            if isShown { showAdminMenu = false }
+        }
+        .onChange(of: showAdminMatches) { _, isShown in
+            if isShown { showAdminMenu = false }
+        }
+        .onChange(of: showBillboard) { _, isShown in
+            if isShown { showAdminMenu = false }
+        }
+#endif
     }
 
     private func content(isCompact: Bool) -> some View {
@@ -39,6 +59,47 @@ struct AdminMainView: View {
 
     @ViewBuilder
     private func mainLayout(isCompact: Bool) -> some View {
+#if ADMIN_APP
+        VStack(spacing: 0) {
+            HStack(spacing: 14) {
+                Button {
+                    showAdminMenu = true
+                } label: {
+                    Image(systemName: "line.3.horizontal")
+                        .font(.title2.bold())
+                        .foregroundStyle(.white)
+                        .frame(width: 48, height: 48)
+                        .background(SecretMatchTheme.surfaceRaised)
+                        .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+                }
+                .accessibilityLabel("Admin-Menü öffnen")
+
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("SECRET MATCH")
+                        .font(.caption2.bold())
+                        .tracking(1.5)
+                        .foregroundStyle(SecretMatchTheme.secondary)
+                    Text("Event Control")
+                        .font(.headline.bold())
+                        .foregroundStyle(.white)
+                }
+
+                Spacer()
+            }
+            .padding(.horizontal, 18)
+            .padding(.vertical, 10)
+            .background(SecretMatchTheme.surface.opacity(0.97))
+            .overlay(alignment: .bottom) {
+                Rectangle()
+                    .fill(SecretMatchTheme.border)
+                    .frame(height: 1)
+            }
+
+            AdminDashboardView(showBillboard: $showBillboard)
+                .environmentObject(api)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+        }
+#else
         if isCompact {
             ScrollView {
                 VStack(spacing: 0) {
@@ -58,6 +119,7 @@ struct AdminMainView: View {
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
         }
+#endif
     }
 
     private func sidebar(isCompact: Bool) -> some View {
