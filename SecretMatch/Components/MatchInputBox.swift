@@ -15,6 +15,7 @@ struct MatchInputBox: View {
     @Binding var selectedActions: Set<String>
     @Binding var responseMessage: String
     let onSend: () -> Void
+    var fillsAvailableSpace = false
 
     private let options = [
         ActionOption(type: "normal", title: "Hot Match", emoji: "❤️", color: Color(hex: "#E83E8C")),
@@ -24,7 +25,7 @@ struct MatchInputBox: View {
         ActionOption(type: "ljob", title: "Lick-Job", emoji: "👅", color: Color(hex: "#D65C8D"))
     ]
 
-    var body: some View {
+    private var content: some View {
         VStack(spacing: 26) {
             VStack(spacing: 6) {
                 Text("MAKE A MOVE")
@@ -91,8 +92,21 @@ struct MatchInputBox: View {
             }
         }
         .frame(maxWidth: 780)
-        .padding(.horizontal, 24)
-        .secretCard(cornerRadius: 24, padding: 30)
+    }
+
+    @ViewBuilder
+    var body: some View {
+        if fillsAvailableSpace {
+            content
+                .padding(.horizontal, 30)
+                .padding(.top, 24)
+                .padding(.bottom, 30)
+                .frame(maxWidth: .infinity, minHeight: 0, alignment: .top)
+        } else {
+            content
+                .padding(.horizontal, 24)
+                .secretCard(cornerRadius: 24, padding: 30)
+        }
     }
 
     private func selectionButton(for option: ActionOption) -> some View {

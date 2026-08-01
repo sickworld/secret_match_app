@@ -203,20 +203,18 @@ struct MatchView: View {
 
                 Divider().background(Color.white.opacity(0.3))
 
-                VStack {
-                    Spacer()
-
+                ScrollView {
                     MatchInputBox(
                         targetNumber: $targetNumber,
                         showKeyboard: $showKeyboard,
                         selectedActions: $selectedActions,
                         responseMessage: $responseMessage,
-                        onSend: sendInteractions
+                        onSend: sendInteractions,
+                        fillsAvailableSpace: true
                     )
-
-                    Spacer()
                 }
                 .frame(maxWidth: .infinity)
+                .background(SecretMatchTheme.surface.opacity(0.97))
             }
         }
     }
