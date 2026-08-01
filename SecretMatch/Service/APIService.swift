@@ -5,7 +5,12 @@ import SwiftUI
 @MainActor
 class APIService: ObservableObject {
     static let shared = APIService()
-    private init() {}
+    private init() {
+        if let savedAdminToken = AdminSessionStore.loadToken(), !savedAdminToken.isEmpty {
+            adminToken = savedAdminToken
+            isAdmin = true
+        }
+    }
 
     @Published var isLoggedIn: Bool = false
     @Published var number: String = ""
@@ -128,6 +133,7 @@ class APIService: ObservableObject {
             if success {
                 let login = try JSONDecoder().decode(AdminLoginResponse.self, from: data)
                 adminToken = login.token
+                AdminSessionStore.saveToken(login.token)
                 isAdmin = true
                 isLoggedIn = false
                 number = ""
@@ -288,6 +294,7 @@ class APIService: ObservableObject {
         }
 
         adminToken = nil
+        AdminSessionStore.clearToken()
         self.isLoggedIn = false
         self.number = ""
         self.matches = []
@@ -341,6 +348,7 @@ class APIService: ObservableObject {
         }
 
         adminToken = nil
+        AdminSessionStore.clearToken()
         isAdmin = false
     }
 }
