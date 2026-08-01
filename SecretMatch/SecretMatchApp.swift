@@ -6,6 +6,17 @@ struct SecretMatchApp: App {
     
     var body: some Scene {
         WindowGroup {
+#if ADMIN_APP
+            Group {
+                if api.isAdmin {
+                    AdminMainView()
+                } else {
+                    AdminLoginView(isPresented: .constant(true), allowsDismiss: false)
+                }
+            }
+            .environmentObject(api)
+            .preferredColorScheme(.dark)
+#else
             Group {
                 if api.isAdmin {
                     AdminMainView()
@@ -17,6 +28,7 @@ struct SecretMatchApp: App {
             }
             .environmentObject(api)
             .preferredColorScheme(.dark)
+#endif
         }
     }
 }

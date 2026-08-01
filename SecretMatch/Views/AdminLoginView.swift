@@ -2,6 +2,7 @@ import SwiftUI
 
 struct AdminLoginView: View {
     @Binding var isPresented: Bool
+    var allowsDismiss = true
     @EnvironmentObject var api: APIService
 
     @State private var password = ""
@@ -16,23 +17,25 @@ struct AdminLoginView: View {
             GeometryReader { proxy in
                 ScrollView {
                     VStack {
-                HStack {
-                    Spacer()
-                    Button {
-                        isPresented = false
-                    } label: {
-                        Image(systemName: "xmark")
-                            .font(.title2.bold())
-                            .foregroundStyle(.white)
-                            .frame(width: 54, height: 54)
-                            .background(SecretMatchTheme.surfaceRaised)
-                            .clipShape(Circle())
+                if allowsDismiss {
+                    HStack {
+                        Spacer()
+                        Button {
+                            isPresented = false
+                        } label: {
+                            Image(systemName: "xmark")
+                                .font(.title2.bold())
+                                .foregroundStyle(.white)
+                                .frame(width: 54, height: 54)
+                                .background(SecretMatchTheme.surfaceRaised)
+                                .clipShape(Circle())
+                        }
+                        .accessibilityLabel("Admin Login schließen")
                     }
-                    .accessibilityLabel("Admin Login schließen")
+                    .padding(28)
                 }
-                .padding(28)
 
-                Spacer(minLength: 30)
+                Spacer(minLength: allowsDismiss ? 30 : 22)
 
                 VStack(spacing: 34) {
                     Image("logo")
@@ -106,8 +109,8 @@ struct AdminLoginView: View {
                     .opacity(password.isEmpty ? 0.55 : 1)
                 }
                 .frame(maxWidth: 560)
-                .secretCard(cornerRadius: 30, padding: 50)
-                .padding(.horizontal, 28)
+                .secretCard(cornerRadius: 30, padding: allowsDismiss ? 50 : 28)
+                .padding(.horizontal, allowsDismiss ? 28 : 18)
 
                 Spacer(minLength: 34)
                     }
