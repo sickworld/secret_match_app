@@ -15,6 +15,8 @@ struct RulesSlideshowView: View {
     var registerActivity: () -> Void
 
     @State private var selectedIndex = 0
+    @State private var isPlaying = true
+    @State private var playbackTask: Task<Void, Never>?
 
     private let slides = [
         RuleSlide(
@@ -92,6 +94,12 @@ struct RulesSlideshowView: View {
         }
         .onTapGesture {
             registerActivity()
+        }
+        .onAppear {
+            startPlayback()
+        }
+        .onDisappear {
+            playbackTask?.cancel()
         }
     }
 
@@ -200,6 +208,7 @@ struct RulesSlideshowView: View {
                     .fill(index == selectedIndex ? SecretMatchTheme.primary : SecretMatchTheme.surfaceRaised)
                     .frame(width: index == selectedIndex ? 34 : 9, height: 9)
                     .onTapGesture {
+                        stopPlayback()
                         selectedIndex = index
                         registerActivity()
                     }
@@ -217,6 +226,14 @@ struct RulesSlideshowView: View {
             .buttonStyle(RuleIconButtonStyle())
             .disabled(selectedIndex == 0)
             .opacity(selectedIndex == 0 ? 0.45 : 1)
+
+            Button {
+                togglePlayback()
+            } label: {
+                Image(systemName: isPlaying ? "pause.fill" : "play.fill")
+            }
+            .buttonStyle(RuleIconButtonStyle())
+            .accessibilityLabel(isPlaying ? "Automatischen Ablauf pausieren" : "Automatischen Ablauf starten")
 
             Button {
                 nextSlide()
@@ -241,6 +258,7 @@ struct RulesSlideshowView: View {
     }
 
     private func nextSlide() {
+        stopPlayback()
         registerActivity()
 
         if selectedIndex == slides.count - 1 {
@@ -251,8 +269,51 @@ struct RulesSlideshowView: View {
     }
 
     private func previousSlide() {
+        stopPlayback()
         selectedIndex = max(selectedIndex - 1, 0)
         registerActivity()
+    }
+
+    private func startPlayback() {
+        playbackTask?.cancel()
+
+        if selectedIndex == slides.count - 1 {
+            selectedIndex = 0
+        }
+
+        isPlaying = true
+        playbackTask = Task { @MainActor in
+            while !Task.isCancelled && isPlaying {
+                do {
+                    try await Task.sleep(for: .seconds(6))
+                } catch {
+                    return
+                }
+
+                guard !Task.isCancelled, isPlaying else { return }
+                if selectedIndex < slides.count - 1 {
+                    selectedIndex += 1
+                    registerActivity()
+                } else {
+                    isPlaying = false
+                    return
+                }
+            }
+        }
+    }
+
+    private func stopPlayback() {
+        isPlaying = false
+        playbackTask?.cancel()
+    }
+
+    private func togglePlayback() {
+        registerActivity()
+        if isPlaying {
+            stopPlayback()
+        } else {
+            startPlayback()
+        }
     }
 }
 
