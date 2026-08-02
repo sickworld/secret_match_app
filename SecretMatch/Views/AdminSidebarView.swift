@@ -118,19 +118,19 @@ struct AdminSidebarView: View {
 
             HStack {
                 Spacer()
-                HStack(spacing: 7) {
+                HStack(alignment: .center, spacing: 5) {
                     Image("hot-chili")
                         .resizable()
                         .scaledToFit()
-                        .frame(width: isCompact ? 72 : 56, height: isCompact ? 50 : 42)
+                        .frame(width: isCompact ? 64 : 48, height: isCompact ? 48 : 38)
                         .accessibilityLabel("Hot Chili Events")
 
                     Image("ficken-logo")
                         .resizable()
                         .scaledToFit()
-                        .frame(width: isCompact ? 76 : 62, height: isCompact ? 42 : 34)
-                        .padding(.horizontal, 6)
-                        .padding(.vertical, 4)
+                        .frame(width: isCompact ? 68 : 54, height: isCompact ? 38 : 30)
+                        .padding(.horizontal, 5)
+                        .padding(.vertical, 3)
                         .background(Color.white.opacity(0.94))
                         .clipShape(RoundedRectangle(cornerRadius: 8))
                         .accessibilityLabel("FICKEN Likör")
@@ -138,7 +138,7 @@ struct AdminSidebarView: View {
                     Image("club2020")
                         .resizable()
                         .scaledToFit()
-                        .frame(width: isCompact ? 82 : 64, height: isCompact ? 56 : 46)
+                        .frame(width: isCompact ? 108 : 88, height: isCompact ? 74 : 62)
                         .accessibilityLabel("Club 2020")
                 }
             }
