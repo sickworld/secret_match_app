@@ -1,4 +1,5 @@
 import SwiftUI
+import LocalAuthentication
 
 struct AdminLoginView: View {
     @Binding var isPresented: Bool
@@ -9,6 +10,8 @@ struct AdminLoginView: View {
     @State private var errorMessage: String?
     @State private var isLoading = false
     @State private var showPassword = false
+    @State private var biometricType: LABiometryType = .none
+    @State private var didRequestBiometrics = false
 
     var body: some View {
         ZStack {
@@ -93,6 +96,22 @@ struct AdminLoginView: View {
                             .clipShape(RoundedRectangle(cornerRadius: 12))
                     }
 
+                    if api.hasSavedAdminSession && biometricType != .none {
+                        Button(action: performBiometricLogin) {
+                            HStack {
+                                Image(systemName: biometricIcon)
+                                Text("Mit \(biometricName) anmelden")
+                                Spacer()
+                            }
+                        }
+                        .buttonStyle(SecretPrimaryButtonStyle(fontSize: 19, minHeight: 68))
+                        .disabled(isLoading)
+
+                        Text("Oder Admin-Passwort verwenden")
+                            .font(.caption.weight(.semibold))
+                            .foregroundStyle(SecretMatchTheme.muted)
+                    }
+
                     Button(action: performLogin) {
                         if isLoading {
                             ProgressView().tint(.white)
@@ -118,6 +137,12 @@ struct AdminLoginView: View {
                 }
             }
         }
+        .onAppear {
+            detectBiometrics()
+            guard !didRequestBiometrics, api.hasSavedAdminSession else { return }
+            didRequestBiometrics = true
+            performBiometricLogin()
+        }
     }
 
     private func performLogin() {
@@ -133,6 +158,54 @@ struct AdminLoginView: View {
                 isPresented = false
             } else {
                 errorMessage = "Falsches Passwort"
+            }
+        }
+    }
+
+    private var biometricName: String {
+        biometricType == .faceID ? "Face ID" : "Touch ID"
+    }
+
+    private var biometricIcon: String {
+        biometricType == .faceID ? "faceid" : "touchid"
+    }
+
+    private func detectBiometrics() {
+        let context = LAContext()
+        var error: NSError?
+        guard context.canEvaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, error: &error) else {
+            biometricType = .none
+            return
+        }
+        biometricType = context.biometryType
+    }
+
+    private func performBiometricLogin() {
+        guard api.hasSavedAdminSession, !isLoading else { return }
+
+        let context = LAContext()
+        context.localizedCancelTitle = "Passwort verwenden"
+        isLoading = true
+        errorMessage = nil
+
+        Task {
+            do {
+                let authenticated = try await context.evaluatePolicy(
+                    .deviceOwnerAuthenticationWithBiometrics,
+                    localizedReason: "Admin-Bereich von Match&Play entsperren"
+                )
+                isLoading = false
+                if authenticated && api.unlockSavedAdminSession() {
+                    isPresented = false
+                }
+            } catch let error as LAError {
+                isLoading = false
+                if error.code != .userCancel && error.code != .appCancel && error.code != .systemCancel {
+                    errorMessage = "\(biometricName) nicht möglich. Bitte Admin-Passwort verwenden."
+                }
+            } catch {
+                isLoading = false
+                errorMessage = "Biometrische Anmeldung nicht möglich."
             }
         }
     }

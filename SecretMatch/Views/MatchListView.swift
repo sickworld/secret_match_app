@@ -79,7 +79,7 @@ struct MatchListView: View {
 
                                             Spacer()
 
-                                            Text("#\(match.other)")
+                                            Text(match.other.displayEventNumber)
                                                 .font(.system(size: 20, weight: .bold, design: .monospaced))
                                                 .foregroundStyle(.white)
                                                 .padding(.horizontal, 15)

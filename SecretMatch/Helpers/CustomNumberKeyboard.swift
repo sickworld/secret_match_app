@@ -16,7 +16,7 @@ struct CustomNumberKeyboard: View {
 
     var body: some View {
         VStack(spacing: 24) {
-            Text(text.isEmpty ? "Nummer…" : text)
+            Text(text.isEmpty ? "Nummer…" : text.displayEventNumber)
                 .font(.system(size: 44, weight: .bold, design: .rounded))
                 .foregroundStyle(.white)
                 .frame(maxWidth: .infinity)
@@ -81,7 +81,7 @@ struct CustomNumberKeyboard: View {
         case "✓":
             onDone()
         default:
-            if text.count < 4 {
+            if text.count < 3 {
                 text.append(key)
             }
         }

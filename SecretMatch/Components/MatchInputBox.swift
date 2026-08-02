@@ -60,7 +60,7 @@ struct MatchInputBox: View {
                     .tracking(1.2)
                     .foregroundStyle(SecretMatchTheme.secondary)
 
-                Text(targetNumber.isEmpty ? "Ziel-Nummer eingeben" : targetNumber)
+                Text(targetNumber.isEmpty ? "Ziel-Nummer eingeben" : targetNumber.displayEventNumber)
                     .foregroundStyle(targetNumber.isEmpty ? SecretMatchTheme.muted : .white)
                     .font(.system(size: 34, weight: .bold, design: .rounded))
                     .multilineTextAlignment(.center)

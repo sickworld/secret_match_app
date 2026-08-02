@@ -9,6 +9,7 @@ struct SidebarView: View {
     @Binding var showActionsOverlay: Bool
     @Binding var showGuideOverlay: Bool
     @Binding var showRulesOverlay: Bool
+    @Binding var showPrivacyOverlay: Bool
     var isCompact = false
     var isShort = false
 
@@ -65,7 +66,7 @@ struct SidebarView: View {
                 HStack {
                     Image(systemName: "ticket.fill")
                         .foregroundStyle(SecretMatchTheme.primary)
-                    Text(api.number)
+                    Text(api.number.displayEventNumber)
                         .font(.system(size: 28, weight: .heavy, design: .rounded))
                         .foregroundStyle(.white)
                 }
@@ -116,6 +117,20 @@ struct SidebarView: View {
             }
             .buttonStyle(SidebarButtonStyle(compact: isShort))
 
+            Spacer(minLength: isCompact ? 12 : (isShort ? 8 : 12))
+
+            Button {
+                registerActivity()
+                showPrivacyOverlay = true
+            } label: {
+                Label("Datenschutz", systemImage: "lock.shield.fill")
+                    .font(.system(size: isShort ? 14 : 15, weight: .semibold, design: .rounded))
+                    .foregroundStyle(SecretMatchTheme.muted)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.horizontal, 4)
+            }
+            .accessibilityHint("Öffnet die Datenschutz-Kurzinfo")
+
             if !isCompact {
                 Spacer(minLength: isShort ? 16 : 28)
             } else {
@@ -135,15 +150,27 @@ struct SidebarView: View {
                 if isCompact {
                     Spacer()
                 }
-                Image("hot-chili")
-                    .resizable()
-                    .scaledToFit()
-                    .frame(
-                        width: isCompact ? 82 : (isShort ? 72 : 112),
-                        height: isCompact ? 56 : (isShort ? 46 : 78)
-                    )
-                    .shadow(color: SecretMatchTheme.primary.opacity(0.18), radius: 12)
-                    .accessibilityLabel("Hot Chili Events")
+                HStack(spacing: isShort ? 8 : 12) {
+                    Image("hot-chili")
+                        .resizable()
+                        .scaledToFit()
+                        .frame(
+                            width: isCompact ? 82 : (isShort ? 72 : 102),
+                            height: isCompact ? 56 : (isShort ? 46 : 70)
+                        )
+                        .shadow(color: SecretMatchTheme.primary.opacity(0.18), radius: 12)
+                        .accessibilityLabel("Hot Chili Events")
+
+                    Image("ficken-logo")
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: isShort ? 82 : 104, height: isShort ? 42 : 54)
+                        .padding(.horizontal, 7)
+                        .padding(.vertical, 4)
+                        .background(Color.white.opacity(0.94))
+                        .clipShape(RoundedRectangle(cornerRadius: 8))
+                        .accessibilityLabel("FICKEN Likör")
+                }
                 if isCompact {
                     Spacer()
                 }

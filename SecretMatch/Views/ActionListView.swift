@@ -186,7 +186,7 @@ struct ActionListView: View {
 
             Spacer()
 
-            Text("#\(partner(for: action))")
+            Text(partner(for: action).displayEventNumber)
                 .foregroundStyle(.white)
                 .font(.system(size: 19, weight: .bold, design: .monospaced))
                 .padding(.horizontal, 14)

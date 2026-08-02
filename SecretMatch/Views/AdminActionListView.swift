@@ -3,6 +3,7 @@ import SwiftUI
 struct AdminActionListView: View {
     @EnvironmentObject var api: APIService
     @Binding var isPresented: Bool
+    var isEmbedded = false
     @State private var searchText = ""
     @State private var selectedType = "all"
     @State private var pendingDelete: AdminAction?
@@ -10,9 +11,11 @@ struct AdminActionListView: View {
 
     var body: some View {
         ZStack {
-            Color.black.opacity(0.6)
-                .ignoresSafeArea()
-                .onTapGesture { isPresented = false }
+            if !isEmbedded {
+                Color.black.opacity(0.6)
+                    .ignoresSafeArea()
+                    .onTapGesture { isPresented = false }
+            }
 
             VStack(spacing: 18) {
                 HStack(alignment: .top) {
@@ -26,15 +29,17 @@ struct AdminActionListView: View {
                             .foregroundStyle(.white)
                     }
                     Spacer()
-                    Button {
-                        isPresented = false
-                    } label: {
-                        Image(systemName: "xmark")
-                            .font(.title3.bold())
-                            .frame(width: 50, height: 50)
-                            .foregroundStyle(.white)
-                            .background(SecretMatchTheme.surfaceRaised)
-                            .clipShape(Circle())
+                    if !isEmbedded {
+                        Button {
+                            isPresented = false
+                        } label: {
+                            Image(systemName: "xmark")
+                                .font(.title3.bold())
+                                .frame(width: 50, height: 50)
+                                .foregroundStyle(.white)
+                                .background(SecretMatchTheme.surfaceRaised)
+                                .clipShape(Circle())
+                        }
                     }
                 }
 
@@ -84,7 +89,7 @@ struct AdminActionListView: View {
                     .refreshable { await loadActions() }
                 }
             }
-            .frame(maxWidth: 1040, maxHeight: 780)
+            .frame(maxWidth: 1040, maxHeight: isEmbedded ? .infinity : 780)
             .secretCard(cornerRadius: 26, padding: 26)
             .padding(24)
         }
@@ -149,7 +154,7 @@ struct AdminActionListView: View {
                     .font(.system(size: 19, weight: .bold, design: .rounded))
                     .foregroundStyle(.white)
 
-                Text("Von \(action.sender_number) → \(action.receiver_number)")
+                Text("Von \(action.sender_number.displayEventNumber) → \(action.receiver_number.displayEventNumber)")
                     .foregroundStyle(SecretMatchTheme.muted)
                     .font(.system(size: 16, weight: .semibold, design: .rounded))
 
@@ -181,6 +186,8 @@ struct AdminActionListView: View {
             let matchesSearch = searchText.isEmpty
                 || action.sender_number.localizedCaseInsensitiveContains(searchText)
                 || action.receiver_number.localizedCaseInsensitiveContains(searchText)
+                || action.sender_number.displayEventNumber.localizedCaseInsensitiveContains(searchText)
+                || action.receiver_number.displayEventNumber.localizedCaseInsensitiveContains(searchText)
             return matchesType && matchesSearch
         }
     }

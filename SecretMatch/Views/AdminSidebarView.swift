@@ -38,7 +38,8 @@ struct AdminSidebarView: View {
             .buttonStyle(SidebarButtonStyle())
 
             Button {
-                showLiveFeed = true
+                dashboardSection = .liveFeed
+                dismissMenu()
             } label: {
                 Label("Livefeed", systemImage: "dot.radiowaves.left.and.right")
             }
@@ -70,25 +71,37 @@ struct AdminSidebarView: View {
 #endif
 
             Button {
+#if ADMIN_APP
+                dashboardSection = .actions
+                dismissMenu()
+#else
                 showActions = true
+#endif
             } label: {
                 Label("Alle Aktionen", systemImage: "paperplane.fill")
             }
             .buttonStyle(SidebarButtonStyle())
 
             Button {
+#if ADMIN_APP
+                dashboardSection = .matches
+                dismissMenu()
+#else
                 showMatches = true
+#endif
             } label: {
                 Label("Alle Matches", systemImage: "sparkles")
             }
             .buttonStyle(SidebarButtonStyle())
 
+#if !ADMIN_APP
             Button {
                 showBillboard = true
             } label: {
                 Label("Billboard Vollbild", systemImage: "rectangle.inset.filled")
             }
             .buttonStyle(SidebarButtonStyle())
+#endif
 
             Divider().background(Color.white.opacity(0.3))
 
@@ -105,11 +118,23 @@ struct AdminSidebarView: View {
 
             HStack {
                 Spacer()
-                Image("hot-chili")
-                    .resizable()
-                    .scaledToFit()
-                    .frame(width: isCompact ? 82 : 104, height: isCompact ? 56 : 72)
-                    .accessibilityLabel("Hot Chili Events")
+                HStack(spacing: 12) {
+                    Image("hot-chili")
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: isCompact ? 82 : 96, height: isCompact ? 56 : 66)
+                        .accessibilityLabel("Hot Chili Events")
+
+                    Image("ficken-logo")
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: isCompact ? 94 : 104, height: isCompact ? 48 : 54)
+                        .padding(.horizontal, 7)
+                        .padding(.vertical, 4)
+                        .background(Color.white.opacity(0.94))
+                        .clipShape(RoundedRectangle(cornerRadius: 8))
+                        .accessibilityLabel("FICKEN Likör")
+                }
             }
         }
         .padding(isCompact ? 16 : 22)

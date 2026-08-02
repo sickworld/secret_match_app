@@ -8,7 +8,7 @@ class APIService: ObservableObject {
     private init() {
         if let savedAdminToken = AdminSessionStore.loadToken(), !savedAdminToken.isEmpty {
             adminToken = savedAdminToken
-            isAdmin = true
+            hasSavedAdminSession = true
         }
     }
 
@@ -17,6 +17,7 @@ class APIService: ObservableObject {
     @Published var matches: [Match] = []
     @Published var actions: [SecretAction] = []
     @Published var isAdmin: Bool = false
+    @Published private(set) var hasSavedAdminSession: Bool = false
     @Published var adminActions: [AdminAction] = []
     @Published var adminMatches: [AdminMatch] = []
     @Published var adminDashboard: AdminDashboard?
@@ -134,6 +135,7 @@ class APIService: ObservableObject {
                 let login = try JSONDecoder().decode(AdminLoginResponse.self, from: data)
                 adminToken = login.token
                 AdminSessionStore.saveToken(login.token)
+                hasSavedAdminSession = true
                 isAdmin = true
                 isLoggedIn = false
                 number = ""
@@ -145,6 +147,20 @@ class APIService: ObservableObject {
         } catch {
             return false
         }
+    }
+
+    func unlockSavedAdminSession() -> Bool {
+        guard let adminToken, !adminToken.isEmpty else {
+            hasSavedAdminSession = false
+            return false
+        }
+
+        isAdmin = true
+        isLoggedIn = false
+        number = ""
+        matches = []
+        actions = []
+        return true
     }
     
     @MainActor
@@ -295,6 +311,7 @@ class APIService: ObservableObject {
 
         adminToken = nil
         AdminSessionStore.clearToken()
+        hasSavedAdminSession = false
         self.isLoggedIn = false
         self.number = ""
         self.matches = []
@@ -349,6 +366,7 @@ class APIService: ObservableObject {
 
         adminToken = nil
         AdminSessionStore.clearToken()
+        hasSavedAdminSession = false
         isAdmin = false
     }
 }
@@ -370,7 +388,19 @@ private struct BillboardAccessResponse: Decodable {
 extension String {
     var normalizedEventNumber: String {
         let digits = trimmingCharacters(in: .whitespacesAndNewlines)
+            .replacingOccurrences(of: "#", with: "")
         let normalized = digits.drop(while: { $0 == "0" })
         return normalized.isEmpty && !digits.isEmpty ? "0" : String(normalized)
+    }
+
+    var displayEventNumber: String {
+        let cleaned = trimmingCharacters(in: .whitespacesAndNewlines)
+            .replacingOccurrences(of: "#", with: "")
+        guard !cleaned.isEmpty,
+              cleaned.allSatisfy(\.isNumber),
+              cleaned.count < 3 else {
+            return cleaned
+        }
+        return String(repeating: "0", count: 3 - cleaned.count) + cleaned
     }
 }

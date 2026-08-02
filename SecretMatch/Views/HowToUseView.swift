@@ -224,7 +224,7 @@ struct HowToUseView: View {
         VStack(alignment: .leading, spacing: 8) {
             demoSectionTitle("Event-Nummer eingeben", icon: "number")
 
-            Text(demoKeyboardNumber.isEmpty ? "Nummer eingeben" : demoKeyboardNumber)
+            Text(demoKeyboardNumber.isEmpty ? "Nummer eingeben" : demoKeyboardNumber.displayEventNumber)
                 .foregroundStyle(demoKeyboardNumber.isEmpty ? SecretMatchTheme.muted : .white)
                 .font(.system(size: 22, weight: .semibold, design: .rounded))
                 .multilineTextAlignment(.center)

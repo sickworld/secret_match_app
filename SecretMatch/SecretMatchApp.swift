@@ -3,6 +3,7 @@ import SwiftUI
 @main
 struct SecretMatchApp: App {
     @StateObject private var api = APIService.shared
+    @Environment(\.scenePhase) private var scenePhase
     
     var body: some Scene {
         WindowGroup {
@@ -29,6 +30,11 @@ struct SecretMatchApp: App {
             .environmentObject(api)
             .preferredColorScheme(.dark)
 #endif
+        }
+        .onChange(of: scenePhase) { _, phase in
+            if phase == .active {
+                UIApplication.shared.isIdleTimerDisabled = true
+            }
         }
     }
 }

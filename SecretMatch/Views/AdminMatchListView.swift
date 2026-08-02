@@ -3,6 +3,7 @@ import SwiftUI
 struct AdminMatchListView: View {
     @EnvironmentObject var api: APIService
     @Binding var isPresented: Bool
+    var isEmbedded = false
     @State private var searchText = ""
     @State private var selectedType = "all"
     @State private var pendingDelete: AdminMatch?
@@ -10,9 +11,11 @@ struct AdminMatchListView: View {
 
     var body: some View {
         ZStack {
-            Color.black.opacity(0.6)
-                .ignoresSafeArea()
-                .onTapGesture { isPresented = false }
+            if !isEmbedded {
+                Color.black.opacity(0.6)
+                    .ignoresSafeArea()
+                    .onTapGesture { isPresented = false }
+            }
 
             VStack(spacing: 18) {
                 HStack(alignment: .top) {
@@ -26,15 +29,17 @@ struct AdminMatchListView: View {
                             .foregroundStyle(.white)
                     }
                     Spacer()
-                    Button {
-                        isPresented = false
-                    } label: {
-                        Image(systemName: "xmark")
-                            .font(.title3.bold())
-                            .frame(width: 50, height: 50)
-                            .foregroundStyle(.white)
-                            .background(SecretMatchTheme.surfaceRaised)
-                            .clipShape(Circle())
+                    if !isEmbedded {
+                        Button {
+                            isPresented = false
+                        } label: {
+                            Image(systemName: "xmark")
+                                .font(.title3.bold())
+                                .frame(width: 50, height: 50)
+                                .foregroundStyle(.white)
+                                .background(SecretMatchTheme.surfaceRaised)
+                                .clipShape(Circle())
+                        }
                     }
                 }
 
@@ -78,7 +83,7 @@ struct AdminMatchListView: View {
                     .refreshable { await loadMatches() }
                 }
             }
-            .frame(maxWidth: 1040, maxHeight: 780)
+            .frame(maxWidth: 1040, maxHeight: isEmbedded ? .infinity : 780)
             .secretCard(cornerRadius: 26, padding: 26)
             .padding(24)
         }
@@ -143,7 +148,7 @@ struct AdminMatchListView: View {
                     .font(.system(size: 19, weight: .bold, design: .rounded))
                     .foregroundStyle(.white)
 
-                Text("\(match.number_a) ↔ \(match.number_b)")
+                Text("\(match.number_a.displayEventNumber) ↔ \(match.number_b.displayEventNumber)")
                     .foregroundStyle(SecretMatchTheme.muted)
                     .font(.system(size: 16, weight: .semibold, design: .rounded))
                 Text(match.created_at)
@@ -175,6 +180,8 @@ struct AdminMatchListView: View {
             let matchesSearch = searchText.isEmpty
                 || match.number_a.localizedCaseInsensitiveContains(searchText)
                 || match.number_b.localizedCaseInsensitiveContains(searchText)
+                || match.number_a.displayEventNumber.localizedCaseInsensitiveContains(searchText)
+                || match.number_b.displayEventNumber.localizedCaseInsensitiveContains(searchText)
             return matchesType && matchesSearch
         }
     }

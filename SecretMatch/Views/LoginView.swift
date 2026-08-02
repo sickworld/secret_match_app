@@ -7,7 +7,10 @@ struct LoginView: View {
     @State private var showKeyboard = false
     @State private var isLoading = false
     @State private var showAdminLogin = false
+    @State private var showPrivacyNotice = false
     @State private var errorMessage: String?
+    @State private var showScreensaver = false
+    @State private var screensaverTask: Task<Void, Never>?
     
     var body: some View {
         ZStack {
@@ -46,7 +49,7 @@ struct LoginView: View {
                     }
 
                     VStack(alignment: .leading, spacing: 14) {
-                        Text(number.isEmpty ? "Deine Nummer eingeben" : number)
+                        Text(number.isEmpty ? "Deine Nummer eingeben" : number.displayEventNumber)
                             .foregroundStyle(number.isEmpty ? SecretMatchTheme.muted : SecretMatchTheme.text)
                             .font(.system(size: 36, weight: .bold, design: .rounded))
                             .multilineTextAlignment(.center)
@@ -81,6 +84,16 @@ struct LoginView: View {
                     .buttonStyle(SecretPrimaryButtonStyle(fontSize: 21, minHeight: 78))
                     .disabled(isLoading || number.isEmpty)
                     .opacity(number.isEmpty ? 0.55 : 1)
+
+                    Button {
+                        showKeyboard = false
+                        showPrivacyNotice = true
+                    } label: {
+                        Label("Datenschutz", systemImage: "lock.shield.fill")
+                            .font(.system(size: 15, weight: .semibold, design: .rounded))
+                            .foregroundStyle(SecretMatchTheme.muted)
+                    }
+                    .accessibilityHint("Öffnet die Datenschutz-Kurzinfo")
                 }
                 .frame(maxWidth: 680)
                 .secretCard(cornerRadius: 30, padding: 50)
@@ -127,8 +140,47 @@ struct LoginView: View {
                 .zIndex(30)
                 .transition(.scale(scale: 0.92).combined(with: .opacity))
             }
+
+            if showPrivacyNotice {
+                PrivacyNoticeView(isPresented: $showPrivacyNotice)
+                    .zIndex(40)
+            }
+
+            if showScreensaver {
+                LoginScreensaverView {
+                    restartScreensaverTimer()
+                }
+                .transition(.opacity)
+                .zIndex(50)
+            }
         }
         .animation(.easeInOut(duration: 0.24), value: showKeyboard)
+        .animation(.easeInOut(duration: 0.7), value: showScreensaver)
+        .simultaneousGesture(
+            TapGesture().onEnded {
+                guard !showScreensaver else { return }
+                restartScreensaverTimer()
+            }
+        )
+        .onAppear {
+            UIApplication.shared.isIdleTimerDisabled = true
+            restartScreensaverTimer()
+        }
+        .onDisappear {
+            screensaverTask?.cancel()
+            screensaverTask = nil
+            showScreensaver = false
+        }
+        .onChange(of: number) { _, _ in restartScreensaverTimer() }
+        .onChange(of: showKeyboard) { _, _ in restartScreensaverTimer() }
+        .onChange(of: showPrivacyNotice) { _, _ in restartScreensaverTimer() }
+        .onChange(of: showAdminLogin) { _, isPresented in
+            if isPresented {
+                suspendScreensaver()
+            } else {
+                restartScreensaverTimer()
+            }
+        }
         .fullScreenCover(isPresented: $showAdminLogin) {
             AdminLoginView(isPresented: $showAdminLogin)
                 .environmentObject(api)
@@ -150,5 +202,36 @@ struct LoginView: View {
                 errorMessage = "Login fehlgeschlagen. Bitte Nummer prüfen und erneut versuchen."
             }
         }
+    }
+
+    private func restartScreensaverTimer() {
+        screensaverTask?.cancel()
+        showScreensaver = false
+
+        guard !showAdminLogin else {
+            screensaverTask = nil
+            return
+        }
+
+        screensaverTask = Task { @MainActor in
+            do {
+                try await Task.sleep(for: .seconds(60))
+            } catch {
+                return
+            }
+
+            guard !showKeyboard,
+                  !showPrivacyNotice,
+                  !showAdminLogin,
+                  !isLoading else { return }
+
+            showScreensaver = true
+        }
+    }
+
+    private func suspendScreensaver() {
+        screensaverTask?.cancel()
+        screensaverTask = nil
+        showScreensaver = false
     }
 }

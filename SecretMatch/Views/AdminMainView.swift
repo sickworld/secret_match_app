@@ -16,10 +16,12 @@ struct AdminMainView: View {
 
             content(isCompact: isCompact)
         }
+#if !ADMIN_APP
         .fullScreenCover(isPresented: $showBillboard) {
             AdminBillboardView(isPresented: $showBillboard)
                 .environmentObject(api)
         }
+#endif
 #if ADMIN_APP
         .sheet(isPresented: $showAdminMenu) {
             ScrollView {
@@ -29,20 +31,8 @@ struct AdminMainView: View {
             .presentationDetents([.medium, .large])
             .presentationDragIndicator(.visible)
         }
-        .onChange(of: showAdminActions) { _, isShown in
-            if isShown { showAdminMenu = false }
-        }
-        .onChange(of: showAdminMatches) { _, isShown in
-            if isShown { showAdminMenu = false }
-        }
-        .onChange(of: showLiveFeed) { _, isShown in
-            if isShown { showAdminMenu = false }
-        }
         .onChange(of: dashboardSection) { _, _ in
             showAdminMenu = false
-        }
-        .onChange(of: showBillboard) { _, isShown in
-            if isShown { showAdminMenu = false }
         }
 #endif
     }
@@ -53,6 +43,7 @@ struct AdminMainView: View {
 
             mainLayout(isCompact: isCompact)
             
+#if !ADMIN_APP
             if showAdminActions {
                 AdminActionListView(isPresented: $showAdminActions)
                     .environmentObject(api)
@@ -60,12 +51,6 @@ struct AdminMainView: View {
 
             if showAdminMatches {
                 AdminMatchListView(isPresented: $showAdminMatches)
-                    .environmentObject(api)
-            }
-
-#if ADMIN_APP
-            if showLiveFeed {
-                AdminLiveFeedView(isPresented: $showLiveFeed)
                     .environmentObject(api)
             }
 #endif
@@ -90,7 +75,7 @@ struct AdminMainView: View {
                 .accessibilityLabel("Admin-Menü öffnen")
 
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("SECRET MATCH")
+                    Text("MATCH&PLAY")
                         .font(.caption2.bold())
                         .tracking(1.5)
                         .foregroundStyle(SecretMatchTheme.secondary)
@@ -110,9 +95,7 @@ struct AdminMainView: View {
                     .frame(height: 1)
             }
 
-            AdminDashboardView(showBillboard: $showBillboard)
-                .environment(\.adminDashboardSection, dashboardSection)
-                .environmentObject(api)
+            adminPage
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
 #else
@@ -137,6 +120,27 @@ struct AdminMainView: View {
         }
 #endif
     }
+
+#if ADMIN_APP
+    @ViewBuilder
+    private var adminPage: some View {
+        switch dashboardSection {
+        case .liveFeed:
+            AdminLiveFeedView(isPresented: .constant(true), isEmbedded: true)
+                .environmentObject(api)
+        case .actions:
+            AdminActionListView(isPresented: .constant(true), isEmbedded: true)
+                .environmentObject(api)
+        case .matches:
+            AdminMatchListView(isPresented: .constant(true), isEmbedded: true)
+                .environmentObject(api)
+        default:
+            AdminDashboardView(showBillboard: $showBillboard)
+                .environment(\.adminDashboardSection, dashboardSection)
+                .environmentObject(api)
+        }
+    }
+#endif
 
     private func sidebar(isCompact: Bool) -> some View {
         AdminSidebarView(

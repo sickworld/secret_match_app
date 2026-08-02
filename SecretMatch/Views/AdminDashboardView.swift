@@ -1,7 +1,7 @@
 import SwiftUI
 
 enum AdminDashboardSection {
-    case overview, controls, participants, system
+    case overview, liveFeed, actions, matches, controls, participants, system
 }
 
 private struct AdminDashboardSectionKey: EnvironmentKey {
@@ -100,6 +100,8 @@ struct AdminDashboardView: View {
             sectionHeading("System & Reset", subtitle: "Systemzustand prüfen und Events vorbereiten")
             systemStatus
             resetCard
+        case .liveFeed, .actions, .matches:
+            EmptyView()
         }
     }
 
@@ -235,7 +237,7 @@ struct AdminDashboardView: View {
                 createdAt: action.created_at,
                 emoji: actionEmoji(action.action_type),
                 title: actionTitle(action.action_type),
-                detail: "\(action.sender_number) → \(action.receiver_number)",
+                detail: "\(action.sender_number.displayEventNumber) → \(action.receiver_number.displayEventNumber)",
                 color: actionColor(action.action_type)
             )
         }
@@ -246,7 +248,7 @@ struct AdminDashboardView: View {
                 createdAt: match.created_at,
                 emoji: isHot ? "🍆" : "❤️",
                 title: isHot ? "Fuck-Match entstanden" : "Hot-Match entstanden",
-                detail: "\(match.number_a) ↔ \(match.number_b)",
+                detail: "\(match.number_a.displayEventNumber) ↔ \(match.number_b.displayEventNumber)",
                 color: isHot ? Color(hex: "#8E63D2") : Color(hex: "#E83E8C")
             )
         }
@@ -289,8 +291,10 @@ struct AdminDashboardView: View {
     private var controls: some View {
         LazyVGrid(columns: [GridItem(.adaptive(minimum: 330), spacing: 16)], spacing: 16) {
             controlCard(title: "📺 Billboard", subtitle: "TV-Ansicht und Top-16-Modus") {
+#if !ADMIN_APP
                 Button("Vollbild öffnen") { showBillboard = true }
                     .buttonStyle(SecretPrimaryButtonStyle())
+#endif
 
                 HStack {
                     Button("Top 16 testen") { Task { await billboard("start_top_test") } }
@@ -336,7 +340,7 @@ struct AdminDashboardView: View {
             } else {
                 ForEach(filteredParticipants.prefix(24), id: \.self) { number in
                     HStack {
-                        Text("#\(number)")
+                        Text(number.displayEventNumber)
                             .font(.headline.monospacedDigit())
                             .foregroundStyle(.white)
                         if activeNumbers.contains(number) {
@@ -382,7 +386,7 @@ struct AdminDashboardView: View {
                 .foregroundStyle(SecretMatchTheme.muted)
             LazyVGrid(columns: [GridItem(.adaptive(minimum: 90), spacing: 10)], spacing: 10) {
                 ForEach(Array((api.adminDashboard?.topPeople ?? []).enumerated()), id: \.offset) { index, number in
-                    Text("\(index + 1).  #\(number)")
+                    Text("\(index + 1).  \(number.displayEventNumber)")
                         .font(.headline.monospacedDigit())
                         .foregroundStyle(.white)
                         .padding(10)
@@ -470,7 +474,11 @@ struct AdminDashboardView: View {
 
     private var filteredParticipants: [String] {
         api.adminParticipants.allowed
-            .filter { participantSearch.isEmpty || $0.localizedCaseInsensitiveContains(participantSearch) }
+            .filter {
+                participantSearch.isEmpty
+                    || $0.localizedCaseInsensitiveContains(participantSearch)
+                    || $0.displayEventNumber.localizedCaseInsensitiveContains(participantSearch)
+            }
             .sorted { ($0.localizedStandardCompare($1)) == .orderedAscending }
     }
 
@@ -564,12 +572,12 @@ struct AdminDashboardView: View {
 
     @MainActor
     private func logout(_ number: String) async {
-        await operation("#\(number) wurde abgemeldet.") { try await api.logoutParticipant(number: number) }
+        await operation("\(number.displayEventNumber) wurde abgemeldet.") { try await api.logoutParticipant(number: number) }
     }
 
     @MainActor
     private func block(_ number: String) async {
-        await operation("#\(number) wurde gesperrt.") { try await api.blockParticipant(number: number) }
+        await operation("\(number.displayEventNumber) wurde gesperrt.") { try await api.blockParticipant(number: number) }
     }
 
     @MainActor
