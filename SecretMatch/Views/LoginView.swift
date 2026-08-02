@@ -85,14 +85,20 @@ struct LoginView: View {
                     .disabled(isLoading || number.isEmpty)
                     .opacity(number.isEmpty ? 0.55 : 1)
 
-                    Button {
-                        showKeyboard = false
-                        showPrivacyNotice = true
-                    } label: {
-                        Label("Datenschutz", systemImage: "lock.shield.fill")
-                            .font(.system(size: 15, weight: .semibold, design: .rounded))
-                            .foregroundStyle(SecretMatchTheme.muted)
+                    HStack(spacing: 5) {
+                        Image(systemName: "lock.fill")
+                            .font(.system(size: 11, weight: .semibold))
+                        Text("Deine Nummer bleibt anonym ·")
+                        Button("Datenschutz ansehen") {
+                            showKeyboard = false
+                            showPrivacyNotice = true
+                        }
+                        .fontWeight(.bold)
+                        .foregroundStyle(SecretMatchTheme.secondary)
                     }
+                    .font(.system(size: 14, weight: .medium, design: .rounded))
+                    .foregroundStyle(SecretMatchTheme.muted)
+                    .accessibilityElement(children: .combine)
                     .accessibilityHint("Öffnet die Datenschutz-Kurzinfo")
                 }
                 .frame(maxWidth: 680)

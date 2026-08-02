@@ -150,13 +150,13 @@ struct SidebarView: View {
                 if isCompact {
                     Spacer()
                 }
-                HStack(spacing: isShort ? 8 : 12) {
+                HStack(spacing: isShort ? 6 : 5) {
                     Image("hot-chili")
                         .resizable()
                         .scaledToFit()
                         .frame(
-                            width: isCompact ? 82 : (isShort ? 72 : 102),
-                            height: isCompact ? 56 : (isShort ? 46 : 70)
+                            width: isCompact ? 72 : (isShort ? 62 : 76),
+                            height: isCompact ? 50 : (isShort ? 42 : 54)
                         )
                         .shadow(color: SecretMatchTheme.primary.opacity(0.18), radius: 12)
                         .accessibilityLabel("Hot Chili Events")
@@ -164,12 +164,18 @@ struct SidebarView: View {
                     Image("ficken-logo")
                         .resizable()
                         .scaledToFit()
-                        .frame(width: isShort ? 82 : 104, height: isShort ? 42 : 54)
-                        .padding(.horizontal, 7)
+                        .frame(width: isShort ? 68 : 78, height: isShort ? 36 : 42)
+                        .padding(.horizontal, 6)
                         .padding(.vertical, 4)
                         .background(Color.white.opacity(0.94))
                         .clipShape(RoundedRectangle(cornerRadius: 8))
                         .accessibilityLabel("FICKEN Likör")
+
+                    Image("club2020")
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: isShort ? 72 : 82, height: isShort ? 50 : 58)
+                        .accessibilityLabel("Club 2020")
                 }
                 if isCompact {
                     Spacer()

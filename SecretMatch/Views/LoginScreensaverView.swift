@@ -43,7 +43,7 @@ struct LoginScreensaverView: View {
                 }
 
                 withAnimation(.easeInOut(duration: 1.1)) {
-                    selectedLogo = (selectedLogo + 1) % 3
+                    selectedLogo = (selectedLogo + 1) % 4
                 }
             }
         }
@@ -55,8 +55,10 @@ struct LoginScreensaverView: View {
             "Hier funkt’s ganz ohne Algorithmus."
         case 1:
             "Heiß gemacht von Hot Chili Events."
-        default:
+        case 2:
             "Flüssiger Mut von FICKEN Likör."
+        default:
+            "Heute funkt’s im Club 2020."
         }
     }
 
@@ -77,7 +79,7 @@ struct LoginScreensaverView: View {
                 .frame(maxWidth: 520, maxHeight: 360)
                 .shadow(color: SecretMatchTheme.primary.opacity(0.24), radius: 26)
                 .accessibilityLabel("Hot Chili Events")
-        default:
+        case 2:
             Image("ficken-logo")
                 .resizable()
                 .scaledToFit()
@@ -87,6 +89,13 @@ struct LoginScreensaverView: View {
                 .clipShape(RoundedRectangle(cornerRadius: 30, style: .continuous))
                 .shadow(color: .black.opacity(0.28), radius: 28, y: 12)
                 .accessibilityLabel("FICKEN Likör")
+        default:
+            Image("club2020")
+                .resizable()
+                .scaledToFit()
+                .frame(maxWidth: 600, maxHeight: 390)
+                .shadow(color: SecretMatchTheme.secondary.opacity(0.24), radius: 28)
+                .accessibilityLabel("Club 2020")
         }
     }
 }
