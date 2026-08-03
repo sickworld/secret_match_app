@@ -19,7 +19,7 @@ struct AdminDashboard: Decodable {
     let billboardWidth: Int?
     let billboardHeight: Int?
     let billboardMode: String?
-    let topPeople: [String]?
+    let topPeople: [TopPerson]?
 
     private enum CodingKeys: String, CodingKey {
         case activeParticipants = "active_participants"
@@ -41,6 +41,21 @@ struct AdminDashboard: Decodable {
         case billboardHeight = "billboard_height"
         case billboardMode = "billboard_mode"
         case topPeople = "top_people"
+    }
+}
+
+struct TopPerson: Decodable, Identifiable {
+    let number: String
+    let gender: String?
+
+    var id: String { number }
+
+    var genderSymbol: String {
+        switch gender {
+        case "female": return "♀"
+        case "male": return "♂"
+        default: return "–"
+        }
     }
 }
 

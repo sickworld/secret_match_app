@@ -385,8 +385,15 @@ struct AdminDashboardView: View {
             Text("Genau diese Nummern erscheinen im Top-16-Modus auf dem Billboard.")
                 .foregroundStyle(SecretMatchTheme.muted)
             LazyVGrid(columns: [GridItem(.adaptive(minimum: 90), spacing: 10)], spacing: 10) {
-                ForEach(Array((api.adminDashboard?.topPeople ?? []).enumerated()), id: \.offset) { index, number in
-                    Text("\(index + 1).  \(number.displayEventNumber)")
+                ForEach(Array((api.adminDashboard?.topPeople ?? []).enumerated()), id: \.offset) { index, person in
+                    HStack {
+                        Text("\(index + 1).  \(person.number.displayEventNumber)")
+                        Spacer(minLength: 4)
+                        Text(person.genderSymbol)
+                            .font(.title3.weight(.medium))
+                            .foregroundStyle(SecretMatchTheme.secondary)
+                            .accessibilityLabel(person.genderSymbol == "–" ? "Keine Angabe" : "Geschlecht angegeben")
+                    }
                         .font(.headline.monospacedDigit())
                         .foregroundStyle(.white)
                         .padding(10)
