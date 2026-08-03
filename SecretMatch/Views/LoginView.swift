@@ -8,6 +8,9 @@ struct LoginView: View {
     @State private var isLoading = false
     @State private var showAdminLogin = false
     @State private var showPrivacyNotice = false
+    @State private var showGenderChoice = false
+    @State private var genderSubmitting = false
+    @State private var genderError: String?
     @State private var errorMessage: String?
     @State private var showScreensaver = false
     @State private var screensaverTask: Task<Void, Never>?
@@ -152,6 +155,13 @@ struct LoginView: View {
                     .zIndex(40)
             }
 
+            if showGenderChoice {
+                ParticipantGenderView(isSubmitting: genderSubmitting, errorMessage: genderError) { gender in
+                    submitGender(gender)
+                }
+                .zIndex(45)
+            }
+
             if showScreensaver {
                 LoginScreensaverView {
                     restartScreensaverTimer()
@@ -180,6 +190,7 @@ struct LoginView: View {
         .onChange(of: number) { _, _ in restartScreensaverTimer() }
         .onChange(of: showKeyboard) { _, _ in restartScreensaverTimer() }
         .onChange(of: showPrivacyNotice) { _, _ in restartScreensaverTimer() }
+        .onChange(of: showGenderChoice) { _, _ in restartScreensaverTimer() }
         .onChange(of: showAdminLogin) { _, isPresented in
             if isPresented {
                 suspendScreensaver()
@@ -203,9 +214,31 @@ struct LoginView: View {
             defer { isLoading = false }
 
             do {
-                try await api.login(number: number)
+                let needsGender = try await api.login(number: number)
+                if needsGender {
+                    showGenderChoice = true
+                } else {
+                    api.finishParticipantLogin()
+                }
             } catch {
                 errorMessage = "Login fehlgeschlagen. Bitte Nummer prüfen und erneut versuchen."
+            }
+        }
+    }
+
+    private func submitGender(_ gender: ParticipantGender) {
+        guard !genderSubmitting else { return }
+        genderSubmitting = true
+        genderError = nil
+
+        Task {
+            defer { genderSubmitting = false }
+            do {
+                try await api.submitParticipantGender(gender)
+                showGenderChoice = false
+                api.finishParticipantLogin()
+            } catch {
+                genderError = "Die Auswahl konnte nicht gespeichert werden. Bitte erneut versuchen."
             }
         }
     }
@@ -228,6 +261,7 @@ struct LoginView: View {
 
             guard !showKeyboard,
                   !showPrivacyNotice,
+                  !showGenderChoice,
                   !showAdminLogin,
                   !isLoading else { return }
 

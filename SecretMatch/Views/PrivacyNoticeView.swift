@@ -47,7 +47,7 @@ struct PrivacyNoticeView: View {
                         privacyPoint(
                             icon: "server.rack",
                             title: "Nur notwendige Eventdaten",
-                            text: "Während des Events verarbeitet Match&Play deine Eventnummer, ausgewählte Aktionen, entstandene Matches und technisch notwendige Sitzungsdaten. Diese Daten werden ausschließlich für die Durchführung des Spiels verwendet."
+                            text: "Während des Events verarbeitet Match&Play deine Eventnummer, eine freiwillige Geschlechtsangabe für die ausgewogene Top-16-Auswahl, ausgewählte Aktionen, entstandene Matches und technisch notwendige Sitzungsdaten. Diese Daten werden ausschließlich für die Durchführung des Spiels verwendet."
                         )
 
                         privacyPoint(

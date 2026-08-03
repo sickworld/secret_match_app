@@ -25,8 +25,8 @@ class APIService: ObservableObject {
     private var adminToken: String?
     private let baseURL = URL(string: "https://secret-match.de/wp-json/secretmatch/v1")!
 
-    func login(number: String) async throws {
-        if isAdmin { return }
+    func login(number: String) async throws -> Bool {
+        if isAdmin { return false }
         let normalizedNumber = number.normalizedEventNumber
         let url = baseURL.appendingPathComponent("login")
         var request = URLRequest(url: url)
@@ -34,13 +34,31 @@ class APIService: ObservableObject {
         request.httpBody = formBody(["secretmatch_number": normalizedNumber])
         request.setValue("application/x-www-form-urlencoded", forHTTPHeaderField: "Content-Type")
 
-        let (_, response) = try await URLSession.shared.data(for: request)
+        let (data, response) = try await URLSession.shared.data(for: request)
         guard let http = response as? HTTPURLResponse, http.statusCode == 200 else {
             throw URLError(.badServerResponse)
         }
 
-        self.isLoggedIn = true
-        self.number = normalizedNumber
+        let result = try JSONDecoder().decode(ParticipantLoginResponse.self, from: data)
+        self.number = result.number ?? normalizedNumber
+        return result.needsGender
+    }
+
+    func submitParticipantGender(_ gender: ParticipantGender) async throws {
+        let url = baseURL.appendingPathComponent("profile")
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.httpBody = formBody(["gender": gender.rawValue])
+        request.setValue("application/x-www-form-urlencoded", forHTTPHeaderField: "Content-Type")
+
+        let (_, response) = try await URLSession.shared.data(for: request)
+        guard let http = response as? HTTPURLResponse, http.statusCode == 200 else {
+            throw URLError(.badServerResponse)
+        }
+    }
+
+    func finishParticipantLogin() {
+        isLoggedIn = true
     }
 
     func submitMatch(targetNumber: String, type: String) async throws -> String {
