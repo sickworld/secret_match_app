@@ -21,7 +21,7 @@ struct ParticipantGenderView: View {
                     .foregroundStyle(.white)
                     .multilineTextAlignment(.center)
 
-                Text("Damit können wir die Top 16 möglichst ausgewogen zusammenstellen. Die Angabe bleibt pseudonym und ist freiwillig.")
+                Text("Die Angabe bleibt pseudonym und ist freiwillig. Sie hilft uns, den Abend passend für alle zu gestalten.")
                     .font(.system(size: 17, weight: .medium, design: .rounded))
                     .foregroundStyle(SecretMatchTheme.muted)
                     .multilineTextAlignment(.center)
