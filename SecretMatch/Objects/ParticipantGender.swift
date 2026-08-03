@@ -15,11 +15,11 @@ enum ParticipantGender: String, CaseIterable, Identifiable {
         }
     }
 
-    var icon: String {
+    var symbol: String {
         switch self {
-        case .female: return "figure.dress.line.vertical.figure"
-        case .male: return "figure.stand"
-        case .skip: return "minus.circle"
+        case .female: return "♀"
+        case .male: return "♂"
+        case .skip: return "–"
         }
     }
 }

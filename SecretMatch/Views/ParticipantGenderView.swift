@@ -62,8 +62,8 @@ struct ParticipantGenderView: View {
             onSelect(gender)
         } label: {
             VStack(spacing: 10) {
-                Image(systemName: gender.icon)
-                    .font(.system(size: 34, weight: .semibold))
+                Text(gender.symbol)
+                    .font(.system(size: 44, weight: .medium, design: .rounded))
                 Text(gender.title)
                     .font(.system(size: 19, weight: .bold, design: .rounded))
             }
