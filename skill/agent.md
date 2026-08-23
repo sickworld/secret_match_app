@@ -48,6 +48,12 @@ Für sichtbare Produktänderungen Release Notes oder ein vorhandenes Changelog a
 - Die Marketing-Version als nächste Patch-Version und die Buildnummer um eins erhöhen, sofern der Nutzer keine andere Zielversion vorgibt.
 - Reine Dokumentations- oder Agentenanweisungsänderungen benötigen keinen Versionssprung.
 
+## WordPress-Modul
+
+- Bei Änderungen an API-Requests, Responses, Authentifizierung, Feedback, Event-Reset oder anderem serverabhängigem Verhalten immer das zugehörige SecretMatch-WordPress-Modul unter `../../wordpress/wordpress/wp-content/plugins/secretmatch` prüfen und bei Bedarf gemeinsam anpassen.
+- Bei Moduländerungen Plugin-Version, `README.md` und `CHANGELOG.md` konsistent aktualisieren sowie PHP-Lint und passende Modulprüfungen ausführen.
+- Die `AGENTS.md` und Git-Regeln des WordPress-Repositories zusätzlich befolgen; insbesondere nicht eigenmächtig committen, pushen oder deployen, wenn dessen Regeln dafür eine ausdrückliche Freigabe verlangen.
+
 ## Review-Pflicht
 
 Jede Codeänderung vor Commit anhand von `skill/secretmatch-review/SKILL.md` prüfen.
