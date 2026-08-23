@@ -261,9 +261,12 @@ class APIService: ObservableObject {
         }
 
         let decoder = JSONDecoder()
-        if let feedback = try? decoder.decode([AdminFeedback]?.self, from: data) {
+        do {
+            let feedback = try decoder.decode([AdminFeedback]?.self, from: data)
             adminFeedback = feedback ?? []
             return
+        } catch {
+            // Older module versions may wrap the list in an object.
         }
         if let envelope = try? decoder.decode(AdminFeedbackEnvelope.self, from: data),
            let feedback = envelope.feedback ?? envelope.data {
