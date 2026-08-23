@@ -6,6 +6,9 @@ struct FeedbackView: View {
 
     @State private var overallRating: Int?
     @State private var functionalityRating: Int?
+    @State private var easeOfUseRating: Int?
+    @State private var designRating: Int?
+    @State private var reuseRating: Int?
     @State private var isSubmitting = false
     @State private var didSubmit = false
     @State private var errorMessage: String?
@@ -44,6 +47,18 @@ struct FeedbackView: View {
 
                 question("Wie gut hat die App funktioniert?") {
                     starPicker(selection: $functionalityRating)
+                }
+
+                question("Wie einfach war die Bedienung?") {
+                    starPicker(selection: $easeOfUseRating)
+                }
+
+                question("Wie gut gefällt dir das Design?") {
+                    starPicker(selection: $designRating)
+                }
+
+                question("Wie wahrscheinlich würdest du Match&Play wieder nutzen?") {
+                    starPicker(selection: $reuseRating)
                 }
 
                 if let errorMessage {
@@ -164,8 +179,12 @@ struct FeedbackView: View {
     }
 
     private func submit() {
-        guard let overallRating, let functionalityRating else {
-            errorMessage = "Bitte bewerte beide Fragen mit Sternen."
+        guard let overallRating,
+              let functionalityRating,
+              let easeOfUseRating,
+              let designRating,
+              let reuseRating else {
+            errorMessage = "Bitte bewerte alle fünf Fragen mit Sternen."
             return
         }
 
@@ -176,7 +195,10 @@ struct FeedbackView: View {
             do {
                 try await api.submitFeedback(
                     rating: overallRating,
-                    functionalityRating: functionalityRating
+                    functionalityRating: functionalityRating,
+                    easeOfUseRating: easeOfUseRating,
+                    designRating: designRating,
+                    reuseRating: reuseRating
                 )
                 didSubmit = true
             } catch {

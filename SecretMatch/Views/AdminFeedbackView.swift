@@ -101,26 +101,41 @@ struct AdminFeedbackView: View {
     }
 
     private var summary: some View {
-        HStack(spacing: 10) {
+        LazyVGrid(columns: [GridItem(.adaptive(minimum: 135), spacing: 10)], spacing: 10) {
             summaryCard(
                 title: "Gesamt",
-                value: average(of: \.rating),
+                value: averageText(of: \.rating),
                 icon: "heart.fill"
             )
             summaryCard(
                 title: "Funktion",
-                value: average(of: \.functionalityRating),
+                value: averageText(of: \.functionalityRating),
                 icon: "gearshape.fill"
+            )
+            summaryCard(
+                title: "Bedienung",
+                value: averageText(of: \.easeOfUseRating),
+                icon: "hand.tap.fill"
+            )
+            summaryCard(
+                title: "Design",
+                value: averageText(of: \.designRating),
+                icon: "paintpalette.fill"
+            )
+            summaryCard(
+                title: "Wieder nutzen",
+                value: averageText(of: \.reuseRating),
+                icon: "arrow.clockwise.circle.fill"
             )
         }
     }
 
-    private func summaryCard(title: String, value: Double, icon: String) -> some View {
+    private func summaryCard(title: String, value: String, icon: String) -> some View {
         VStack(alignment: .leading, spacing: 6) {
             Label(title, systemImage: icon)
                 .font(.caption.bold())
                 .foregroundStyle(SecretMatchTheme.secondary)
-            Text(value.formatted(.number.precision(.fractionLength(1))))
+            Text(value)
                 .font(.system(size: 28, weight: .heavy, design: .rounded))
                 .foregroundStyle(.white)
             Text("von 5 Sternen")
@@ -153,6 +168,9 @@ struct AdminFeedbackView: View {
 
             ratingRow("Match&Play gesamt", value: feedback.rating)
             ratingRow("App-Funktion", value: feedback.functionalityRating)
+            ratingRow("Bedienung", value: feedback.easeOfUseRating)
+            ratingRow("Design", value: feedback.designRating)
+            ratingRow("Wieder nutzen", value: feedback.reuseRating)
 
             Label(feedback.createdAt, systemImage: "clock")
                 .font(.caption.monospacedDigit())
@@ -164,20 +182,26 @@ struct AdminFeedbackView: View {
         .overlay(RoundedRectangle(cornerRadius: 18).stroke(SecretMatchTheme.border))
     }
 
-    private func ratingRow(_ title: String, value: Int) -> some View {
+    private func ratingRow(_ title: String, value: Int?) -> some View {
         HStack {
             Text(title)
                 .font(.subheadline.weight(.semibold))
                 .foregroundStyle(.white)
             Spacer()
-            HStack(spacing: 3) {
-                ForEach(1...5, id: \.self) { star in
-                    Image(systemName: star <= value ? "star.fill" : "star")
-                        .foregroundStyle(star <= value ? SecretMatchTheme.secondary : SecretMatchTheme.muted)
+            if let value {
+                HStack(spacing: 3) {
+                    ForEach(1...5, id: \.self) { star in
+                        Image(systemName: star <= value ? "star.fill" : "star")
+                            .foregroundStyle(star <= value ? SecretMatchTheme.secondary : SecretMatchTheme.muted)
+                    }
                 }
+                .accessibilityElement(children: .ignore)
+                .accessibilityLabel("\(value) von 5 Sternen")
+            } else {
+                Text("Nicht beantwortet")
+                    .font(.caption)
+                    .foregroundStyle(SecretMatchTheme.muted)
             }
-            .accessibilityElement(children: .ignore)
-            .accessibilityLabel("\(value) von 5 Sternen")
         }
     }
 
@@ -210,10 +234,18 @@ struct AdminFeedbackView: View {
         .frame(maxWidth: .infinity, minHeight: 180)
     }
 
-    private func average(of keyPath: KeyPath<AdminFeedback, Int>) -> Double {
-        guard !api.adminFeedback.isEmpty else { return 0 }
+    private func averageText(of keyPath: KeyPath<AdminFeedback, Int>) -> String {
+        guard !api.adminFeedback.isEmpty else { return "–" }
         let total = api.adminFeedback.reduce(0) { $0 + $1[keyPath: keyPath] }
-        return Double(total) / Double(api.adminFeedback.count)
+        let average = Double(total) / Double(api.adminFeedback.count)
+        return average.formatted(.number.precision(.fractionLength(1)))
+    }
+
+    private func averageText(of keyPath: KeyPath<AdminFeedback, Int?>) -> String {
+        let values = api.adminFeedback.compactMap { $0[keyPath: keyPath] }
+        guard !values.isEmpty else { return "–" }
+        let average = Double(values.reduce(0, +)) / Double(values.count)
+        return average.formatted(.number.precision(.fractionLength(1)))
     }
 
     private func loadFeedback() async {
