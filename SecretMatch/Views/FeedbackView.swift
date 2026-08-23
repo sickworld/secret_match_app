@@ -4,14 +4,11 @@ struct FeedbackView: View {
     @EnvironmentObject private var api: APIService
     @Binding var isPresented: Bool
 
-    @State private var rating: Int?
-    @State private var experience: Experience?
-    @State private var comment = ""
+    @State private var overallRating: Int?
+    @State private var functionalityRating: Int?
     @State private var isSubmitting = false
     @State private var didSubmit = false
     @State private var errorMessage: String?
-
-    private let maximumCommentLength = 500
 
     var body: some View {
         ZStack {
@@ -42,84 +39,11 @@ struct FeedbackView: View {
                 header
 
                 question("Wie gefällt dir Match&Play?") {
-                    HStack(spacing: 10) {
-                        ForEach(1...5, id: \.self) { value in
-                            Button {
-                                rating = value
-                                errorMessage = nil
-                            } label: {
-                                Image(systemName: value <= (rating ?? 0) ? "star.fill" : "star")
-                                    .font(.system(size: 28, weight: .bold))
-                                    .foregroundStyle(value <= (rating ?? 0) ? SecretMatchTheme.secondary : SecretMatchTheme.muted)
-                                    .frame(maxWidth: .infinity, minHeight: 58)
-                                    .background(SecretMatchTheme.surfaceRaised)
-                                    .clipShape(RoundedRectangle(cornerRadius: 14))
-                                    .overlay(
-                                        RoundedRectangle(cornerRadius: 14)
-                                            .stroke(rating == value ? SecretMatchTheme.secondary : SecretMatchTheme.border, lineWidth: 1.2)
-                                    )
-                            }
-                            .buttonStyle(.plain)
-                            .accessibilityLabel("\(value) von 5 Sternen")
-                            .accessibilityAddTraits(rating == value ? .isSelected : [])
-                        }
-                    }
+                    starPicker(selection: $overallRating)
                 }
 
-                question("Hat alles funktioniert?") {
-                    HStack(spacing: 10) {
-                        ForEach(Experience.allCases) { option in
-                            Button {
-                                experience = option
-                                errorMessage = nil
-                            } label: {
-                                Text(option.title)
-                                    .font(.system(size: 15, weight: .bold, design: .rounded))
-                                    .foregroundStyle(.white)
-                                    .frame(maxWidth: .infinity, minHeight: 52)
-                                    .background(experience == option ? SecretMatchTheme.primary.opacity(0.35) : SecretMatchTheme.surfaceRaised)
-                                    .clipShape(RoundedRectangle(cornerRadius: 14))
-                                    .overlay(
-                                        RoundedRectangle(cornerRadius: 14)
-                                            .stroke(experience == option ? SecretMatchTheme.primary : SecretMatchTheme.border, lineWidth: 1.2)
-                                    )
-                            }
-                            .buttonStyle(.plain)
-                            .accessibilityAddTraits(experience == option ? .isSelected : [])
-                        }
-                    }
-                }
-
-                VStack(alignment: .leading, spacing: 8) {
-                    HStack {
-                        Text("Möchtest du uns noch etwas sagen?")
-                            .font(.headline)
-                            .foregroundStyle(.white)
-                        Spacer()
-                        Text("Optional")
-                            .font(.caption.bold())
-                            .foregroundStyle(SecretMatchTheme.muted)
-                    }
-
-                    TextEditor(text: $comment)
-                        .font(.body)
-                        .foregroundStyle(.white)
-                        .scrollContentBackground(.hidden)
-                        .frame(minHeight: 100)
-                        .padding(12)
-                        .background(Color.black.opacity(0.28))
-                        .clipShape(RoundedRectangle(cornerRadius: 14))
-                        .overlay(RoundedRectangle(cornerRadius: 14).stroke(SecretMatchTheme.border))
-                        .onChange(of: comment) { _, newValue in
-                            if newValue.count > maximumCommentLength {
-                                comment = String(newValue.prefix(maximumCommentLength))
-                            }
-                        }
-
-                    Text("\(comment.count)/\(maximumCommentLength)")
-                        .font(.caption.monospacedDigit())
-                        .foregroundStyle(SecretMatchTheme.muted)
-                        .frame(maxWidth: .infinity, alignment: .trailing)
+                question("Wie gut hat die App funktioniert?") {
+                    starPicker(selection: $functionalityRating)
                 }
 
                 if let errorMessage {
@@ -214,46 +138,51 @@ struct FeedbackView: View {
         }
     }
 
+    private func starPicker(selection: Binding<Int?>) -> some View {
+        HStack(spacing: 10) {
+            ForEach(1...5, id: \.self) { value in
+                Button {
+                    selection.wrappedValue = value
+                    errorMessage = nil
+                } label: {
+                    Image(systemName: value <= (selection.wrappedValue ?? 0) ? "star.fill" : "star")
+                        .font(.system(size: 28, weight: .bold))
+                        .foregroundStyle(value <= (selection.wrappedValue ?? 0) ? SecretMatchTheme.secondary : SecretMatchTheme.muted)
+                        .frame(maxWidth: .infinity, minHeight: 58)
+                        .background(SecretMatchTheme.surfaceRaised)
+                        .clipShape(RoundedRectangle(cornerRadius: 14))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 14)
+                                .stroke(selection.wrappedValue == value ? SecretMatchTheme.secondary : SecretMatchTheme.border, lineWidth: 1.2)
+                        )
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("\(value) von 5 Sternen")
+                .accessibilityAddTraits(selection.wrappedValue == value ? .isSelected : [])
+            }
+        }
+    }
+
     private func submit() {
-        guard let rating, let experience else {
-            errorMessage = "Bitte beantworte die beiden kurzen Fragen."
+        guard let overallRating, let functionalityRating else {
+            errorMessage = "Bitte bewerte beide Fragen mit Sternen."
             return
         }
 
         isSubmitting = true
         errorMessage = nil
-        let trimmedComment = comment.trimmingCharacters(in: .whitespacesAndNewlines)
 
         Task {
             do {
                 try await api.submitFeedback(
-                    rating: rating,
-                    experience: experience.rawValue,
-                    comment: trimmedComment
+                    rating: overallRating,
+                    functionalityRating: functionalityRating
                 )
                 didSubmit = true
             } catch {
                 errorMessage = "Das Feedback konnte gerade nicht gesendet werden. Bitte versuche es noch einmal."
             }
             isSubmitting = false
-        }
-    }
-}
-
-private extension FeedbackView {
-    enum Experience: String, CaseIterable, Identifiable {
-        case yes
-        case partly
-        case no
-
-        var id: String { rawValue }
-
-        var title: String {
-            switch self {
-            case .yes: "Ja"
-            case .partly: "Teilweise"
-            case .no: "Nein"
-            }
         }
     }
 }

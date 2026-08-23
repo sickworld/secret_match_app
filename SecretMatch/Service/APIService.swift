@@ -57,13 +57,13 @@ class APIService: ObservableObject {
         }
     }
 
-    func submitFeedback(rating: Int, experience: String, comment: String) async throws {
+    func submitFeedback(rating: Int, functionalityRating: Int) async throws {
         let url = baseURL.appendingPathComponent("feedback")
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.httpBody = try JSONEncoder().encode(
-            FeedbackRequest(rating: rating, experience: experience, comment: comment)
+            FeedbackRequest(rating: rating, functionalityRating: functionalityRating)
         )
 
         let configuration = URLSessionConfiguration.ephemeral
@@ -416,8 +416,12 @@ private struct AdminLoginResponse: Decodable {
 
 private struct FeedbackRequest: Encodable {
     let rating: Int
-    let experience: String
-    let comment: String
+    let functionalityRating: Int
+
+    private enum CodingKeys: String, CodingKey {
+        case rating
+        case functionalityRating = "functionality_rating"
+    }
 }
 
 private struct BillboardAccessResponse: Decodable {

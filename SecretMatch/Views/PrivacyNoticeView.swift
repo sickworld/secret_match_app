@@ -59,7 +59,7 @@ struct PrivacyNoticeView: View {
                         privacyPoint(
                             icon: "bubble.left.and.bubble.right.fill",
                             title: "Anonymes Feedback",
-                            text: "Wenn du freiwillig Feedback gibst, übermittelt die App nur deine Antworten und deinen optionalen Kommentar. Deine Eventnummer und deine Sitzung werden dabei nicht mitgesendet."
+                            text: "Wenn du freiwillig Feedback gibst, übermittelt die App nur deine beiden Sternbewertungen. Deine Eventnummer und deine Sitzung werden dabei nicht mitgesendet."
                         )
 
                         privacyPoint(
