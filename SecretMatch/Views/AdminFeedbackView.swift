@@ -122,11 +122,6 @@ struct AdminFeedbackView: View {
                 value: averageText(of: \.designRating),
                 icon: "paintpalette.fill"
             )
-            summaryCard(
-                title: "Wieder nutzen",
-                value: averageText(of: \.reuseRating),
-                icon: "arrow.clockwise.circle.fill"
-            )
         }
     }
 
@@ -170,7 +165,6 @@ struct AdminFeedbackView: View {
             ratingRow("App-Funktion", value: feedback.functionalityRating)
             ratingRow("Bedienung", value: feedback.easeOfUseRating)
             ratingRow("Design", value: feedback.designRating)
-            ratingRow("Wieder nutzen", value: feedback.reuseRating)
 
             Label(feedback.createdAt, systemImage: "clock")
                 .font(.caption.monospacedDigit())
@@ -232,13 +226,6 @@ struct AdminFeedbackView: View {
             .buttonStyle(SecretSecondaryButtonStyle())
         }
         .frame(maxWidth: .infinity, minHeight: 180)
-    }
-
-    private func averageText(of keyPath: KeyPath<AdminFeedback, Int>) -> String {
-        guard !api.adminFeedback.isEmpty else { return "–" }
-        let total = api.adminFeedback.reduce(0) { $0 + $1[keyPath: keyPath] }
-        let average = Double(total) / Double(api.adminFeedback.count)
-        return average.formatted(.number.precision(.fractionLength(1)))
     }
 
     private func averageText(of keyPath: KeyPath<AdminFeedback, Int?>) -> String {
