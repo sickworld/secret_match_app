@@ -62,8 +62,7 @@ class APIService: ObservableObject {
         rating: Int,
         functionalityRating: Int,
         easeOfUseRating: Int,
-        designRating: Int,
-        reuseRating: Int
+        designRating: Int
     ) async throws {
         let url = baseURL.appendingPathComponent("feedback")
         var request = URLRequest(url: url)
@@ -74,8 +73,7 @@ class APIService: ObservableObject {
                 rating: rating,
                 functionalityRating: functionalityRating,
                 easeOfUseRating: easeOfUseRating,
-                designRating: designRating,
-                reuseRating: reuseRating
+                designRating: designRating
             )
         )
 
@@ -451,14 +449,12 @@ private struct FeedbackRequest: Encodable {
     let functionalityRating: Int
     let easeOfUseRating: Int
     let designRating: Int
-    let reuseRating: Int
 
     private enum CodingKeys: String, CodingKey {
         case rating
         case functionalityRating = "functionality_rating"
         case easeOfUseRating = "ease_of_use_rating"
         case designRating = "design_rating"
-        case reuseRating = "reuse_rating"
     }
 }
 

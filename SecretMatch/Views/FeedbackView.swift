@@ -8,7 +8,6 @@ struct FeedbackView: View {
     @State private var functionalityRating: Int?
     @State private var easeOfUseRating: Int?
     @State private var designRating: Int?
-    @State private var reuseRating: Int?
     @State private var isSubmitting = false
     @State private var didSubmit = false
     @State private var errorMessage: String?
@@ -55,10 +54,6 @@ struct FeedbackView: View {
 
                 question("Wie gut gefällt dir das Design?") {
                     starPicker(selection: $designRating)
-                }
-
-                question("Wie wahrscheinlich würdest du Match&Play wieder nutzen?") {
-                    starPicker(selection: $reuseRating)
                 }
 
                 if let errorMessage {
@@ -182,9 +177,8 @@ struct FeedbackView: View {
         guard let overallRating,
               let functionalityRating,
               let easeOfUseRating,
-              let designRating,
-              let reuseRating else {
-            errorMessage = "Bitte bewerte alle fünf Fragen mit Sternen."
+              let designRating else {
+            errorMessage = "Bitte bewerte alle vier Fragen mit Sternen."
             return
         }
 
@@ -197,8 +191,7 @@ struct FeedbackView: View {
                     rating: overallRating,
                     functionalityRating: functionalityRating,
                     easeOfUseRating: easeOfUseRating,
-                    designRating: designRating,
-                    reuseRating: reuseRating
+                    designRating: designRating
                 )
                 didSubmit = true
             } catch {
