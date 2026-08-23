@@ -68,25 +68,6 @@ struct PrivacyNoticeView: View {
                             text: "Eventnummern, Aktionen, Matches, Sitzungen und anonyme Feedbacks werden nach Abschluss des Events aus dem aktiven Match&Play-System gelöscht."
                         )
 
-                        VStack(alignment: .leading, spacing: 8) {
-                            Text("Verantwortlicher Veranstalter")
-                                .font(.headline)
-                                .foregroundStyle(.white)
-
-                            Text("Hot Chili Events\nKirchheimerstr. 4\n71229 Leonberg\nDeutschland")
-                                .font(.subheadline)
-                                .foregroundStyle(.white.opacity(0.78))
-
-                            Text("Für Datenschutzanfragen kannst du das Veranstaltungsteam vor Ort ansprechen.")
-                                .font(.footnote.weight(.medium))
-                                .foregroundStyle(SecretMatchTheme.muted)
-                        }
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .padding(16)
-                        .background(SecretMatchTheme.surfaceRaised)
-                        .clipShape(RoundedRectangle(cornerRadius: 15))
-                        .overlay(RoundedRectangle(cornerRadius: 15).stroke(SecretMatchTheme.border))
-                        .padding(.top, 4)
                     }
                 }
             }

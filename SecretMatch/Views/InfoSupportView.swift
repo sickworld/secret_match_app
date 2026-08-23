@@ -145,12 +145,6 @@ struct InfoSupportView: View {
                 .font(.subheadline)
                 .foregroundStyle(.white.opacity(0.82))
 
-            Link(destination: URL(string: "https://hot-chili-events.de/")!) {
-                Label("hot-chili-events.de", systemImage: "safari.fill")
-                    .font(.subheadline.weight(.semibold))
-                    .foregroundStyle(SecretMatchTheme.secondary)
-            }
-
             Text("Für direkte Fragen kannst du außerdem das Veranstaltungsteam vor Ort ansprechen.")
                 .font(.footnote)
                 .foregroundStyle(SecretMatchTheme.muted)
