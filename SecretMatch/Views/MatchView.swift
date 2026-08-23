@@ -7,8 +7,7 @@ struct MatchView: View {
     @State private var showActionsOverlay = false
     @State private var showGuideOverlay = false
     @State private var showRulesOverlay = false
-    @State private var showFeedbackOverlay = false
-    @State private var showPrivacyOverlay = false
+    @State private var showInfoOverlay = false
     @State private var targetNumber = ""
     @State private var selectedActions: Set<String> = []
     @State private var responseMessage = ""
@@ -152,15 +151,8 @@ struct MatchView: View {
                 .zIndex(5)
             }
 
-            if showPrivacyOverlay {
-                PrivacyNoticeView(isPresented: $showPrivacyOverlay)
-                    .onAppear { pauseInactivityTimer() }
-                    .onDisappear { resetInactivityTimer() }
-                    .zIndex(6)
-            }
-
-            if showFeedbackOverlay {
-                FeedbackView(isPresented: $showFeedbackOverlay)
+            if showInfoOverlay {
+                InfoSupportView(isPresented: $showInfoOverlay)
                     .environmentObject(api)
                     .onAppear { pauseInactivityTimer() }
                     .onDisappear { resetInactivityTimer() }
@@ -227,8 +219,7 @@ struct MatchView: View {
             showActionsOverlay: $showActionsOverlay,
             showGuideOverlay: $showGuideOverlay,
             showRulesOverlay: $showRulesOverlay,
-            showFeedbackOverlay: $showFeedbackOverlay,
-            showPrivacyOverlay: $showPrivacyOverlay,
+            showInfoOverlay: $showInfoOverlay,
             isCompact: isCompact,
             isShort: isShort
         )

@@ -15,3 +15,5 @@ Der Server-Endpunkt muss die vier App-Bewertungen validieren und darf Feedback w
 Beim Event-Reset werden die anonymen Feedbacks zusammen mit den übrigen Eventdaten im letzten Reset-Backup gesichert und anschließend aus dem aktiven System gelöscht.
 
 Die iPhone-Admin-App lädt die anonymen Einträge über `GET /wp-json/secretmatch/v1/admin/feedback` und löscht einzelne Einträge über `DELETE /wp-json/secretmatch/v1/admin/feedback/{id}`. Beide Aufrufe erfordern das Admin-Bearer-Token.
+
+Die Teilnehmer-App bündelt Feedback, Datenschutz, Impressum und App-Version im Bereich **Info & Support**. Dieser ist sowohl vor dem Login als auch im laufenden Event erreichbar.

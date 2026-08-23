@@ -7,7 +7,7 @@ struct LoginView: View {
     @State private var showKeyboard = false
     @State private var isLoading = false
     @State private var showAdminLogin = false
-    @State private var showPrivacyNotice = false
+    @State private var showInfoSupport = false
     @State private var showGenderChoice = false
     @State private var genderSubmitting = false
     @State private var genderError: String?
@@ -86,21 +86,16 @@ struct LoginView: View {
                     .disabled(isLoading || number.isEmpty)
                     .opacity(number.isEmpty ? 0.55 : 1)
 
-                    HStack(spacing: 5) {
-                        Image(systemName: "lock.fill")
-                            .font(.system(size: 11, weight: .semibold))
-                        Text("Deine Nummer bleibt anonym ·")
-                        Button("Datenschutz ansehen") {
+                    Button {
                             showKeyboard = false
-                            showPrivacyNotice = true
-                        }
-                        .fontWeight(.bold)
-                        .foregroundStyle(SecretMatchTheme.secondary)
+                            showInfoSupport = true
+                    } label: {
+                        Label("Info, Datenschutz & Impressum", systemImage: "info.circle.fill")
+                            .fontWeight(.bold)
                     }
                     .font(.system(size: 14, weight: .medium, design: .rounded))
-                    .foregroundStyle(SecretMatchTheme.muted)
-                    .accessibilityElement(children: .combine)
-                    .accessibilityHint("Öffnet die Datenschutz-Kurzinfo")
+                    .foregroundStyle(SecretMatchTheme.secondary)
+                    .accessibilityHint("Öffnet Info, Feedback, Datenschutz und Impressum")
                         }
                         .frame(maxWidth: 680)
                         .secretCard(cornerRadius: 30, padding: 50)
@@ -147,8 +142,9 @@ struct LoginView: View {
                 .transition(.scale(scale: 0.92).combined(with: .opacity))
             }
 
-            if showPrivacyNotice {
-                PrivacyNoticeView(isPresented: $showPrivacyNotice)
+            if showInfoSupport {
+                InfoSupportView(isPresented: $showInfoSupport)
+                    .environmentObject(api)
                     .zIndex(40)
             }
 
@@ -186,7 +182,7 @@ struct LoginView: View {
         }
         .onChange(of: number) { _, _ in restartScreensaverTimer() }
         .onChange(of: showKeyboard) { _, _ in restartScreensaverTimer() }
-        .onChange(of: showPrivacyNotice) { _, _ in restartScreensaverTimer() }
+        .onChange(of: showInfoSupport) { _, _ in restartScreensaverTimer() }
         .onChange(of: showGenderChoice) { _, _ in restartScreensaverTimer() }
         .onChange(of: showAdminLogin) { _, isPresented in
             if isPresented {
@@ -257,7 +253,7 @@ struct LoginView: View {
             }
 
             guard !showKeyboard,
-                  !showPrivacyNotice,
+                  !showInfoSupport,
                   !showGenderChoice,
                   !showAdminLogin,
                   !isLoading else { return }

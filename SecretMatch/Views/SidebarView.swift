@@ -9,8 +9,7 @@ struct SidebarView: View {
     @Binding var showActionsOverlay: Bool
     @Binding var showGuideOverlay: Bool
     @Binding var showRulesOverlay: Bool
-    @Binding var showFeedbackOverlay: Bool
-    @Binding var showPrivacyOverlay: Bool
+    @Binding var showInfoOverlay: Bool
     var isCompact = false
     var isShort = false
 
@@ -122,26 +121,12 @@ struct SidebarView: View {
 
             Button {
                 registerActivity()
-                showFeedbackOverlay = true
+                showInfoOverlay = true
             } label: {
-                Label("Feedback geben", systemImage: "bubble.left.and.bubble.right.fill")
+                Label("Info & Support", systemImage: "info.circle.fill")
             }
             .buttonStyle(SidebarButtonStyle(compact: isShort))
-            .accessibilityHint("Öffnet das anonyme Feedback-Formular")
-
-            Spacer(minLength: isCompact ? 12 : (isShort ? 8 : 12))
-
-            Button {
-                registerActivity()
-                showPrivacyOverlay = true
-            } label: {
-                Label("Datenschutz", systemImage: "lock.shield.fill")
-                    .font(.system(size: isShort ? 14 : 15, weight: .semibold, design: .rounded))
-                    .foregroundStyle(SecretMatchTheme.muted)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(.horizontal, 4)
-            }
-            .accessibilityHint("Öffnet die Datenschutz-Kurzinfo")
+            .accessibilityHint("Öffnet Feedback, Datenschutz und Impressum")
 
             if !isCompact {
                 Spacer(minLength: isShort ? 16 : 28)
