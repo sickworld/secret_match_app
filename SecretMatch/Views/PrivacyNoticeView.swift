@@ -65,7 +65,7 @@ struct PrivacyNoticeView: View {
                         privacyPoint(
                             icon: "trash.fill",
                             title: "Löschung nach dem Event",
-                            text: "Eventnummern, Aktionen, Matches und Sitzungen werden nach Abschluss des Events aus dem aktiven Match&Play-System gelöscht."
+                            text: "Eventnummern, Aktionen, Matches, Sitzungen und anonyme Feedbacks werden nach Abschluss des Events aus dem aktiven Match&Play-System gelöscht."
                         )
 
                         VStack(alignment: .leading, spacing: 8) {

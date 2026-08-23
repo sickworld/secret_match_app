@@ -67,6 +67,7 @@ struct EventResetResponse: Decodable {
         let matches: Int
         let requests: Int
         let actions: Int
+        let feedback: Int?
     }
 
     private enum CodingKeys: String, CodingKey {

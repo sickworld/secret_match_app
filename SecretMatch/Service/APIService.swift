@@ -358,6 +358,7 @@ class APIService: ObservableObject {
         let result = try JSONDecoder().decode(EventResetResponse.self, from: data)
         adminActions = []
         adminMatches = []
+        adminFeedback = []
         try await refreshAdminControlData()
         return result
     }

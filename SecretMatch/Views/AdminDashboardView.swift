@@ -415,7 +415,7 @@ struct AdminDashboardView: View {
             Text("🚨 Neues Event vorbereiten")
                 .font(.title2.bold())
                 .foregroundStyle(.white)
-            Text("Erstellt zuerst ein Backup, leert Matches, Anfragen und Aktionen, beendet Sessions und setzt das Billboard zurück. Freigegebene Nummern und Einstellungen bleiben erhalten.")
+            Text("Erstellt zuerst ein Backup, leert Matches, Anfragen, Aktionen und Feedbacks, beendet Sessions und setzt das Billboard zurück. Freigegebene Nummern und Einstellungen bleiben erhalten.")
                 .foregroundStyle(SecretMatchTheme.muted)
             Button("Event-Reset-Assistent öffnen", role: .destructive) {
                 resetConfirmation = ""
@@ -431,7 +431,7 @@ struct AdminDashboardView: View {
             Form {
                 Section("Der Assistent führt diese Schritte aus") {
                     Label("Backup des aktuellen Events erstellen", systemImage: "archivebox")
-                    Label("Matches, Anfragen und Aktionen leeren", systemImage: "trash")
+                    Label("Matches, Anfragen, Aktionen und Feedbacks leeren", systemImage: "trash")
                     Label("Teilnehmer- und Billboard-Sessions beenden", systemImage: "person.crop.circle.badge.xmark")
                     Label("Top-16-Testmodus zurücksetzen", systemImage: "rectangle.on.rectangle.slash")
                 }
@@ -621,7 +621,11 @@ struct AdminDashboardView: View {
         isWorking = true
         do {
             let result = try await api.resetEvent(confirmation: resetConfirmation)
-            statusMessage = "Event zurückgesetzt. Backup: \(result.backupCreatedAt) · \(result.deleted.matches) Matches und \(result.deleted.actions) Aktionen entfernt."
+            if let feedback = result.deleted.feedback {
+                statusMessage = "Event zurückgesetzt. Backup: \(result.backupCreatedAt) · \(result.deleted.matches) Matches, \(result.deleted.actions) Aktionen und \(feedback) Feedbacks entfernt."
+            } else {
+                statusMessage = "Event zurückgesetzt. Backup: \(result.backupCreatedAt) · \(result.deleted.matches) Matches und \(result.deleted.actions) Aktionen entfernt."
+            }
             errorMessage = nil
             showResetAssistant = false
         } catch {
