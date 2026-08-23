@@ -15,7 +15,8 @@ struct AdminLoginView: View {
 
     var body: some View {
         ZStack {
-            BrandBackground()
+            SecretMatchTheme.background
+                .ignoresSafeArea()
 
             GeometryReader { proxy in
                 ScrollView {
@@ -108,9 +109,8 @@ struct AdminLoginView: View {
                     .opacity(password.isEmpty ? 0.55 : 1)
                         }
                         .frame(maxWidth: 560)
-                        .secretCard(cornerRadius: 30, padding: allowsDismiss ? 50 : 28)
-                        .padding(.horizontal, allowsDismiss ? 28 : 18)
-                        .padding(.vertical, 28)
+                        .padding(.horizontal, allowsDismiss ? 50 : 32)
+                        .padding(.vertical, 36)
                     }
                     .frame(maxWidth: .infinity, minHeight: proxy.size.height)
                 }

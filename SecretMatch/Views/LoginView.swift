@@ -17,7 +17,8 @@ struct LoginView: View {
     
     var body: some View {
         ZStack {
-            BrandBackground()
+            SecretMatchTheme.background
+                .ignoresSafeArea()
 
             GeometryReader { proxy in
                 ScrollView {
@@ -98,8 +99,8 @@ struct LoginView: View {
                     .accessibilityHint("Öffnet Info, Feedback, Datenschutz und Impressum")
                         }
                         .frame(maxWidth: 680)
-                        .secretCard(cornerRadius: 30, padding: 50)
-                        .padding(.vertical, 28)
+                        .padding(.horizontal, 50)
+                        .padding(.vertical, 36)
                     }
                     .frame(maxWidth: .infinity, minHeight: proxy.size.height)
                     .padding(.horizontal, 28)

@@ -43,9 +43,9 @@ Für sichtbare Produktänderungen Release Notes oder ein vorhandenes Changelog a
 
 ## Versionierung
 
-- Bei jeder ausgelieferten Änderung an App-Code, UI, API-Integration, Modellen, Assets oder Xcode-Projekt sowohl `MARKETING_VERSION` als auch `CURRENT_PROJECT_VERSION` erhöhen.
+- Bei jeder ausgelieferten Änderung an App-Code, UI, API-Integration, Modellen, Assets oder Xcode-Projekt `MARKETING_VERSION` auf das aktuelle Datum im Format `YYYY.MM.DD` setzen und `CURRENT_PROJECT_VERSION` erhöhen.
 - `SecretMatch` und `SecretMatch Admin` müssen in allen Build-Konfigurationen dieselben Versions- und Buildnummern verwenden.
-- Die Marketing-Version als nächste Patch-Version und die Buildnummer um eins erhöhen, sofern der Nutzer keine andere Zielversion vorgibt.
+- Bei mehreren Auslieferungen am selben Tag die Datums-Version beibehalten und die Buildnummer jeweils um eins erhöhen, sofern der Nutzer keine andere Zielversion vorgibt.
 - Reine Dokumentations- oder Agentenanweisungsänderungen benötigen keinen Versionssprung.
 
 ## WordPress-Modul
