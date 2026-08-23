@@ -21,10 +21,8 @@ struct LoginView: View {
 
             GeometryReader { proxy in
                 ScrollView {
-                    VStack {
-                        Spacer(minLength: 28)
-
-                VStack(spacing: 34) {
+                    VStack(spacing: 0) {
+                        VStack(spacing: 34) {
                     Image("logo")
                         .resizable()
                         .scaledToFit()
@@ -103,11 +101,10 @@ struct LoginView: View {
                     .foregroundStyle(SecretMatchTheme.muted)
                     .accessibilityElement(children: .combine)
                     .accessibilityHint("Öffnet die Datenschutz-Kurzinfo")
-                }
-                .frame(maxWidth: 680)
-                .secretCard(cornerRadius: 30, padding: 50)
-
-                        Spacer(minLength: 28)
+                        }
+                        .frame(maxWidth: 680)
+                        .secretCard(cornerRadius: 30, padding: 50)
+                        .padding(.vertical, 28)
                     }
                     .frame(maxWidth: .infinity, minHeight: proxy.size.height)
                     .padding(.horizontal, 28)

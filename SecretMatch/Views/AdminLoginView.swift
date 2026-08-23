@@ -19,28 +19,8 @@ struct AdminLoginView: View {
 
             GeometryReader { proxy in
                 ScrollView {
-                    VStack {
-                if allowsDismiss {
-                    HStack {
-                        Spacer()
-                        Button {
-                            isPresented = false
-                        } label: {
-                            Image(systemName: "xmark")
-                                .font(.title2.bold())
-                                .foregroundStyle(.white)
-                                .frame(width: 54, height: 54)
-                                .background(SecretMatchTheme.surfaceRaised)
-                                .clipShape(Circle())
-                        }
-                        .accessibilityLabel("Admin Login schließen")
-                    }
-                    .padding(28)
-                }
-
-                Spacer(minLength: allowsDismiss ? 30 : 22)
-
-                VStack(spacing: 34) {
+                    VStack(spacing: 0) {
+                        VStack(spacing: 34) {
                     Image("logo")
                         .resizable()
                         .scaledToFit()
@@ -126,14 +106,29 @@ struct AdminLoginView: View {
                     .buttonStyle(SecretPrimaryButtonStyle(fontSize: 20, minHeight: 76))
                     .disabled(password.isEmpty || isLoading)
                     .opacity(password.isEmpty ? 0.55 : 1)
-                }
-                .frame(maxWidth: 560)
-                .secretCard(cornerRadius: 30, padding: allowsDismiss ? 50 : 28)
-                .padding(.horizontal, allowsDismiss ? 28 : 18)
-
-                Spacer(minLength: 34)
+                        }
+                        .frame(maxWidth: 560)
+                        .secretCard(cornerRadius: 30, padding: allowsDismiss ? 50 : 28)
+                        .padding(.horizontal, allowsDismiss ? 28 : 18)
+                        .padding(.vertical, 28)
                     }
                     .frame(maxWidth: .infinity, minHeight: proxy.size.height)
+                }
+                .overlay(alignment: .topTrailing) {
+                    if allowsDismiss {
+                        Button {
+                            isPresented = false
+                        } label: {
+                            Image(systemName: "xmark")
+                                .font(.title2.bold())
+                                .foregroundStyle(.white)
+                                .frame(width: 54, height: 54)
+                                .background(SecretMatchTheme.surfaceRaised)
+                                .clipShape(Circle())
+                        }
+                        .accessibilityLabel("Admin Login schließen")
+                        .padding(28)
+                    }
                 }
             }
         }
