@@ -241,7 +241,14 @@ class APIService: ObservableObject {
 
     func loadAdminFeedback() async throws {
         let url = baseURL.appendingPathComponent("admin/feedback")
-        let (data, response) = try await URLSession.shared.data(for: adminRequest(url: url))
+        let request = try adminRequest(url: url)
+        let data: Data
+        let response: URLResponse
+        do {
+            (data, response) = try await URLSession.shared.data(for: request)
+        } catch let error as URLError where error.code == .cancelled && !Task.isCancelled {
+            (data, response) = try await URLSession.shared.data(for: request)
+        }
         guard let http = response as? HTTPURLResponse else {
             throw AdminFeedbackLoadError.invalidResponse
         }
