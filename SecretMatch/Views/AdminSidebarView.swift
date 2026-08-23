@@ -94,6 +94,16 @@ struct AdminSidebarView: View {
             }
             .buttonStyle(SidebarButtonStyle())
 
+#if ADMIN_APP
+            Button {
+                dashboardSection = .feedback
+                dismissMenu()
+            } label: {
+                Label("Feedback", systemImage: "star.bubble.fill")
+            }
+            .buttonStyle(SidebarButtonStyle())
+#endif
+
 #if !ADMIN_APP
             Button {
                 showBillboard = true

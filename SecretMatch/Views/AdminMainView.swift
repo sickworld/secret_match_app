@@ -134,6 +134,9 @@ struct AdminMainView: View {
         case .matches:
             AdminMatchListView(isPresented: .constant(true), isEmbedded: true)
                 .environmentObject(api)
+        case .feedback:
+            AdminFeedbackView()
+                .environmentObject(api)
         default:
             AdminDashboardView(showBillboard: $showBillboard)
                 .environment(\.adminDashboardSection, dashboardSection)

@@ -20,6 +20,7 @@ class APIService: ObservableObject {
     @Published private(set) var hasSavedAdminSession: Bool = false
     @Published var adminActions: [AdminAction] = []
     @Published var adminMatches: [AdminMatch] = []
+    @Published var adminFeedback: [AdminFeedback] = []
     @Published var adminDashboard: AdminDashboard?
     @Published var adminParticipants = AdminParticipants(allowed: [], active: [])
     private var adminToken: String?
@@ -228,6 +229,13 @@ class APIService: ObservableObject {
         adminMatches = try JSONDecoder().decode([AdminMatch].self, from: data)
     }
 
+    func loadAdminFeedback() async throws {
+        let url = baseURL.appendingPathComponent("admin/feedback")
+        let (data, response) = try await URLSession.shared.data(for: adminRequest(url: url))
+        try validateAdminResponse(response)
+        adminFeedback = try JSONDecoder().decode([AdminFeedback].self, from: data)
+    }
+
     func createBillboardAccessURL() async throws -> URL {
         let url = baseURL.appendingPathComponent("admin/billboard-access")
         var request = try adminRequest(url: url)
@@ -310,6 +318,17 @@ class APIService: ObservableObject {
         try await loadAdminDashboard()
     }
 
+    func deleteAdminFeedback(id: String) async throws {
+        let url = baseURL
+            .appendingPathComponent("admin/feedback")
+            .appendingPathComponent(id)
+        var request = try adminRequest(url: url)
+        request.httpMethod = "DELETE"
+        let (_, response) = try await URLSession.shared.data(for: request)
+        try validateAdminResponse(response)
+        adminFeedback.removeAll { $0.id == id }
+    }
+
     func logoutParticipant(number: String) async throws {
         try await participantCommand(number: number, suffix: "logout", method: "POST")
     }
@@ -355,6 +374,7 @@ class APIService: ObservableObject {
         self.number = ""
         self.matches = []
         self.actions = []
+        self.adminFeedback = []
         self.isAdmin = false
     }
 

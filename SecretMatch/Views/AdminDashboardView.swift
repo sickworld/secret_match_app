@@ -1,7 +1,7 @@
 import SwiftUI
 
 enum AdminDashboardSection {
-    case overview, liveFeed, actions, matches, controls, participants, system
+    case overview, liveFeed, actions, matches, feedback, controls, participants, system
 }
 
 private struct AdminDashboardSectionKey: EnvironmentKey {
@@ -100,7 +100,7 @@ struct AdminDashboardView: View {
             sectionHeading("System & Reset", subtitle: "Systemzustand prüfen und Events vorbereiten")
             systemStatus
             resetCard
-        case .liveFeed, .actions, .matches:
+        case .liveFeed, .actions, .matches, .feedback:
             EmptyView()
         }
     }
