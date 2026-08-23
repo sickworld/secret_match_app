@@ -244,7 +244,7 @@ struct AdminFeedbackView: View {
         do {
             try await api.loadAdminFeedback()
         } catch {
-            errorMessage = "Feedback konnte nicht geladen werden."
+            errorMessage = error.localizedDescription
         }
     }
 

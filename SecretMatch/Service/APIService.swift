@@ -242,8 +242,29 @@ class APIService: ObservableObject {
     func loadAdminFeedback() async throws {
         let url = baseURL.appendingPathComponent("admin/feedback")
         let (data, response) = try await URLSession.shared.data(for: adminRequest(url: url))
-        try validateAdminResponse(response)
-        adminFeedback = try JSONDecoder().decode([AdminFeedback].self, from: data)
+        guard let http = response as? HTTPURLResponse else {
+            throw AdminFeedbackLoadError.invalidResponse
+        }
+        if http.statusCode == 401 || http.statusCode == 403 {
+            handleExpiredAdminToken(response)
+            throw AdminFeedbackLoadError.sessionExpired
+        }
+        guard http.statusCode == 200 else {
+            throw AdminFeedbackLoadError.server(statusCode: http.statusCode)
+        }
+
+        let decoder = JSONDecoder()
+        if let feedback = try? decoder.decode([AdminFeedback]?.self, from: data) {
+            adminFeedback = feedback ?? []
+            return
+        }
+        if let envelope = try? decoder.decode(AdminFeedbackEnvelope.self, from: data),
+           let feedback = envelope.feedback ?? envelope.data {
+            adminFeedback = feedback
+            return
+        }
+
+        throw AdminFeedbackLoadError.invalidPayload
     }
 
     func createBillboardAccessURL() async throws -> URL {
@@ -443,6 +464,31 @@ class APIService: ObservableObject {
 
 private struct AdminLoginResponse: Decodable {
     let token: String
+}
+
+private struct AdminFeedbackEnvelope: Decodable {
+    let feedback: [AdminFeedback]?
+    let data: [AdminFeedback]?
+}
+
+enum AdminFeedbackLoadError: LocalizedError {
+    case invalidResponse
+    case sessionExpired
+    case server(statusCode: Int)
+    case invalidPayload
+
+    var errorDescription: String? {
+        switch self {
+        case .invalidResponse:
+            return "Der Feedback-Server hat nicht korrekt geantwortet."
+        case .sessionExpired:
+            return "Die Admin-Sitzung ist abgelaufen. Bitte erneut anmelden."
+        case .server(let statusCode):
+            return "Feedback konnte wegen eines Serverfehlers nicht geladen werden (HTTP \(statusCode))."
+        case .invalidPayload:
+            return "Die Feedback-Antwort hat ein unbekanntes Format."
+        }
+    }
 }
 
 private struct FeedbackRequest: Encodable {
