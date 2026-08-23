@@ -15,6 +15,7 @@ Load the matching project skill when the task touches its area:
 - Keep changes small, thematic, and consistent with the existing SwiftUI architecture.
 - Review every completed code change before delivery.
 - Run the smallest relevant checks; for app changes, build the `SecretMatch` scheme.
+- For every delivered app-code, UI, API-integration, model, asset, or Xcode-project change, increment both `MARKETING_VERSION` and `CURRENT_PROJECT_VERSION`. Keep the `SecretMatch` and `SecretMatch Admin` targets on the same values in every build configuration. Documentation-only changes do not require a version bump.
 - Run `git diff --check` before committing.
 - Stage only task-related files and exclude Xcode user-state files.
 - Commit with a clear product-level message and push the current branch unless the user explicitly says not to.

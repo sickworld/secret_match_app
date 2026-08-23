@@ -41,6 +41,13 @@ Diese Datei enthält die verbindlichen Arbeitsregeln für Agenten in diesem Repo
 
 Für sichtbare Produktänderungen Release Notes oder ein vorhandenes Changelog aktualisieren. Falls noch kein Changelog existiert, keines nur für eine kleine Änderung erfinden; den Bedarf bei einer Release-Aufgabe neu bewerten.
 
+## Versionierung
+
+- Bei jeder ausgelieferten Änderung an App-Code, UI, API-Integration, Modellen, Assets oder Xcode-Projekt sowohl `MARKETING_VERSION` als auch `CURRENT_PROJECT_VERSION` erhöhen.
+- `SecretMatch` und `SecretMatch Admin` müssen in allen Build-Konfigurationen dieselben Versions- und Buildnummern verwenden.
+- Die Marketing-Version als nächste Patch-Version und die Buildnummer um eins erhöhen, sofern der Nutzer keine andere Zielversion vorgibt.
+- Reine Dokumentations- oder Agentenanweisungsänderungen benötigen keinen Versionssprung.
+
 ## Review-Pflicht
 
 Jede Codeänderung vor Commit anhand von `skill/secretmatch-review/SKILL.md` prüfen.
