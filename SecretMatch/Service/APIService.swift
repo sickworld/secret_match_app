@@ -57,6 +57,27 @@ class APIService: ObservableObject {
         }
     }
 
+    func submitFeedback(rating: Int, experience: String, comment: String) async throws {
+        let url = baseURL.appendingPathComponent("feedback")
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.httpBody = try JSONEncoder().encode(
+            FeedbackRequest(rating: rating, experience: experience, comment: comment)
+        )
+
+        let configuration = URLSessionConfiguration.ephemeral
+        configuration.httpShouldSetCookies = false
+        configuration.httpCookieStorage = nil
+        configuration.urlCache = nil
+        let session = URLSession(configuration: configuration)
+
+        let (_, response) = try await session.data(for: request)
+        guard let http = response as? HTTPURLResponse, (200...299).contains(http.statusCode) else {
+            throw URLError(.badServerResponse)
+        }
+    }
+
     func finishParticipantLogin() {
         isLoggedIn = true
     }
@@ -391,6 +412,12 @@ class APIService: ObservableObject {
 
 private struct AdminLoginResponse: Decodable {
     let token: String
+}
+
+private struct FeedbackRequest: Encodable {
+    let rating: Int
+    let experience: String
+    let comment: String
 }
 
 private struct BillboardAccessResponse: Decodable {

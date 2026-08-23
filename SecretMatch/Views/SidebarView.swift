@@ -9,6 +9,7 @@ struct SidebarView: View {
     @Binding var showActionsOverlay: Bool
     @Binding var showGuideOverlay: Bool
     @Binding var showRulesOverlay: Bool
+    @Binding var showFeedbackOverlay: Bool
     @Binding var showPrivacyOverlay: Bool
     var isCompact = false
     var isShort = false
@@ -116,6 +117,17 @@ struct SidebarView: View {
                 Label("Spielregeln", systemImage: "list.bullet.clipboard.fill")
             }
             .buttonStyle(SidebarButtonStyle(compact: isShort))
+
+            Spacer(minLength: isCompact ? 12 : (isShort ? 8 : 12))
+
+            Button {
+                registerActivity()
+                showFeedbackOverlay = true
+            } label: {
+                Label("Feedback geben", systemImage: "bubble.left.and.bubble.right.fill")
+            }
+            .buttonStyle(SidebarButtonStyle(compact: isShort))
+            .accessibilityHint("Öffnet das anonyme Feedback-Formular")
 
             Spacer(minLength: isCompact ? 12 : (isShort ? 8 : 12))
 

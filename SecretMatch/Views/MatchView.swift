@@ -7,6 +7,7 @@ struct MatchView: View {
     @State private var showActionsOverlay = false
     @State private var showGuideOverlay = false
     @State private var showRulesOverlay = false
+    @State private var showFeedbackOverlay = false
     @State private var showPrivacyOverlay = false
     @State private var targetNumber = ""
     @State private var selectedActions: Set<String> = []
@@ -157,6 +158,14 @@ struct MatchView: View {
                     .onDisappear { resetInactivityTimer() }
                     .zIndex(6)
             }
+
+            if showFeedbackOverlay {
+                FeedbackView(isPresented: $showFeedbackOverlay)
+                    .environmentObject(api)
+                    .onAppear { pauseInactivityTimer() }
+                    .onDisappear { resetInactivityTimer() }
+                    .zIndex(6)
+            }
             
         }.onTapGesture {
             withAnimation {
@@ -218,6 +227,7 @@ struct MatchView: View {
             showActionsOverlay: $showActionsOverlay,
             showGuideOverlay: $showGuideOverlay,
             showRulesOverlay: $showRulesOverlay,
+            showFeedbackOverlay: $showFeedbackOverlay,
             showPrivacyOverlay: $showPrivacyOverlay,
             isCompact: isCompact,
             isShort: isShort

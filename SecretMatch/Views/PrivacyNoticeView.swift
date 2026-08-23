@@ -57,6 +57,12 @@ struct PrivacyNoticeView: View {
                         )
 
                         privacyPoint(
+                            icon: "bubble.left.and.bubble.right.fill",
+                            title: "Anonymes Feedback",
+                            text: "Wenn du freiwillig Feedback gibst, übermittelt die App nur deine Antworten und deinen optionalen Kommentar. Deine Eventnummer und deine Sitzung werden dabei nicht mitgesendet."
+                        )
+
+                        privacyPoint(
                             icon: "trash.fill",
                             title: "Löschung nach dem Event",
                             text: "Eventnummern, Aktionen, Matches und Sitzungen werden nach Abschluss des Events aus dem aktiven Match&Play-System gelöscht."
