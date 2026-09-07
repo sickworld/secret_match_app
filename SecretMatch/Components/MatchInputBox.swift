@@ -68,7 +68,8 @@ struct MatchInputBox: View {
                     .multilineTextAlignment(.center)
             }
 
-            Spacer(minLength: fillsAvailableSpace ? metric(22, 20) : 26)
+            Color.clear
+                .frame(height: fillsAvailableSpace ? metric(22, 20) : 26)
 
             LazyVGrid(
                 columns: [GridItem(.flexible()), GridItem(.flexible())],
@@ -79,7 +80,8 @@ struct MatchInputBox: View {
                 }
             }
 
-            Spacer(minLength: fillsAvailableSpace ? metric(34, 28) : 26)
+            Color.clear
+                .frame(height: fillsAvailableSpace ? metric(34, 28) : 26)
 
             VStack(alignment: .leading, spacing: 8) {
                 Text("ZIEL-NUMMER")
@@ -197,7 +199,8 @@ struct MatchInputBox: View {
             maxWidth: fillsAvailableSpace ? .infinity : 780,
             minHeight: fillsAvailableSpace
                 ? max(0, (availableHeight ?? 0) - metric(105, 105))
-                : nil
+                : nil,
+            alignment: .top
         )
     }
 
