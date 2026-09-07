@@ -32,6 +32,31 @@ struct AdminDashboardView: View {
     @State private var quickMessagesText = ""
     @State private var pinEditorNumber: String?
     @State private var pinDraft = ""
+    @State private var equipmentEditor: EquipmentEditor?
+    @State private var equipmentNameDraft = ""
+    @State private var billboardNameDraft = ""
+    @State private var generatedBillboardURL: URL?
+    @State private var participantRangeMax = ""
+    @State private var participantRangeConfirmation = ""
+
+    private enum EquipmentEditor: Identifiable {
+        case device(id: String, currentName: String)
+        case billboard(id: String, currentName: String)
+
+        var id: String {
+            switch self {
+            case .device(let id, _): return "device-\(id)"
+            case .billboard(let id, _): return "billboard-\(id)"
+            }
+        }
+
+        var title: String {
+            switch self {
+            case .device: return "iPad benennen"
+            case .billboard: return "Billboard benennen"
+            }
+        }
+    }
 
     private enum Confirmation: Identifiable {
         case createDummy
@@ -101,6 +126,9 @@ struct AdminDashboardView: View {
         .sheet(isPresented: Binding(get: { pinEditorNumber != nil }, set: { if !$0 { pinEditorNumber = nil } })) {
             pinEditor
         }
+        .sheet(item: $equipmentEditor) { editor in
+            equipmentNameEditor(editor)
+        }
     }
 
 #if ADMIN_APP
@@ -146,26 +174,27 @@ struct AdminDashboardView: View {
 #endif
 
     private var liveStatus: some View {
-        let online = api.adminDashboard?.billboardOnline == true
-        let testMode = api.adminDashboard?.topTestActive == true
-        let color: Color = online ? (testMode ? .yellow : .green) : .red
-        return HStack(spacing: 14) {
-            Circle().fill(color).frame(width: 16, height: 16)
-            VStack(alignment: .leading, spacing: 3) {
-                Text(online ? (testMode ? "BILLBOARD · TESTMODUS" : "BILLBOARD ONLINE") : "BILLBOARD OFFLINE")
-                    .font(.headline.bold())
-                    .foregroundStyle(color)
-                Text(online
-                     ? "TV verbunden · \(billboardResolution) · \(billboardModeLabel)"
-                     : "Seit mindestens 25 Sekunden kein Signal vom TV.")
-                    .foregroundStyle(.white.opacity(0.82))
+        VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                Text("📺 Billboards")
+                    .font(.title2.bold())
+                    .foregroundStyle(.white)
+                Spacer()
+                Text("\(billboardStatuses.count)")
+                    .font(.title3.bold().monospacedDigit())
+                    .foregroundStyle(SecretMatchTheme.secondary)
             }
-            Spacer()
+
+            if billboardStatuses.isEmpty {
+                Label("Noch kein Billboard verbunden oder vorbereitet.", systemImage: "tv.slash")
+                    .foregroundStyle(SecretMatchTheme.muted)
+            } else {
+                ForEach(billboardStatuses) { billboard in
+                    billboardStatusRow(billboard)
+                }
+            }
         }
-        .padding(16)
-        .background(color.opacity(0.13))
-        .overlay(RoundedRectangle(cornerRadius: 16).stroke(color.opacity(0.75), lineWidth: 2))
-        .clipShape(RoundedRectangle(cornerRadius: 16))
+        .secretCard(cornerRadius: 20, padding: 20)
     }
 
     private var header: some View {
@@ -319,6 +348,29 @@ struct AdminDashboardView: View {
                     .buttonStyle(SecretPrimaryButtonStyle())
 #endif
 
+                TextField("Name, z. B. Hauptsaal", text: $billboardNameDraft)
+                    .textFieldStyle(.roundedBorder)
+                    .onChange(of: billboardNameDraft) { _, value in
+                        billboardNameDraft = String(value.prefix(40))
+                        generatedBillboardURL = nil
+                    }
+                Button {
+                    Task { await createBillboardAccess() }
+                } label: {
+                    Label("Benannten Zugang erstellen", systemImage: "link.badge.plus")
+                }
+                .buttonStyle(SecretPrimaryButtonStyle())
+                .disabled(billboardNameDraft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || isWorking)
+                if let generatedBillboardURL {
+                    ShareLink(item: generatedBillboardURL) {
+                        Label("Zugangslink teilen", systemImage: "square.and.arrow.up")
+                    }
+                    .buttonStyle(SecretSecondaryButtonStyle())
+                    Text("Der Einmal-Link muss innerhalb einer Minute am Zielgerät geöffnet werden.")
+                        .font(.caption)
+                        .foregroundStyle(SecretMatchTheme.muted)
+                }
+
                 HStack {
                     Button("Top 16 testen") { Task { await billboard("start_top_test") } }
                     Button("Normalbetrieb") { Task { await billboard("normal_mode") } }
@@ -375,6 +427,57 @@ struct AdminDashboardView: View {
                     .font(.callout.bold())
                     .foregroundStyle(.red)
             }
+
+            VStack(alignment: .leading, spacing: 10) {
+                HStack {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Nummernbestand")
+                            .font(.headline)
+                            .foregroundStyle(.white)
+                        Text("\(api.adminParticipants.allowed.count) Nummern freigegeben")
+                            .foregroundStyle(SecretMatchTheme.muted)
+                    }
+                    Spacer()
+                    Text("1…N")
+                        .font(.headline.monospacedDigit())
+                        .foregroundStyle(SecretMatchTheme.secondary)
+                }
+
+                HStack(spacing: 10) {
+                    TextField("Höchste Nummer", text: $participantRangeMax)
+                        .textFieldStyle(.roundedBorder)
+                        .keyboardType(.numberPad)
+                        .onChange(of: participantRangeMax) { _, value in
+                            participantRangeMax = String(value.filter(\.isNumber).prefix(5))
+                            participantRangeConfirmation = ""
+                        }
+                    Button(numbersRemovedByRange > 0 ? "Bereich verkleinern" : "Bereich ergänzen") {
+                        Task { await reconcileParticipantRange() }
+                    }
+                    .buttonStyle(SecretPrimaryButtonStyle(fullWidth: false))
+                    .disabled(!isValidParticipantRange || (numbersRemovedByRange > 0 && participantRangeConfirmation != "NUMMERN ANPASSEN") || isWorking)
+                }
+
+                if let target = participantRangeTarget {
+                    Text(rangePreview(target: target))
+                        .font(.callout.bold())
+                        .foregroundStyle(numbersRemovedByRange > 0 ? .orange : SecretMatchTheme.muted)
+                }
+                if numbersRemovedByRange > 0 {
+                    Text("Zum Entfernen exakt NUMMERN ANPASSEN eingeben.")
+                        .font(.caption.bold())
+                        .foregroundStyle(.orange)
+                    TextField("NUMMERN ANPASSEN", text: $participantRangeConfirmation)
+                        .textFieldStyle(.roundedBorder)
+                        .textInputAutocapitalization(.characters)
+                }
+                Text("Die Testnummern 901–916 bleiben bei diesem Abgleich unverändert.")
+                    .font(.caption)
+                    .foregroundStyle(SecretMatchTheme.muted)
+            }
+            .padding(14)
+            .background(Color.white.opacity(0.06))
+            .clipShape(RoundedRectangle(cornerRadius: 14))
 
             HStack(spacing: 10) {
                 TextField("Neue Nummer", text: $newParticipantNumber)
@@ -511,8 +614,11 @@ struct AdminDashboardView: View {
                             .fill(device.isOnline ? Color.green : Color.red)
                             .frame(width: 13, height: 13)
                         VStack(alignment: .leading, spacing: 2) {
-                            Text(device.number.displayEventNumber)
+                            Text(device.name ?? "iPad")
                                 .font(.title3.bold().monospacedDigit())
+                            Text("Nummer \(device.number.displayEventNumber)")
+                                .font(.subheadline.bold().monospacedDigit())
+                                .foregroundStyle(SecretMatchTheme.muted)
                             Text(device.isOnline ? "Online" : "Offline · zuletzt \(device.lastSeenDescription)")
                                 .font(.caption.bold())
                                 .foregroundStyle(device.isOnline ? Color.green : Color.red)
@@ -521,6 +627,17 @@ struct AdminDashboardView: View {
                         Image(systemName: device.batteryState == "charging" ? "battery.100percent.bolt" : "battery.100percent")
                         Text("\(device.batteryLevel) %").font(.title3.bold().monospacedDigit())
                         Text("v\(device.appVersion)").foregroundStyle(SecretMatchTheme.muted)
+                        if let id = device.deviceID {
+                            Button {
+                                equipmentNameDraft = device.name ?? ""
+                                equipmentEditor = .device(id: id, currentName: device.name ?? "")
+                            } label: {
+                                Image(systemName: "pencil")
+                                    .frame(width: 36, height: 36)
+                            }
+                            .buttonStyle(.borderless)
+                            .accessibilityLabel("\(device.name ?? "iPad") umbenennen")
+                        }
                     }
                     .foregroundStyle(device.batteryLevel < 20 || !device.isOnline ? .red : .white)
                     .padding(10)
@@ -530,6 +647,58 @@ struct AdminDashboardView: View {
             }
         }
         .secretCard(cornerRadius: 20, padding: 20)
+    }
+
+    private var billboardStatuses: [AdminBillboardStatus] {
+        if let billboards = api.adminDashboard?.billboards, !billboards.isEmpty {
+            return billboards
+        }
+        guard let dashboard = api.adminDashboard,
+              let lastSeen = dashboard.billboardLastSeen,
+              lastSeen > 0 else { return [] }
+        return [AdminBillboardStatus(
+            billboardID: "legacy",
+            name: "Billboard",
+            lastSeen: lastSeen,
+            online: dashboard.billboardOnline == true,
+            width: dashboard.billboardWidth ?? 0,
+            height: dashboard.billboardHeight ?? 0,
+            mode: dashboard.billboardMode ?? "unknown"
+        )]
+    }
+
+    private func billboardStatusRow(_ billboard: AdminBillboardStatus) -> some View {
+        let testMode = api.adminDashboard?.topTestActive == true && billboard.online
+        let color: Color = billboard.online ? (testMode ? .yellow : .green) : .red
+        return HStack(spacing: 12) {
+            Circle().fill(color).frame(width: 13, height: 13)
+            VStack(alignment: .leading, spacing: 3) {
+                Text(billboard.name)
+                    .font(.title3.bold())
+                    .foregroundStyle(.white)
+                Text(billboard.online
+                     ? "Online · \(billboard.resolution) · \(billboard.modeLabel)"
+                     : "Offline · \(billboard.lastSeenDescription)")
+                    .font(.caption.bold())
+                    .foregroundStyle(color)
+            }
+            Spacer()
+            if billboard.billboardID != "legacy" {
+                Button {
+                    equipmentNameDraft = billboard.name
+                    equipmentEditor = .billboard(id: billboard.billboardID, currentName: billboard.name)
+                } label: {
+                    Image(systemName: "pencil")
+                        .frame(width: 36, height: 36)
+                }
+                .buttonStyle(.borderless)
+                .accessibilityLabel("\(billboard.name) umbenennen")
+            }
+        }
+        .padding(12)
+        .background(color.opacity(0.10))
+        .overlay(RoundedRectangle(cornerRadius: 12).stroke(color.opacity(0.45)))
+        .clipShape(RoundedRectangle(cornerRadius: 12))
     }
 
     private var pinEditor: some View {
@@ -547,6 +716,30 @@ struct AdminDashboardView: View {
                 ToolbarItem(placement: .cancellationAction) { Button("Abbrechen") { pinEditorNumber = nil } }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Speichern") { Task { await savePIN() } }.disabled(pinDraft.count != 2)
+                }
+            }
+        }
+    }
+
+    private func equipmentNameEditor(_ editor: EquipmentEditor) -> some View {
+        NavigationStack {
+            Form {
+                Section("Fester Anzeigename") {
+                    TextField("z. B. Eingang links", text: $equipmentNameDraft)
+                        .onChange(of: equipmentNameDraft) { _, value in
+                            equipmentNameDraft = String(value.prefix(40))
+                        }
+                    Text("Dieser Name erscheint im Dashboard sowie in Ausfall- und Entwarnungsmeldungen.")
+                }
+            }
+            .navigationTitle(editor.title)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Abbrechen") { equipmentEditor = nil }
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Speichern") { Task { await saveEquipmentName(editor) } }
+                        .disabled(equipmentNameDraft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || isWorking)
                 }
             }
         }
@@ -635,6 +828,35 @@ struct AdminDashboardView: View {
             .sorted { ($0.localizedStandardCompare($1)) == .orderedAscending }
     }
 
+    private var participantRangeTarget: Int? {
+        guard let value = Int(participantRangeMax), (1...10_000).contains(value) else { return nil }
+        return value
+    }
+
+    private var isValidParticipantRange: Bool {
+        participantRangeTarget != nil
+    }
+
+    private var dummyNumbers: Set<String> {
+        Set((901...916).map(String.init))
+    }
+
+    private var numbersRemovedByRange: Int {
+        guard let target = participantRangeTarget else { return 0 }
+        return api.adminParticipants.allowed.filter { number in
+            !dummyNumbers.contains(number) && (Int(number) ?? Int.max) > target
+        }.count
+    }
+
+    private func rangePreview(target: Int) -> String {
+        let allowed = Set(api.adminParticipants.allowed)
+        let additions = (1...target).lazy.map(String.init).filter { !allowed.contains($0) }.count
+        if numbersRemovedByRange > 0 {
+            return "\(additions) hinzufügen · \(numbersRemovedByRange) entfernen (inklusive Profil, PIN und Sitzung)"
+        }
+        return additions > 0 ? "\(additions) fehlende Nummern werden ergänzt." : "Der Bereich 1…\(target) ist bereits vollständig."
+    }
+
     private var activeNumbers: Set<String> {
         Set(api.adminParticipants.active.map(\.number))
     }
@@ -671,16 +893,6 @@ struct AdminDashboardView: View {
         let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "–"
         let build = Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? "–"
         return "\(version).\(build)"
-    }
-
-    private var billboardResolution: String {
-        let width = api.adminDashboard?.billboardWidth ?? 0
-        let height = api.adminDashboard?.billboardHeight ?? 0
-        return width > 0 && height > 0 ? "\(width) × \(height)" : "Auflösung unbekannt"
-    }
-
-    private var billboardModeLabel: String {
-        api.adminDashboard?.billboardMode == "top" ? "Top 16" : "Normalbetrieb"
     }
 
     private func metric(_ emoji: String, _ title: String, _ value: Int, _ color: Color) -> some View {
@@ -726,6 +938,12 @@ struct AdminDashboardView: View {
         do {
             try await api.refreshAdminControlData()
             rotationSeconds = api.adminDashboard?.billboardRotationSeconds ?? rotationSeconds
+            if participantRangeMax.isEmpty {
+                let regularNumbers = api.adminParticipants.allowed
+                    .filter { !dummyNumbers.contains($0) }
+                    .compactMap(Int.init)
+                participantRangeMax = String(regularNumbers.max() ?? max(1, api.adminParticipants.allowed.count))
+            }
             if !isWorking || quickMessagesText.isEmpty {
                 quickMessagesText = (api.adminDashboard?.matchMessageOptions ?? []).joined(separator: "\n")
             }
@@ -743,6 +961,34 @@ struct AdminDashboardView: View {
         await operation("Billboard aktualisiert.") {
             try await api.controlBillboard(action: action, seconds: seconds)
         }
+    }
+
+    @MainActor
+    private func createBillboardAccess() async {
+        isWorking = true
+        do {
+            generatedBillboardURL = try await api.createBillboardAccessURL(name: billboardNameDraft)
+            statusMessage = "Zugang für \(billboardNameDraft) wurde erstellt."
+            errorMessage = nil
+            try? await api.loadAdminDashboard()
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+        isWorking = false
+    }
+
+    @MainActor
+    private func saveEquipmentName(_ editor: EquipmentEditor) async {
+        let name = equipmentNameDraft.trimmingCharacters(in: .whitespacesAndNewlines)
+        await operation("Name wurde gespeichert.") {
+            switch editor {
+            case .device(let id, _):
+                try await api.updateAdminDeviceName(id: id, name: name)
+            case .billboard(let id, _):
+                try await api.updateAdminBillboardName(id: id, name: name)
+            }
+        }
+        if errorMessage == nil { equipmentEditor = nil }
     }
 
     @MainActor
@@ -764,6 +1010,24 @@ struct AdminDashboardView: View {
         if errorMessage == nil {
             newParticipantNumber = ""
         }
+    }
+
+    @MainActor
+    private func reconcileParticipantRange() async {
+        guard let target = participantRangeTarget else { return }
+        isWorking = true
+        do {
+            let result = try await api.reconcileParticipantRange(
+                targetMax: target,
+                confirmation: participantRangeConfirmation
+            )
+            statusMessage = "Nummernbereich 1…\(result.targetMax): \(result.addedCount) ergänzt, \(result.removedCount) entfernt."
+            errorMessage = nil
+            participantRangeConfirmation = ""
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+        isWorking = false
     }
 
     @MainActor

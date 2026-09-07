@@ -22,6 +22,7 @@ struct AdminDashboard: Decodable {
     let billboardWidth: Int?
     let billboardHeight: Int?
     let billboardMode: String?
+    let billboards: [AdminBillboardStatus]?
     let topPeople: [TopPerson]?
     let matchMessageOptions: [String]?
     let devices: [AdminDeviceStatus]?
@@ -48,6 +49,7 @@ struct AdminDashboard: Decodable {
         case billboardWidth = "billboard_width"
         case billboardHeight = "billboard_height"
         case billboardMode = "billboard_mode"
+        case billboards
         case topPeople = "top_people"
         case matchMessageOptions = "match_message_options"
         case devices
@@ -71,6 +73,7 @@ struct TopPerson: Decodable, Identifiable {
 
 struct AdminDeviceStatus: Decodable, Identifiable {
     let deviceID: String?
+    let name: String?
     let number: String
     let batteryLevel: Int
     let batteryState: String
@@ -93,12 +96,65 @@ struct AdminDeviceStatus: Decodable, Identifiable {
 
     private enum CodingKeys: String, CodingKey {
         case deviceID = "device_id"
+        case name
         case number
         case batteryLevel = "battery_level"
         case batteryState = "battery_state"
         case appVersion = "app_version"
         case lastSeen = "last_seen"
         case online
+    }
+}
+
+struct AdminBillboardStatus: Decodable, Identifiable {
+    let billboardID: String
+    let name: String
+    let lastSeen: Int
+    let online: Bool
+    let width: Int
+    let height: Int
+    let mode: String
+
+    var id: String { billboardID }
+
+    var lastSeenDescription: String {
+        guard lastSeen > 0 else { return "noch kein Signal" }
+        let seconds = max(0, Int(Date().timeIntervalSince1970) - lastSeen)
+        if seconds < 60 { return "gerade eben" }
+        if seconds < 3600 { return "vor \(seconds / 60) Min." }
+        return "vor \(seconds / 3600) Std."
+    }
+
+    var resolution: String {
+        width > 0 && height > 0 ? "\(width) × \(height)" : "Auflösung unbekannt"
+    }
+
+    var modeLabel: String {
+        mode == "top" ? "Top 16" : (mode == "normal" ? "Normalbetrieb" : "Modus unbekannt")
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case billboardID = "billboard_id"
+        case name
+        case lastSeen = "last_seen"
+        case online
+        case width
+        case height
+        case mode
+    }
+}
+
+struct ParticipantRangeResponse: Decodable {
+    let targetMax: Int
+    let allowedCount: Int
+    let addedCount: Int
+    let removedCount: Int
+
+    private enum CodingKeys: String, CodingKey {
+        case targetMax = "target_max"
+        case allowedCount = "allowed_count"
+        case addedCount = "added_count"
+        case removedCount = "removed_count"
     }
 }
 

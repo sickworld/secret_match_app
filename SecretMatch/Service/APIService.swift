@@ -517,10 +517,14 @@ class APIService: ObservableObject {
         throw AdminFeedbackLoadError.invalidPayload
     }
 
-    func createBillboardAccessURL() async throws -> URL {
+    func createBillboardAccessURL(name: String? = nil) async throws -> URL {
         let url = baseURL.appendingPathComponent("admin/billboard-access")
         var request = try adminRequest(url: url)
         request.httpMethod = "POST"
+        if let name, !name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            request.httpBody = try JSONSerialization.data(withJSONObject: ["name": name])
+            request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        }
 
         let (data, response) = try await URLSession.shared.data(for: request)
         guard let http = response as? HTTPURLResponse, http.statusCode == 200 else {
@@ -533,6 +537,24 @@ class APIService: ObservableObject {
             throw URLError(.badURL)
         }
         return accessURL
+    }
+
+    func updateAdminDeviceName(id: String, name: String) async throws {
+        try await mutateAdminResource(
+            path: ["admin", "devices", id],
+            method: "PATCH",
+            body: ["name": name]
+        )
+        try? await loadAdminDashboard()
+    }
+
+    func updateAdminBillboardName(id: String, name: String) async throws {
+        try await mutateAdminResource(
+            path: ["admin", "billboards", id],
+            method: "PATCH",
+            body: ["name": name]
+        )
+        try? await loadAdminDashboard()
     }
 
     func loadAdminDashboard() async throws {
@@ -632,6 +654,30 @@ class APIService: ObservableObject {
         )
         try? await loadAdminParticipants()
         try? await loadAdminDashboard()
+    }
+
+    func reconcileParticipantRange(targetMax: Int, confirmation: String) async throws -> ParticipantRangeResponse {
+        let url = baseURL
+            .appendingPathComponent("admin")
+            .appendingPathComponent("participants")
+            .appendingPathComponent("range")
+        var request = try adminRequest(url: url)
+        request.httpMethod = "PUT"
+        request.httpBody = try JSONSerialization.data(withJSONObject: [
+            "target_max": targetMax,
+            "confirmation": confirmation
+        ])
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        let (data, response) = try await URLSession.shared.data(for: request)
+        guard let http = response as? HTTPURLResponse, (200...299).contains(http.statusCode) else {
+            handleExpiredAdminToken(response)
+            let responseError = try? JSONDecoder().decode(AdminMutationResponseError.self, from: data)
+            throw AdminMutationError(message: responseError?.message ?? "Nummernbereich konnte nicht geändert werden.")
+        }
+        let result = try JSONDecoder().decode(ParticipantRangeResponse.self, from: data)
+        try? await loadAdminParticipants()
+        try? await loadAdminDashboard()
+        return result
     }
 
     func updateParticipantGender(number: String, gender: ParticipantGender?) async throws {
