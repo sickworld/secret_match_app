@@ -14,12 +14,17 @@ struct SidebarView: View {
     var isShort = false
     var availableHeight: CGFloat?
 
-    private var isVeryShort: Bool {
-        !isCompact && (interfaceScale >= 1.29 || (availableHeight ?? .infinity) < 680)
+    private var normalizedScale: CGFloat {
+        max(interfaceScale, 1)
     }
 
-    private var usesCondensedLayout: Bool {
-        isShort || interfaceScale > 1.01 || isVeryShort
+    private var zoomProgress: CGFloat {
+        min(max((normalizedScale - 1) / 0.30, 0), 1)
+    }
+
+    private func metric(_ standard: CGFloat, _ extraLarge: CGFloat) -> CGFloat {
+        let renderedValue = standard + (extraLarge - standard) * zoomProgress
+        return renderedValue / normalizedScale
     }
 
     var body: some View {
@@ -27,30 +32,33 @@ struct SidebarView: View {
             Image("logo")
                 .resizable()
                 .scaledToFit()
-                .frame(maxWidth: isCompact ? 132 : (isVeryShort ? 112 : (usesCondensedLayout ? 142 : 156)))
-                .frame(height: isCompact ? 86 : (isVeryShort ? 64 : (usesCondensedLayout ? 86 : 110)))
+                .frame(maxWidth: isCompact ? 132 : metric(156, 170))
+                .frame(height: isCompact ? 86 : metric(110, 120))
                 .frame(maxWidth: .infinity, alignment: .center)
                 .shadow(color: SecretMatchTheme.primary.opacity(0.16), radius: 18)
 
             Spacer()
-                .frame(height: isCompact ? 14 : (isVeryShort ? 8 : (usesCondensedLayout ? 10 : 12)))
+                .frame(height: isCompact ? 14 : metric(12, 10))
 
-            HStack(spacing: 10) {
+            HStack(spacing: isCompact ? 10 : metric(10, 11)) {
                 Circle()
                     .fill(secondsRemaining <= 10 ? SecretMatchTheme.secondary : SecretMatchTheme.primary)
-                    .frame(width: 10, height: 10)
+                    .frame(
+                        width: isCompact ? 10 : metric(10, 11),
+                        height: isCompact ? 10 : metric(10, 11)
+                    )
                     .shadow(
                         color: (secondsRemaining <= 10 ? SecretMatchTheme.secondary : SecretMatchTheme.primary).opacity(0.5),
                         radius: 6
                     )
 
                 Text("Auto-Logout in \(secondsRemaining)s")
-                    .font(.system(size: isVeryShort ? 15 : 17, weight: .bold, design: .rounded))
+                    .font(.system(size: 17, weight: .bold, design: .rounded))
                     .foregroundStyle(.white)
                     .monospacedDigit()
             }
-            .padding(.horizontal, isVeryShort ? 12 : 16)
-            .frame(maxWidth: .infinity, minHeight: isVeryShort ? 38 : (usesCondensedLayout ? 42 : 48))
+            .padding(.horizontal, isCompact ? 16 : metric(16, 16))
+            .frame(maxWidth: .infinity, minHeight: isCompact ? 48 : metric(48, 52))
             .background(
                 (secondsRemaining <= 10 ? SecretMatchTheme.secondary : SecretMatchTheme.primary)
                     .opacity(0.14)
@@ -67,50 +75,62 @@ struct SidebarView: View {
             .accessibilityLabel("Automatischer Logout in \(secondsRemaining) Sekunden")
 
             Spacer()
-                .frame(height: isCompact ? 18 : (isVeryShort ? 8 : (usesCondensedLayout ? 16 : 18)))
+                .frame(height: isCompact ? 18 : metric(18, 14))
 
-            VStack(alignment: .leading, spacing: 8) {
+            VStack(alignment: .leading, spacing: isCompact ? 8 : metric(8, 8)) {
                 Text("DEIN EVENT PASS")
                     .font(.caption2.bold())
                     .tracking(1.3)
                     .foregroundStyle(SecretMatchTheme.secondary)
 
-                HStack {
+                HStack(spacing: isCompact ? 8 : metric(8, 9)) {
                     Image(systemName: "ticket.fill")
                         .foregroundStyle(SecretMatchTheme.primary)
                     Text(api.number.displayEventNumber)
-                        .font(.system(size: isVeryShort ? 24 : 28, weight: .heavy, design: .rounded))
+                        .font(.system(size: 28, weight: .heavy, design: .rounded))
                         .foregroundStyle(.white)
                 }
-                .padding(.horizontal, isVeryShort ? 12 : 14)
-                .frame(maxWidth: .infinity, minHeight: isVeryShort ? 48 : 58, alignment: .leading)
+                .padding(.horizontal, isCompact ? 14 : metric(19, 20))
+                .frame(maxWidth: .infinity, minHeight: isCompact ? 58 : metric(58, 62), alignment: .leading)
                 .background(SecretMatchTheme.surfaceRaised)
-                .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
-                .overlay(RoundedRectangle(cornerRadius: 16).stroke(SecretMatchTheme.border))
+                .clipShape(RoundedRectangle(cornerRadius: isCompact ? 16 : metric(16, 18), style: .continuous))
+                .overlay(
+                    RoundedRectangle(cornerRadius: isCompact ? 16 : metric(16, 18))
+                        .stroke(SecretMatchTheme.border)
+                )
             }
 
             Spacer()
-                .frame(height: isCompact ? 18 : (isVeryShort ? 8 : (usesCondensedLayout ? 16 : 18)))
+                .frame(height: isCompact ? 18 : metric(18, 14))
 
             Button {
                 registerActivity()
                 showOverviewOverlay = true
             } label: {
-                HStack(spacing: 12) {
+                HStack(spacing: isCompact ? 12 : metric(12, 10)) {
                     Image(systemName: "rectangle.grid.1x2.fill")
                     VStack(alignment: .leading, spacing: 2) {
                         Text("Deine Übersicht")
+                            .lineLimit(1)
                         Text("Matches · Interesse · Aktionen")
-                            .font(.caption.weight(.semibold))
+                            .font(.system(
+                                size: isCompact ? 12 : metric(11, 12),
+                                weight: .semibold,
+                                design: .rounded
+                            ))
                             .foregroundStyle(SecretMatchTheme.muted)
+                            .lineLimit(1)
                     }
                 }
             }
-            .buttonStyle(SidebarButtonStyle(compact: usesCondensedLayout, veryCompact: isVeryShort))
+            .buttonStyle(SidebarButtonStyle(
+                compact: isCompact,
+                stabilizedScale: isCompact ? nil : normalizedScale
+            ))
             .accessibilityLabel("Deine Übersicht: Matches, Interesse und Aktionen")
 
             Spacer()
-                .frame(height: isCompact ? 12 : (isVeryShort ? 8 : 10))
+                .frame(height: isCompact ? 12 : metric(10, 10))
 
             Button {
                 registerActivity()
@@ -118,10 +138,13 @@ struct SidebarView: View {
             } label: {
                 Label("So funktioniert's", systemImage: "questionmark.circle.fill")
             }
-            .buttonStyle(SidebarButtonStyle(compact: usesCondensedLayout, veryCompact: isVeryShort))
+            .buttonStyle(SidebarButtonStyle(
+                compact: isCompact,
+                stabilizedScale: isCompact ? nil : normalizedScale
+            ))
 
             Spacer()
-                .frame(height: isCompact ? 12 : (isVeryShort ? 8 : 10))
+                .frame(height: isCompact ? 12 : metric(10, 10))
 
             Button {
                 registerActivity()
@@ -129,10 +152,13 @@ struct SidebarView: View {
             } label: {
                 Label("Spielregeln", systemImage: "list.bullet.clipboard.fill")
             }
-            .buttonStyle(SidebarButtonStyle(compact: usesCondensedLayout, veryCompact: isVeryShort))
+            .buttonStyle(SidebarButtonStyle(
+                compact: isCompact,
+                stabilizedScale: isCompact ? nil : normalizedScale
+            ))
 
             Spacer()
-                .frame(height: isCompact ? 12 : (isVeryShort ? 8 : 10))
+                .frame(height: isCompact ? 12 : metric(10, 10))
 
             Button {
                 registerActivity()
@@ -140,11 +166,14 @@ struct SidebarView: View {
             } label: {
                 Label("Info & Support", systemImage: "info.circle.fill")
             }
-            .buttonStyle(SidebarButtonStyle(compact: usesCondensedLayout, veryCompact: isVeryShort))
+            .buttonStyle(SidebarButtonStyle(
+                compact: isCompact,
+                stabilizedScale: isCompact ? nil : normalizedScale
+            ))
             .accessibilityHint("Öffnet Feedback, Datenschutz und Impressum")
 
             if !isCompact {
-                Spacer(minLength: isVeryShort ? 8 : (usesCondensedLayout ? 16 : 28))
+                Spacer(minLength: metric(28, 12))
             } else {
                 Spacer(minLength: 18)
             }
@@ -154,22 +183,25 @@ struct SidebarView: View {
             } label: {
                 Label("Abmelden", systemImage: "rectangle.portrait.and.arrow.right")
             }
-            .buttonStyle(LogoutButtonStyle(compact: usesCondensedLayout, veryCompact: isVeryShort))
+            .buttonStyle(LogoutButtonStyle(
+                compact: isCompact,
+                stabilizedScale: isCompact ? nil : normalizedScale
+            ))
 
             Spacer()
-                .frame(height: isCompact ? 14 : (isVeryShort ? 8 : 10))
+                .frame(height: isCompact ? 14 : metric(10, 10))
 
             HStack {
                 if isCompact {
                     Spacer()
                 }
-                HStack(alignment: .center, spacing: usesCondensedLayout ? 4 : 5) {
+                HStack(alignment: .center, spacing: isCompact ? 4 : metric(5, 5)) {
                     Image("hot-chili")
                         .resizable()
                         .scaledToFit()
                         .frame(
-                            width: isVeryShort ? 44 : (usesCondensedLayout ? 58 : 64),
-                            height: isVeryShort ? 32 : (usesCondensedLayout ? 42 : 48)
+                            width: isCompact ? 58 : metric(64, 64),
+                            height: isCompact ? 42 : metric(48, 46)
                         )
                         .shadow(color: SecretMatchTheme.primary.opacity(0.18), radius: 12)
                         .accessibilityLabel("Hot Chili Events")
@@ -178,21 +210,21 @@ struct SidebarView: View {
                         .resizable()
                         .scaledToFit()
                         .frame(
-                            width: isVeryShort ? 46 : (usesCondensedLayout ? 62 : 68),
-                            height: isVeryShort ? 26 : (usesCondensedLayout ? 34 : 38)
+                            width: isCompact ? 62 : metric(68, 68),
+                            height: isCompact ? 34 : metric(38, 36)
                         )
-                        .padding(.horizontal, 6)
-                        .padding(.vertical, 4)
+                        .padding(.horizontal, isCompact ? 6 : metric(6, 6))
+                        .padding(.vertical, isCompact ? 4 : metric(4, 4))
                         .background(Color.white.opacity(0.94))
-                        .clipShape(RoundedRectangle(cornerRadius: 8))
+                        .clipShape(RoundedRectangle(cornerRadius: isCompact ? 8 : metric(8, 8)))
                         .accessibilityLabel("FICKEN Likör")
 
                     Image("club2020")
                         .resizable()
                         .scaledToFit()
                         .frame(
-                            width: isCompact ? 112 : (isVeryShort ? 62 : (usesCondensedLayout ? 88 : 98)),
-                            height: isCompact ? 76 : (isVeryShort ? 42 : (usesCondensedLayout ? 62 : 68))
+                            width: isCompact ? 112 : metric(98, 94),
+                            height: isCompact ? 76 : metric(68, 64)
                         )
                         .accessibilityLabel("Club 2020")
                 }
@@ -202,8 +234,8 @@ struct SidebarView: View {
                 }
             }
         }
-        .padding(isCompact ? 16 : (isVeryShort ? 10 : (usesCondensedLayout ? 14 : 16)))
-        .frame(width: isCompact ? nil : 304)
+        .padding(isCompact ? 16 : metric(16, 12))
+        .frame(width: isCompact ? nil : metric(304, 336))
         .frame(maxWidth: isCompact ? .infinity : nil)
         .background(SecretMatchTheme.surface.opacity(0.97))
         .overlay(alignment: isCompact ? .bottom : .trailing) {
