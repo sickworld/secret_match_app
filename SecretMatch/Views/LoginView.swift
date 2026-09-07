@@ -204,7 +204,11 @@ struct LoginView: View {
             }
 
             if showPINSetup {
-                ParticipantPINSetupView(isSubmitting: pinSetupSubmitting, errorMessage: pinSetupError) { newPIN, confirmation in
+                ParticipantPINSetupView(
+                    isSubmitting: pinSetupSubmitting,
+                    errorMessage: pinSetupError,
+                    onCancel: cancelPINSetup
+                ) { newPIN, confirmation in
                     submitNewPIN(newPIN, confirmation: confirmation)
                 }
                 .zIndex(46)
@@ -317,7 +321,7 @@ struct LoginView: View {
                 activeField = .pin
                 showKeyboard = true
             } catch ParticipantLoginError.tooManyAttempts {
-                errorMessage = "Zu viele Login-Versuche. Bitte kurz warten."
+                errorMessage = "Zu viele Login-Versuche. Bitte 20 Sekunden warten."
             } catch ParticipantLoginError.invalidCredentials {
                 errorMessage = requiresLoginPIN
                     ? "Die PIN ist nicht gültig. Bitte erneut versuchen."
@@ -357,6 +361,24 @@ struct LoginView: View {
             } catch {
                 pinSetupError = "Die PIN konnte nicht gespeichert werden. Bitte prüfe beide Eingaben."
             }
+        }
+    }
+
+    private func cancelPINSetup() {
+        guard !pinSetupSubmitting else { return }
+        pinSetupSubmitting = true
+        Task {
+            await api.cancelParticipantLogin()
+            showPINSetup = false
+            pinSetupError = nil
+            needsGenderAfterPIN = false
+            number = ""
+            pin = ""
+            requiresLoginPIN = false
+            activeField = .number
+            showKeyboard = false
+            pinSetupSubmitting = false
+            restartScreensaverTimer()
         }
     }
 
@@ -414,6 +436,7 @@ struct LoginView: View {
 private struct ParticipantPINSetupView: View {
     let isSubmitting: Bool
     let errorMessage: String?
+    let onCancel: () -> Void
     let onSave: (String, String) -> Void
     @State private var pin = ""
     @State private var confirmation = ""
@@ -446,9 +469,25 @@ private struct ParticipantPINSetupView: View {
 
     private var setupDetails: some View {
         VStack(spacing: 18) {
-            Text("DEINE PERSÖNLICHE PIN")
-                .font(.caption.bold()).tracking(2)
-                .foregroundStyle(SecretMatchTheme.secondary)
+            HStack {
+                Text("DEINE PERSÖNLICHE PIN")
+                    .font(.caption.bold()).tracking(2)
+                    .foregroundStyle(SecretMatchTheme.secondary)
+                Spacer()
+                Button(action: onCancel) {
+                    Label("Abbrechen", systemImage: "xmark")
+                        .font(.callout.bold())
+                        .foregroundStyle(.white)
+                        .padding(.horizontal, 14)
+                        .frame(minHeight: 44)
+                        .background(SecretMatchTheme.surfaceRaised)
+                        .clipShape(Capsule())
+                        .overlay(Capsule().stroke(SecretMatchTheme.border))
+                }
+                .buttonStyle(.plain)
+                .disabled(isSubmitting)
+                .accessibilityHint("Bricht die PIN-Anlage ab und kehrt zur Nummerneingabe zurück")
+            }
             Text(activeField == .pin ? "Lege deine PIN fest" : "PIN wiederholen")
                 .font(.system(size: 32, weight: .bold, design: .rounded))
                 .foregroundStyle(.white)

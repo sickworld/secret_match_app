@@ -28,6 +28,8 @@ Die Teilnehmernavigation bündelt Matches, offene Interessen und erhaltene Aktio
 
 Beim Login erhält die PIN-Tastatur einen sichtbaren Kontext mit Eventnummer, Erklärung und direkter Möglichkeit, die Nummer zu ändern. Die PIN-Erstanlage kennzeichnet die Eingabe und Bestätigung zusätzlich eindeutig als Schritt 1 und Schritt 2.
 
+Die PIN-Erstanlage kann jederzeit über **Abbrechen** verlassen werden. Dabei verwirft die App den begonnenen Login, beendet die vorläufige Teilnehmer-Sitzung und kehrt zur Eingabe der Eventnummer zurück.
+
 ## Sende-Warteschlange
 
 Match- und Aktionssendungen werden vor dem ersten Netzwerkversuch lokal vorgemerkt. Bei fehlender oder instabiler Verbindung versucht die App sie mit wachsendem Abstand automatisch erneut; angemeldete Teilnehmer können den Retry zusätzlich über **Jetzt versuchen** auslösen. Offene Einträge bleiben an die ursprüngliche Eventnummer gebunden, überstehen einen App-Neustart und werden nach spätestens 24 Stunden verworfen.

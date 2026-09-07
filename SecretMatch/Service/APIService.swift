@@ -873,6 +873,16 @@ class APIService: ObservableObject {
         self.isAdmin = false
     }
 
+    func cancelParticipantLogin() async {
+        if !isAdmin, !number.isEmpty {
+            var request = URLRequest(url: baseURL.appendingPathComponent("logout"))
+            request.httpMethod = "POST"
+            request.timeoutInterval = 3
+            _ = try? await URLSession.shared.data(for: request)
+        }
+        logout()
+    }
+
     private func adminRequest(url: URL) throws -> URLRequest {
         guard let adminToken else {
             throw URLError(.userAuthenticationRequired)
