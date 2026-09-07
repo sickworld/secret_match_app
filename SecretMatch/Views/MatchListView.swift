@@ -282,7 +282,9 @@ struct MatchListView: View {
             Spacer()
 
             Text(entry.other.displayEventNumber)
-                .font(.system(size: 20, weight: .bold, design: .monospaced))
+                .font(.system(size: 28, weight: .bold, design: .monospaced))
+                .lineLimit(1)
+                .minimumScaleFactor(0.75)
                 .foregroundStyle(.white)
                 .padding(.horizontal, 15)
                 .padding(.vertical, 11)
@@ -360,7 +362,7 @@ struct MatchListView: View {
         guard let date = input.date(from: value) else { return value }
         let output = DateFormatter()
         output.locale = Locale(identifier: "de_DE")
-        output.dateFormat = "dd.MM. · HH:mm"
+        output.dateFormat = "dd.MM."
         return output.string(from: date)
     }
 }

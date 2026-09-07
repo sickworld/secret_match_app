@@ -188,7 +188,9 @@ struct ActionListView: View {
 
             Text(partner(for: action).displayEventNumber)
                 .foregroundStyle(.white)
-                .font(.system(size: 19, weight: .bold, design: .monospaced))
+                .font(.system(size: 28, weight: .bold, design: .monospaced))
+                .lineLimit(1)
+                .minimumScaleFactor(0.75)
                 .padding(.horizontal, 14)
                 .padding(.vertical, 10)
                 .background(Color.black.opacity(0.24))
@@ -241,16 +243,6 @@ struct ActionListView: View {
             : action.sender_number
     }
 
-    private func formattedDate(_ iso: String) -> String {
-        let formatter = ISO8601DateFormatter()
-        guard let date = formatter.date(from: iso) else { return iso }
-
-        let df = DateFormatter()
-        df.dateStyle = .short
-        df.timeStyle = .short
-        return df.string(from: date)
-    }
-
     private func displayDate(_ value: String) -> String {
         let input = DateFormatter()
         input.locale = Locale(identifier: "en_US_POSIX")
@@ -258,7 +250,7 @@ struct ActionListView: View {
         guard let date = input.date(from: value) else { return value }
         let output = DateFormatter()
         output.locale = Locale(identifier: "de_DE")
-        output.dateFormat = "dd.MM. · HH:mm"
+        output.dateFormat = "dd.MM."
         return output.string(from: date)
     }
 }
