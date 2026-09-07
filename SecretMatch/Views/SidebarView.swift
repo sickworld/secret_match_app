@@ -83,7 +83,7 @@ struct SidebarView: View {
                 registerActivity()
                 showMatchesOverlay = true
             } label: {
-                Label("Deine Matches", systemImage: "sparkles")
+                Label("Matches & Interessen", systemImage: "sparkles")
             }
             .buttonStyle(SidebarButtonStyle(compact: isShort))
 

@@ -257,6 +257,17 @@ class APIService: ObservableObject {
         let decoded = try JSONDecoder().decode([Match].self, from: data)
         return decoded
     }
+
+    func loadIncomingInterests() async throws -> [IncomingInterest] {
+        let url = baseURL.appendingPathComponent("interests")
+        let (data, response) = try await URLSession.shared.data(from: url)
+
+        guard let http = response as? HTTPURLResponse, http.statusCode == 200 else {
+            throw URLError(.badServerResponse)
+        }
+
+        return try JSONDecoder().decode([IncomingInterest].self, from: data)
+    }
     
     @MainActor
     func loadActions() async throws -> [SecretAction] {
