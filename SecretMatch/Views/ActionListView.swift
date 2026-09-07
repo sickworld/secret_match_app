@@ -4,15 +4,9 @@ struct ActionListView: View {
     @EnvironmentObject var api: APIService
     @Binding var isPresented: Bool
     @Environment(\.dismiss) private var dismiss
-    @State private var selectedDirection = "all"
+    @State private var selectedType = "all"
+    @State private var senderQuery = ""
     @State private var loadErrorMessage: String?
-
-    var groupedActions: [String: [SecretAction]] {
-        Dictionary(
-            grouping: api.actions,
-            by: { $0.sender_number == api.number ? "Gesendet" : "Erhalten" }
-        )
-    }
 
     var body: some View {
         ZStack {
@@ -31,24 +25,37 @@ struct ActionListView: View {
                         Text("Aktionen")
                             .font(.system(size: 34, weight: .bold, design: .rounded))
                             .foregroundStyle(.white)
-                        Text("Alles, was du gesendet und erhalten hast.")
+                        Text("Nur Aktionen, die du erhalten hast – nach Kategorie und Nummer filterbar.")
                             .foregroundStyle(SecretMatchTheme.muted)
                     }
                     Spacer()
                     closeButton
                 }
 
-                HStack(spacing: 10) {
-                    actionFilterButton("Alle \(api.actions.count)", direction: "all", color: SecretMatchTheme.secondary)
-                    actionFilterButton("Erhalten \(receivedCount)", direction: "received", color: SecretMatchTheme.primary)
-                    actionFilterButton("Gesendet \(sentCount)", direction: "sent", color: Color(hex: "#3E9ED6"))
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 10) {
+                        actionFilterButton("Alle", type: "all", color: SecretMatchTheme.secondary)
+                        actionFilterButton("❤️ Hot", type: "normal", color: Color(hex: "#E83E8C"))
+                        actionFilterButton("🍆 Fuck", type: "hot", color: Color(hex: "#8E63D2"))
+                        actionFilterButton("👄 Blow", type: "bjob", color: Color(hex: "#3E9ED6"))
+                        actionFilterButton("✋ Hand", type: "hjob", color: Color(hex: "#E6923E"))
+                        actionFilterButton("👅 Lick", type: "ljob", color: Color(hex: "#D65C8D"))
+                    }
                 }
+
+                TextField("Absender-Nummer filtern", text: $senderQuery)
+                    .keyboardType(.numberPad)
+                    .font(.system(size: 20, weight: .semibold, design: .rounded))
+                    .foregroundStyle(.white)
+                    .padding(14)
+                    .background(SecretMatchTheme.surfaceRaised)
+                    .clipShape(RoundedRectangle(cornerRadius: 14))
 
                 if let loadErrorMessage {
                     loadErrorState(message: loadErrorMessage)
                 } else if filteredActions.isEmpty {
                     ContentUnavailableView(
-                        selectedDirection == "all" ? "Noch keine Aktionen" : "Hier ist noch nichts",
+                        "Keine erhaltenen Aktionen",
                         systemImage: "paperplane",
                         description: Text("Neue Aktionen erscheinen automatisch in dieser Übersicht.")
                     )
@@ -118,34 +125,24 @@ struct ActionListView: View {
 
     private var filteredActions: [SecretAction] {
         api.actions.filter { action in
-            switch selectedDirection {
-            case "received": return action.sender_number != api.number
-            case "sent": return action.sender_number == api.number
-            default: return true
-            }
+            action.receiver_number.normalizedEventNumber == api.number.normalizedEventNumber
+                && (selectedType == "all" || action.action_type == selectedType)
+                && (senderQuery.isEmpty || action.sender_number.contains(senderQuery))
         }
     }
 
-    private var receivedCount: Int {
-        api.actions.filter { $0.sender_number != api.number }.count
-    }
-
-    private var sentCount: Int {
-        api.actions.filter { $0.sender_number == api.number }.count
-    }
-
-    private func actionFilterButton(_ title: String, direction: String, color: Color) -> some View {
-        let isSelected = selectedDirection == direction
+    private func actionFilterButton(_ title: String, type: String, color: Color) -> some View {
+        let isSelected = selectedType == type
 
         return Button {
             withAnimation(.easeOut(duration: 0.18)) {
-                selectedDirection = direction
+                selectedType = type
             }
         } label: {
             Text(title)
                 .font(.system(size: 20, weight: .bold, design: .rounded))
                 .foregroundStyle(.white)
-                .frame(maxWidth: .infinity, minHeight: 64)
+                .frame(minWidth: 130, minHeight: 64)
                 .background(isSelected ? color.opacity(0.9) : color.opacity(0.14))
                 .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
                 .overlay(
@@ -172,13 +169,13 @@ struct ActionListView: View {
 
             Text(actionLabel(for: action.action_type))
                 .foregroundStyle(.white)
-                .font(.system(size: 20, weight: .bold, design: .rounded))
+                .font(.system(size: 24, weight: .bold, design: .rounded))
 
             Spacer()
 
-            Text(partner(for: action).displayEventNumber)
+            Text(action.sender_number.displayEventNumber)
                 .foregroundStyle(.white)
-                .font(.system(size: 28, weight: .bold, design: .monospaced))
+                .font(.system(size: 40, weight: .heavy, design: .monospaced))
                 .lineLimit(1)
                 .minimumScaleFactor(0.75)
                 .padding(.horizontal, 14)
@@ -227,9 +224,4 @@ struct ActionListView: View {
         }
     }
 
-    private func partner(for action: SecretAction) -> String {
-        action.sender_number == api.number
-            ? action.receiver_number
-            : action.sender_number
-    }
 }

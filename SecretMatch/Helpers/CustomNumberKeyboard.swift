@@ -3,6 +3,8 @@ import SwiftUI
 struct CustomNumberKeyboard: View {
     @Binding var text: String
     var doneLabel = "Fertig"
+    var maxDigits = 3
+    var obscuresText = false
     var onActivity: () -> Void = {}
     var onClose: () -> Void = {}
     var onDone: () -> Void
@@ -16,7 +18,7 @@ struct CustomNumberKeyboard: View {
 
     var body: some View {
         VStack(spacing: 24) {
-            Text(text.isEmpty ? "Nummer…" : text.displayEventNumber)
+            Text(text.isEmpty ? "Nummer…" : (obscuresText ? String(repeating: "•", count: text.count) : text.displayEventNumber))
                 .font(.system(size: 44, weight: .bold, design: .rounded))
                 .foregroundStyle(.white)
                 .frame(maxWidth: .infinity)
@@ -81,7 +83,7 @@ struct CustomNumberKeyboard: View {
         case "✓":
             onDone()
         default:
-            if text.count < 3 {
+            if text.count < maxDigits {
                 text.append(key)
             }
         }

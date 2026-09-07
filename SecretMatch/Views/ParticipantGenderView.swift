@@ -21,7 +21,7 @@ struct ParticipantGenderView: View {
                     .foregroundStyle(.white)
                     .multilineTextAlignment(.center)
 
-                Text("Die Angabe bleibt pseudonym und ist freiwillig. Sie hilft uns, den Abend passend für alle zu gestalten.")
+                Text("Die Angabe bleibt pseudonym und ist für die Teilnahme erforderlich.")
                     .font(.system(size: 17, weight: .medium, design: .rounded))
                     .foregroundStyle(SecretMatchTheme.muted)
                     .multilineTextAlignment(.center)
@@ -31,13 +31,6 @@ struct ParticipantGenderView: View {
                     genderButton(.female)
                     genderButton(.male)
                 }
-
-                Button("Lieber nicht angeben") {
-                    onSelect(.skip)
-                }
-                .font(.system(size: 14, weight: .semibold, design: .rounded))
-                .foregroundStyle(SecretMatchTheme.muted)
-                .disabled(isSubmitting)
 
                 if isSubmitting {
                     ProgressView()

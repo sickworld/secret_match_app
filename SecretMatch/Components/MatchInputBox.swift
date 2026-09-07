@@ -14,6 +14,8 @@ struct MatchInputBox: View {
     @Binding var showKeyboard: Bool
     @Binding var selectedActions: Set<String>
     @Binding var responseMessage: String
+    @Binding var matchMessage: String
+    let quickMessages: [String]
     let onSend: () -> Void
     var queuedSendCount = 0
     var isRetryingQueuedSends = false
@@ -74,6 +76,41 @@ struct MatchInputBox: View {
                             showKeyboard = true
                         }
                     }
+            }
+
+            if selectedActions.contains("normal") || selectedActions.contains("hot") {
+                Spacer(minLength: 18)
+                VStack(alignment: .leading, spacing: 10) {
+                    Text("NACHRICHT ZUM MATCH · OPTIONAL")
+                        .font(.system(size: 14, weight: .bold, design: .rounded))
+                        .tracking(1.2)
+                        .foregroundStyle(SecretMatchTheme.secondary)
+                    if !quickMessages.isEmpty {
+                        ScrollView(.horizontal, showsIndicators: false) {
+                            HStack(spacing: 8) {
+                                ForEach(quickMessages, id: \.self) { option in
+                                    Button(option) { matchMessage = option }
+                                        .buttonStyle(.bordered)
+                                        .tint(SecretMatchTheme.secondary)
+                                }
+                            }
+                        }
+                    }
+                    TextField("z. B. Lass uns an der Bar treffen", text: $matchMessage, axis: .vertical)
+                        .lineLimit(2...4)
+                        .font(.system(size: 19, weight: .medium, design: .rounded))
+                        .foregroundStyle(.white)
+                        .padding(14)
+                        .background(SecretMatchTheme.surfaceRaised)
+                        .clipShape(RoundedRectangle(cornerRadius: 14))
+                        .onChange(of: matchMessage) { _, value in
+                            if value.count > 180 { matchMessage = String(value.prefix(180)) }
+                        }
+                    Text("\(matchMessage.count)/180")
+                        .font(.caption.monospacedDigit())
+                        .foregroundStyle(SecretMatchTheme.muted)
+                        .frame(maxWidth: .infinity, alignment: .trailing)
+                }
             }
 
             Spacer(minLength: fillsAvailableSpace ? 28 : 26)

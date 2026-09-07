@@ -1,15 +1,16 @@
 import SwiftUI
 
-struct MatchListView: View {
-    private enum OverviewSection {
-        case matches
-        case interests
-    }
+enum MatchOverviewSection {
+    case matches
+    case interests
+}
 
+struct MatchListView: View {
     private struct OverviewEntry: Identifiable {
         let id: String
         let other: String
         let type: String
+        let message: String?
     }
 
     @EnvironmentObject var api: APIService
@@ -17,12 +18,17 @@ struct MatchListView: View {
     @Binding var isPresented: Bool
     @State private var matches: [Match] = []
     @State private var interests: [IncomingInterest] = []
-    @State private var selectedSection: OverviewSection = .matches
+    @State private var selectedSection: MatchOverviewSection
     @State private var selectedType = "all"
     @State private var matchesLoadErrorMessage: String?
     @State private var interestsLoadErrorMessage: String?
     @State private var isLoadingMatches = true
     @State private var isLoadingInterests = true
+
+    init(isPresented: Binding<Bool>, initialSection: MatchOverviewSection = .matches) {
+        _isPresented = isPresented
+        _selectedSection = State(initialValue: initialSection)
+    }
 
     var body: some View {
         ZStack {
@@ -124,7 +130,7 @@ struct MatchListView: View {
     private func overviewButton(
         _ title: String,
         systemImage: String,
-        section: OverviewSection,
+        section: MatchOverviewSection,
         color: Color
     ) -> some View {
         let isSelected = selectedSection == section
@@ -173,11 +179,11 @@ struct MatchListView: View {
         switch selectedSection {
         case .matches:
             return matches.map {
-                OverviewEntry(id: $0.id, other: $0.other, type: $0.type)
+                OverviewEntry(id: $0.id, other: $0.other, type: $0.type, message: $0.message)
             }
         case .interests:
             return interests.map {
-                OverviewEntry(id: $0.id, other: $0.other, type: $0.type)
+                OverviewEntry(id: $0.id, other: $0.other, type: $0.type, message: $0.message)
             }
         }
     }
@@ -266,18 +272,25 @@ struct MatchListView: View {
 
             VStack(alignment: .leading, spacing: 4) {
                 Text(selectedSection == .matches ? "Du hast ein Match!" : "Diese Person hat Interesse an dir")
-                    .font(.system(size: 20, weight: .bold, design: .rounded))
+                    .font(.system(size: 24, weight: .bold, design: .rounded))
                     .foregroundStyle(.white)
 
                 Text(typeTitle(for: entry.type))
-                    .font(.caption.weight(.semibold))
+                    .font(.system(size: 17, weight: .semibold, design: .rounded))
                     .foregroundStyle(SecretMatchTheme.muted)
+
+                if let message = entry.message, !message.isEmpty {
+                    Text("„\(message)“")
+                        .font(.system(size: 19, weight: .medium, design: .rounded))
+                        .foregroundStyle(.white)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
             }
 
             Spacer()
 
             Text(entry.other.displayEventNumber)
-                .font(.system(size: 28, weight: .bold, design: .monospaced))
+                .font(.system(size: 38, weight: .heavy, design: .monospaced))
                 .lineLimit(1)
                 .minimumScaleFactor(0.75)
                 .foregroundStyle(.white)

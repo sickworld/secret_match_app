@@ -12,6 +12,7 @@ struct PendingInteraction: Codable, Identifiable {
     let targetNumber: String
     let type: String
     let kind: Kind
+    let message: String?
     let createdAt: Date
     var retryCount: Int
     var nextAttemptAt: Date

@@ -29,6 +29,9 @@ struct AdminDashboardView: View {
     @State private var confirmation: Confirmation?
     @State private var showResetAssistant = false
     @State private var resetConfirmation = ""
+    @State private var quickMessagesText = ""
+    @State private var pinEditorNumber: String?
+    @State private var pinDraft = ""
 
     private enum Confirmation: Identifiable {
         case createDummy
@@ -92,6 +95,9 @@ struct AdminDashboardView: View {
         .sheet(isPresented: $showResetAssistant) {
             resetAssistant
         }
+        .sheet(isPresented: Binding(get: { pinEditorNumber != nil }, set: { if !$0 { pinEditorNumber = nil } })) {
+            pinEditor
+        }
     }
 
 #if ADMIN_APP
@@ -102,6 +108,7 @@ struct AdminDashboardView: View {
             header
             liveStatus
             metrics
+            deviceStatus
             topPreview
         case .controls:
             sectionHeading("Eventsteuerung", subtitle: "Billboard und Testdaten verwalten")
@@ -113,6 +120,7 @@ struct AdminDashboardView: View {
         case .system:
             sectionHeading("System & Reset", subtitle: "Systemzustand prüfen und Events vorbereiten")
             systemStatus
+            deviceStatus
             resetCard
         case .liveFeed, .actions, .matches, .feedback:
             EmptyView()
@@ -334,6 +342,15 @@ struct AdminDashboardView: View {
                 Button("Testdaten löschen", role: .destructive) { confirmation = .deleteDummy }
                     .foregroundStyle(.red)
             }
+
+            controlCard(title: "💬 Match-Schnelltexte", subtitle: "Bis zu 8 Texte, je eine Zeile") {
+                TextEditor(text: $quickMessagesText)
+                    .frame(minHeight: 150)
+                    .foregroundStyle(.primary)
+                    .clipShape(RoundedRectangle(cornerRadius: 10))
+                Button("Schnelltexte speichern") { Task { await saveQuickMessages() } }
+                    .buttonStyle(SecretPrimaryButtonStyle())
+            }
         }
     }
 
@@ -369,6 +386,9 @@ struct AdminDashboardView: View {
                             Text(number.displayEventNumber)
                                 .font(.title3.bold().monospacedDigit())
                                 .foregroundStyle(.white)
+                            Text("PIN \(api.adminParticipants.pins[number] ?? "–")")
+                                .font(.headline.monospacedDigit())
+                                .foregroundStyle(SecretMatchTheme.secondary)
                             if activeNumbers.contains(number) {
                                 Text("LIVE")
                                     .font(.caption2.bold())
@@ -388,6 +408,10 @@ struct AdminDashboardView: View {
                             }
 
                             genderMenu(for: number)
+                            Button("PIN ändern") {
+                                pinDraft = api.adminParticipants.pins[number] ?? ""
+                                pinEditorNumber = number
+                            }
 
                             Spacer()
 
@@ -446,6 +470,53 @@ struct AdminDashboardView: View {
             }
         }
         .secretCard(cornerRadius: 20, padding: 20)
+    }
+
+    private var deviceStatus: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("🔋 Aktive iPads")
+                .font(.title2.bold())
+                .foregroundStyle(.white)
+            if (api.adminDashboard?.devices ?? []).isEmpty {
+                Text("In den letzten 3 Minuten wurde kein iPad-Heartbeat empfangen.")
+                    .foregroundStyle(SecretMatchTheme.muted)
+            } else {
+                ForEach(api.adminDashboard?.devices ?? []) { device in
+                    HStack {
+                        Text(device.number.displayEventNumber).font(.title3.bold().monospacedDigit())
+                        Spacer()
+                        Image(systemName: device.batteryState == "charging" ? "battery.100percent.bolt" : "battery.100percent")
+                        Text("\(device.batteryLevel) %").font(.title3.bold().monospacedDigit())
+                        Text("v\(device.appVersion)").foregroundStyle(SecretMatchTheme.muted)
+                    }
+                    .foregroundStyle(device.batteryLevel < 20 ? .red : .white)
+                    .padding(10)
+                    .background(Color.white.opacity(0.06))
+                    .clipShape(RoundedRectangle(cornerRadius: 12))
+                }
+            }
+        }
+        .secretCard(cornerRadius: 20, padding: 20)
+    }
+
+    private var pinEditor: some View {
+        NavigationStack {
+            Form {
+                Section("Neue zweistellige PIN") {
+                    TextField("00", text: $pinDraft)
+                        .keyboardType(.numberPad)
+                        .onChange(of: pinDraft) { _, value in pinDraft = String(value.filter(\.isNumber).prefix(2)) }
+                    Text("Die Nummer wird beim Speichern auf allen Geräten abgemeldet.")
+                }
+            }
+            .navigationTitle("PIN für \(pinEditorNumber?.displayEventNumber ?? "")")
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) { Button("Abbrechen") { pinEditorNumber = nil } }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Speichern") { Task { await savePIN() } }.disabled(pinDraft.count != 2)
+                }
+            }
+        }
     }
 
     private var resetCard: some View {
@@ -616,6 +687,9 @@ struct AdminDashboardView: View {
         do {
             try await api.refreshAdminControlData()
             rotationSeconds = api.adminDashboard?.billboardRotationSeconds ?? rotationSeconds
+            if !isWorking || quickMessagesText.isEmpty {
+                quickMessagesText = (api.adminDashboard?.matchMessageOptions ?? []).joined(separator: "\n")
+            }
             errorMessage = nil
         } catch {
             if showErrors { errorMessage = "Aktualisierung fehlgeschlagen." }
@@ -658,6 +732,21 @@ struct AdminDashboardView: View {
         await operation("Gender für \(number.displayEventNumber) wurde auf \(gender.title) gesetzt. Die Nummer wurde abgemeldet.") {
             try await api.updateParticipantGender(number: number, gender: gender)
         }
+    }
+
+    @MainActor
+    private func savePIN() async {
+        guard let number = pinEditorNumber, pinDraft.count == 2 else { return }
+        await operation("PIN für \(number.displayEventNumber) geändert; Sitzungen wurden beendet.") {
+            try await api.updateParticipantPIN(number: number, pin: pinDraft)
+        }
+        if errorMessage == nil { pinEditorNumber = nil }
+    }
+
+    @MainActor
+    private func saveQuickMessages() async {
+        let options = quickMessagesText.split(separator: "\n").map { String($0).trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty }
+        await operation("Schnelltexte gespeichert.") { try await api.updateMatchMessageOptions(Array(options.prefix(8))) }
     }
 
     @MainActor
@@ -736,7 +825,7 @@ struct AdminDashboardView: View {
 
     private func genderMenu(for number: String) -> some View {
         Menu {
-            ForEach(ParticipantGender.allCases) { gender in
+            ForEach(ParticipantGender.allCases.filter { $0 == .female || $0 == .male }) { gender in
                 Button("\(gender.symbol) \(gender.title)") {
                     Task { await setGender(gender, for: number) }
                 }

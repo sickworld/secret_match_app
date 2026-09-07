@@ -20,6 +20,8 @@ struct AdminDashboard: Decodable {
     let billboardHeight: Int?
     let billboardMode: String?
     let topPeople: [TopPerson]?
+    let matchMessageOptions: [String]?
+    let devices: [AdminDeviceStatus]?
 
     private enum CodingKeys: String, CodingKey {
         case activeParticipants = "active_participants"
@@ -41,6 +43,8 @@ struct AdminDashboard: Decodable {
         case billboardHeight = "billboard_height"
         case billboardMode = "billboard_mode"
         case topPeople = "top_people"
+        case matchMessageOptions = "match_message_options"
+        case devices
     }
 }
 
@@ -56,6 +60,24 @@ struct TopPerson: Decodable, Identifiable {
         case "male": return "♂"
         default: return "–"
         }
+    }
+}
+
+struct AdminDeviceStatus: Decodable, Identifiable {
+    let number: String
+    let batteryLevel: Int
+    let batteryState: String
+    let appVersion: String
+    let lastSeen: Int
+
+    var id: String { "\(number)-\(lastSeen)" }
+
+    private enum CodingKeys: String, CodingKey {
+        case number
+        case batteryLevel = "battery_level"
+        case batteryState = "battery_state"
+        case appVersion = "app_version"
+        case lastSeen = "last_seen"
     }
 }
 
@@ -80,15 +102,17 @@ struct AdminParticipants: Decodable {
     let allowed: [String]
     let active: [AdminActiveParticipant]
     let profiles: [AdminParticipantProfile]
+    let pins: [String: String]
 
-    init(allowed: [String], active: [AdminActiveParticipant], profiles: [AdminParticipantProfile] = []) {
+    init(allowed: [String], active: [AdminActiveParticipant], profiles: [AdminParticipantProfile] = [], pins: [String: String] = [:]) {
         self.allowed = allowed
         self.active = active
         self.profiles = profiles
+        self.pins = pins
     }
 
     private enum CodingKeys: String, CodingKey {
-        case allowed, active, profiles
+        case allowed, active, profiles, pins
     }
 
     init(from decoder: Decoder) throws {
@@ -96,6 +120,7 @@ struct AdminParticipants: Decodable {
         allowed = try container.decode([String].self, forKey: .allowed)
         active = try container.decode([AdminActiveParticipant].self, forKey: .active)
         profiles = try container.decodeIfPresent([AdminParticipantProfile].self, forKey: .profiles) ?? []
+        pins = try container.decodeIfPresent([String: String].self, forKey: .pins) ?? [:]
     }
 }
 

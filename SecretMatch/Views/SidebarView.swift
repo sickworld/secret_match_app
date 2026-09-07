@@ -6,6 +6,7 @@ struct SidebarView: View {
     var registerActivity: () -> Void
     var logout: () -> Void
     @Binding var showMatchesOverlay: Bool
+    @Binding var showInterestsOverlay: Bool
     @Binding var showActionsOverlay: Bool
     @Binding var showGuideOverlay: Bool
     @Binding var showRulesOverlay: Bool
@@ -83,7 +84,17 @@ struct SidebarView: View {
                 registerActivity()
                 showMatchesOverlay = true
             } label: {
-                Label("Matches & Interessen", systemImage: "sparkles")
+                Label("Matches", systemImage: "sparkles")
+            }
+            .buttonStyle(SidebarButtonStyle(compact: isShort))
+
+            Spacer(minLength: isCompact ? 12 : (isShort ? 8 : 12))
+
+            Button {
+                registerActivity()
+                showInterestsOverlay = true
+            } label: {
+                Label("Interesse", systemImage: "heart.text.square.fill")
             }
             .buttonStyle(SidebarButtonStyle(compact: isShort))
 

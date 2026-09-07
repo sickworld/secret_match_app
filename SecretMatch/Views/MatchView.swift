@@ -11,6 +11,8 @@ struct MatchView: View {
     @State private var targetNumber = ""
     @State private var selectedActions: Set<String> = []
     @State private var responseMessage = ""
+    @State private var matchMessage = ""
+    @State private var showInterestsOverlay = false
 
 
     // Inactivity / Auto-Logout
@@ -110,7 +112,13 @@ struct MatchView: View {
                 }
             
             if showMatchesOverlay {
-                MatchListView(isPresented: $showMatchesOverlay)
+                MatchListView(isPresented: $showMatchesOverlay, initialSection: .matches)
+                    .environmentObject(api)
+                    .zIndex(5)
+            }
+
+            if showInterestsOverlay {
+                MatchListView(isPresented: $showInterestsOverlay, initialSection: .interests)
                     .environmentObject(api)
                     .zIndex(5)
             }
@@ -182,6 +190,8 @@ struct MatchView: View {
                         showKeyboard: $showKeyboard,
                         selectedActions: $selectedActions,
                         responseMessage: $responseMessage,
+                        matchMessage: $matchMessage,
+                        quickMessages: api.matchMessageOptions,
                         onSend: sendInteractions,
                         queuedSendCount: api.queuedSendCount,
                         isRetryingQueuedSends: api.isRetryingQueuedSends,
@@ -202,6 +212,8 @@ struct MatchView: View {
                         showKeyboard: $showKeyboard,
                         selectedActions: $selectedActions,
                         responseMessage: $responseMessage,
+                        matchMessage: $matchMessage,
+                        quickMessages: api.matchMessageOptions,
                         onSend: sendInteractions,
                         queuedSendCount: api.queuedSendCount,
                         isRetryingQueuedSends: api.isRetryingQueuedSends,
@@ -222,6 +234,7 @@ struct MatchView: View {
             registerActivity: resetInactivityTimer,
             logout: { api.logout() },
             showMatchesOverlay: $showMatchesOverlay,
+            showInterestsOverlay: $showInterestsOverlay,
             showActionsOverlay: $showActionsOverlay,
             showGuideOverlay: $showGuideOverlay,
             showRulesOverlay: $showRulesOverlay,
@@ -255,9 +268,11 @@ struct MatchView: View {
                     .filter(selectedActions.contains)
                 let result = try await api.submitInteractions(
                     targetNumber: targetNumber,
-                    types: orderedTypes
+                    types: orderedTypes,
+                    message: matchMessage
                 )
                 responseMessage = result.userMessage
+                matchMessage = ""
             } catch {
                 responseMessage = "Die Aktionen konnten nicht vorgemerkt werden. Bitte versuche es erneut."
             }

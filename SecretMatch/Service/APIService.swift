@@ -2,6 +2,7 @@ import Foundation
 import Combine
 import Network
 import SwiftUI
+import UIKit
 
 @MainActor
 class APIService: ObservableObject {
@@ -36,6 +37,7 @@ class APIService: ObservableObject {
     @Published private(set) var isRetryingQueuedSends = false
     @Published private(set) var connectionState: ConnectionState = .checking
     @Published private(set) var isCheckingConnection = false
+    @Published private(set) var matchMessageOptions: [String] = []
     private var adminToken: String?
     private let baseURL = URL(string: "https://secret-match.de/wp-json/secretmatch/v1")!
     private var pendingInteractions: [PendingInteraction]
@@ -44,10 +46,11 @@ class APIService: ObservableObject {
     private var isApplicationActive = false
     private var retryTask: Task<Void, Never>?
     private var connectionPollingTask: Task<Void, Never>?
+    private var heartbeatTask: Task<Void, Never>?
     private let networkMonitor = NWPathMonitor()
     private let networkMonitorQueue = DispatchQueue(label: "de.secret-match.send-queue.network")
 
-    func login(number: String) async throws -> Bool {
+    func login(number: String, pin: String) async throws -> Bool {
         if isAdmin { return false }
         await waitForSendQueueToFinish()
         await retryPendingSendsForPreviousSession()
@@ -56,7 +59,7 @@ class APIService: ObservableObject {
         let url = baseURL.appendingPathComponent("login")
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
-        request.httpBody = formBody(["secretmatch_number": normalizedNumber])
+        request.httpBody = formBody(["secretmatch_number": normalizedNumber, "secretmatch_pin": pin])
         request.setValue("application/x-www-form-urlencoded", forHTTPHeaderField: "Content-Type")
 
         let (data, response) = try await URLSession.shared.data(for: request)
@@ -118,9 +121,11 @@ class APIService: ObservableObject {
     func finishParticipantLogin() {
         isLoggedIn = true
         triggerQueueProcessing(for: number)
+        startDeviceHeartbeat()
+        Task { try? await loadMatchMessageOptions() }
     }
 
-    func submitInteractions(targetNumber: String, types: [String]) async throws -> InteractionSubmissionResult {
+    func submitInteractions(targetNumber: String, types: [String], message: String = "") async throws -> InteractionSubmissionResult {
         let senderNumber = number.normalizedEventNumber
         let normalizedTargetNumber = targetNumber.normalizedEventNumber
         let supportedTypes = Set(["normal", "hot", "bjob", "hjob", "ljob"])
@@ -134,6 +139,7 @@ class APIService: ObservableObject {
 
         let batchID = UUID()
         let now = Date()
+        let cleanMessage = String(message.trimmingCharacters(in: .whitespacesAndNewlines).prefix(180))
         let interactions = types.map { type in
             PendingInteraction(
                 id: UUID(),
@@ -142,6 +148,7 @@ class APIService: ObservableObject {
                 targetNumber: normalizedTargetNumber,
                 type: type,
                 kind: type == "normal" || type == "hot" ? .match : .action,
+                message: type == "normal" || type == "hot" ? cleanMessage : nil,
                 createdAt: now,
                 retryCount: 0,
                 nextAttemptAt: now
@@ -163,8 +170,9 @@ class APIService: ObservableObject {
     func retryPendingSends() async {
         let senderNumber = number.normalizedEventNumber
         guard !senderNumber.isEmpty else { return }
-        if let index = pendingInteractions.firstIndex(where: { $0.senderNumber == senderNumber }) {
+        for index in pendingInteractions.indices where pendingInteractions[index].senderNumber == senderNumber {
             pendingInteractions[index].nextAttemptAt = Date()
+            pendingInteractions[index].retryCount = 0
             persistPendingInteractions()
         }
         _ = await processSendQueue(for: senderNumber)
@@ -178,6 +186,7 @@ class APIService: ObservableObject {
             guard self?.isApplicationActive == true,
                   self?.connectionState == .online else { return }
             await self?.retryPendingSends()
+            self?.startDeviceHeartbeat()
         }
     }
 
@@ -185,6 +194,8 @@ class APIService: ObservableObject {
         isApplicationActive = false
         connectionPollingTask?.cancel()
         connectionPollingTask = nil
+        heartbeatTask?.cancel()
+        heartbeatTask = nil
     }
 
     func checkConnection() async {
@@ -228,7 +239,8 @@ class APIService: ObservableObject {
         request.httpBody = formBody([
             "target_number": interaction.targetNumber,
             "match_type": interaction.type,
-            "request_id": interaction.id.uuidString.lowercased()
+            "request_id": interaction.id.uuidString.lowercased(),
+            "message": interaction.message ?? ""
         ])
         request.setValue("application/x-www-form-urlencoded", forHTTPHeaderField: "Content-Type")
         request.timeoutInterval = 12
@@ -242,7 +254,15 @@ class APIService: ObservableObject {
         }
 
         let decoded = try JSONDecoder().decode(MatchResponse.self, from: data)
+        guard decoded.success else { throw InteractionSendError.rejected }
         return decoded.data
+    }
+
+    func loadMatchMessageOptions() async throws {
+        let url = baseURL.appendingPathComponent("match-message-options")
+        let (data, response) = try await URLSession.shared.data(from: url)
+        guard let http = response as? HTTPURLResponse, http.statusCode == 200 else { throw URLError(.badServerResponse) }
+        matchMessageOptions = try JSONDecoder().decode(MatchMessageOptionsResponse.self, from: data).options
     }
     
     @MainActor
@@ -523,6 +543,24 @@ class APIService: ObservableObject {
         try? await loadAdminDashboard()
     }
 
+    func updateParticipantPIN(number: String, pin: String) async throws {
+        try await mutateAdminResource(
+            path: ["admin", "participants", number.normalizedEventNumber],
+            method: "PATCH",
+            body: ["pin": pin]
+        )
+        try? await loadAdminParticipants()
+    }
+
+    func updateMatchMessageOptions(_ options: [String]) async throws {
+        try await mutateAdminResource(
+            path: ["admin", "match-message-options"],
+            method: "PATCH",
+            body: ["options": options]
+        )
+        try? await loadAdminDashboard()
+    }
+
     func controlBillboard(action: String, seconds: Int? = nil) async throws {
         let url = baseURL.appendingPathComponent("admin/billboard-control")
         var request = try adminRequest(url: url)
@@ -629,6 +667,8 @@ class APIService: ObservableObject {
         self.isLoggedIn = false
         self.number = ""
         retryTask?.cancel()
+        heartbeatTask?.cancel()
+        heartbeatTask = nil
         updateQueuedSendCount()
         self.matches = []
         self.actions = []
@@ -724,6 +764,45 @@ class APIService: ObservableObject {
                 await self?.checkConnection()
             }
         }
+    }
+
+    private func startDeviceHeartbeat() {
+        heartbeatTask?.cancel()
+        guard isLoggedIn, isApplicationActive else { return }
+        UIDevice.current.isBatteryMonitoringEnabled = true
+        heartbeatTask = Task { @MainActor [weak self] in
+            while !Task.isCancelled {
+                await self?.sendDeviceHeartbeat()
+                do { try await Task.sleep(for: .seconds(30)) } catch { return }
+            }
+        }
+    }
+
+    private func sendDeviceHeartbeat() async {
+        guard isLoggedIn else { return }
+        let key = "secretmatch.installation-id"
+        let defaults = UserDefaults.standard
+        let deviceID: String
+        if let saved = defaults.string(forKey: key) { deviceID = saved }
+        else { deviceID = UUID().uuidString.lowercased(); defaults.set(deviceID, forKey: key) }
+        let rawLevel = UIDevice.current.batteryLevel
+        let level = rawLevel < 0 ? 0 : Int((rawLevel * 100).rounded())
+        let state: String
+        switch UIDevice.current.batteryState {
+        case .charging: state = "charging"
+        case .full: state = "full"
+        case .unplugged: state = "unplugged"
+        default: state = "unknown"
+        }
+        let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? ""
+        var request = URLRequest(url: baseURL.appendingPathComponent("heartbeat"))
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.httpBody = try? JSONSerialization.data(withJSONObject: [
+            "device_id": deviceID, "battery_level": level, "battery_state": state, "app_version": version
+        ])
+        request.timeoutInterval = 8
+        _ = try? await URLSession.shared.data(for: request)
     }
 
     private func triggerQueueProcessing(for senderNumber: String) {
@@ -972,6 +1051,10 @@ private struct ParticipantStatusResponse: Decodable {
         case loggedIn = "logged_in"
         case number
     }
+}
+
+private struct MatchMessageOptionsResponse: Decodable {
+    let options: [String]
 }
 
 private struct AdminLoginResponse: Decodable {

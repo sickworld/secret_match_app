@@ -3,6 +3,8 @@ import Combine
 
 struct LoginView: View {
     @State private var number: String = ""
+    @State private var pin: String = ""
+    @State private var activeField: LoginField = .number
     @EnvironmentObject var api: APIService
     @State private var showKeyboard = false
     @State private var isLoading = false
@@ -59,8 +61,19 @@ struct LoginView: View {
                             .secretInput(highlighted: showKeyboard)
                             .onTapGesture {
                                 withAnimation(.easeOut(duration: 0.2)) {
+                                    activeField = .number
                                     showKeyboard = true
                                 }
+                            }
+
+                        Text(pin.isEmpty ? "2-stellige PIN eingeben" : String(repeating: "•", count: pin.count))
+                            .foregroundStyle(pin.isEmpty ? SecretMatchTheme.muted : SecretMatchTheme.text)
+                            .font(.system(size: 32, weight: .bold, design: .rounded))
+                            .multilineTextAlignment(.center)
+                            .secretInput(highlighted: showKeyboard && activeField == .pin)
+                            .onTapGesture {
+                                activeField = .pin
+                                showKeyboard = true
                             }
                     }
 
@@ -84,8 +97,8 @@ struct LoginView: View {
                         }
                     }
                     .buttonStyle(SecretPrimaryButtonStyle(fontSize: 21, minHeight: 78))
-                    .disabled(isLoading || number.isEmpty)
-                    .opacity(number.isEmpty ? 0.55 : 1)
+                    .disabled(isLoading || number.isEmpty || pin.count != 2)
+                    .opacity(number.isEmpty || pin.count != 2 ? 0.55 : 1)
 
                     Button {
                             showKeyboard = false
@@ -126,8 +139,10 @@ struct LoginView: View {
                     Spacer()
                     VStack(spacing: 10) {
                         CustomNumberKeyboard(
-                            text: $number,
+                            text: activeField == .number ? $number : $pin,
                             doneLabel: "Einloggen",
+                            maxDigits: activeField == .number ? 3 : 2,
+                            obscuresText: activeField == .pin,
                             onClose: { withAnimation { showKeyboard = false } }
                         ) {
                             submitLogin()
@@ -199,7 +214,7 @@ struct LoginView: View {
     }
 
     private func submitLogin() {
-        guard !number.isEmpty, !isLoading else { return }
+        guard !number.isEmpty, pin.count == 2, !isLoading else { return }
 
         showKeyboard = false
         errorMessage = nil
@@ -208,14 +223,14 @@ struct LoginView: View {
             defer { isLoading = false }
 
             do {
-                let needsGender = try await api.login(number: number)
+                let needsGender = try await api.login(number: number, pin: pin)
                 if needsGender {
                     showGenderChoice = true
                 } else {
                     api.finishParticipantLogin()
                 }
             } catch {
-                errorMessage = "Login fehlgeschlagen. Bitte Nummer prüfen und erneut versuchen."
+                errorMessage = "Login fehlgeschlagen. Bitte Nummer und PIN prüfen."
             }
         }
     }
@@ -268,4 +283,9 @@ struct LoginView: View {
         screensaverTask = nil
         showScreensaver = false
     }
+}
+
+private enum LoginField {
+    case number
+    case pin
 }
