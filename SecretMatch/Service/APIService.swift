@@ -552,6 +552,26 @@ class APIService: ObservableObject {
         try? await loadAdminParticipants()
     }
 
+    func resetParticipantPIN(number: String) async throws -> String {
+        let url = baseURL
+            .appendingPathComponent("admin")
+            .appendingPathComponent("participants")
+            .appendingPathComponent(number.normalizedEventNumber)
+        var request = try adminRequest(url: url)
+        request.httpMethod = "PATCH"
+        request.httpBody = try JSONSerialization.data(withJSONObject: ["reset_pin": true])
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        let (data, response) = try await URLSession.shared.data(for: request)
+        guard let http = response as? HTTPURLResponse, (200...299).contains(http.statusCode) else {
+            handleExpiredAdminToken(response)
+            let responseError = try? JSONDecoder().decode(AdminMutationResponseError.self, from: data)
+            throw AdminMutationError(message: responseError?.message ?? "PIN-Reset fehlgeschlagen.")
+        }
+        let result = try JSONDecoder().decode(AdminParticipantMutationResponse.self, from: data)
+        try? await loadAdminParticipants()
+        return result.pin
+    }
+
     func updateMatchMessageOptions(_ options: [String]) async throws {
         try await mutateAdminResource(
             path: ["admin", "match-message-options"],
@@ -1035,6 +1055,10 @@ private enum InteractionSendError: Error {
 
 private struct AdminMutationResponseError: Decodable {
     let message: String
+}
+
+private struct AdminParticipantMutationResponse: Decodable {
+    let pin: String
 }
 
 private struct AdminMutationError: LocalizedError {

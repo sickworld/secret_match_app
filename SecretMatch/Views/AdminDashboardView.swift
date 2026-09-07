@@ -38,6 +38,7 @@ struct AdminDashboardView: View {
         case deleteDummy
         case revokeBillboard
         case resetGender(String)
+        case resetPIN(String)
         case blockParticipant(String)
 
         var id: String {
@@ -46,6 +47,7 @@ struct AdminDashboardView: View {
             case .deleteDummy: return "delete-dummy"
             case .revokeBillboard: return "revoke-billboard"
             case .resetGender(let number): return "reset-gender-\(number)"
+            case .resetPIN(let number): return "reset-pin-\(number)"
             case .blockParticipant(let number): return "block-participant-\(number)"
             }
         }
@@ -360,6 +362,18 @@ struct AdminDashboardView: View {
                 .font(.title2.bold())
                 .foregroundStyle(.white)
 
+            if let statusMessage {
+                Text(statusMessage)
+                    .font(.callout.bold())
+                    .foregroundStyle(.green)
+                    .textSelection(.enabled)
+            }
+            if let errorMessage {
+                Text(errorMessage)
+                    .font(.callout.bold())
+                    .foregroundStyle(.red)
+            }
+
             HStack(spacing: 10) {
                 TextField("Neue Nummer", text: $newParticipantNumber)
                     .textFieldStyle(.roundedBorder)
@@ -408,10 +422,18 @@ struct AdminDashboardView: View {
                             }
 
                             genderMenu(for: number)
-                            Button("PIN ändern") {
-                                pinDraft = api.adminParticipants.pins[number] ?? ""
-                                pinEditorNumber = number
+                            Menu {
+                                Button("PIN manuell ändern") {
+                                    pinDraft = api.adminParticipants.pins[number] ?? ""
+                                    pinEditorNumber = number
+                                }
+                                Button("Neue PIN erzeugen", role: .destructive) {
+                                    confirmation = .resetPIN(number)
+                                }
+                            } label: {
+                                Label("PIN verwalten", systemImage: "key.fill")
                             }
+                            .disabled(isWorking)
 
                             Spacer()
 
@@ -622,6 +644,8 @@ struct AdminDashboardView: View {
         case .revokeBillboard: return "Alle aktuell geöffneten Billboard-Zugänge ungültig machen?"
         case .resetGender(let number):
             return "Das Gender von \(number.displayEventNumber) zurücksetzen und alle Sitzungen dieser Nummer abmelden? Beim nächsten Login wird die Auswahl erneut angezeigt."
+        case .resetPIN(let number):
+            return "Für \(number.displayEventNumber) eine neue zufällige PIN erzeugen? Die bisherige PIN wird sofort ungültig und alle Sitzungen dieser Nummer werden beendet."
         case .blockParticipant(let number):
             return "\(number.displayEventNumber) sperren, das Profil löschen und alle Sitzungen dieser Nummer abmelden?"
         case nil: return ""
@@ -764,11 +788,26 @@ struct AdminDashboardView: View {
             await operation("Gender für \(number.displayEventNumber) wurde zurückgesetzt. Die Nummer wurde abgemeldet.") {
                 try await api.updateParticipantGender(number: number, gender: nil)
             }
+        case .resetPIN(let number):
+            await resetPIN(for: number)
         case .blockParticipant(let number):
             await block(number)
         case nil:
             break
         }
+    }
+
+    @MainActor
+    private func resetPIN(for number: String) async {
+        isWorking = true
+        do {
+            let newPIN = try await api.resetParticipantPIN(number: number)
+            statusMessage = "Neue PIN für \(number.displayEventNumber): \(newPIN) · Alle Sitzungen wurden beendet."
+            errorMessage = nil
+        } catch {
+            errorMessage = "PIN-Reset fehlgeschlagen: \(error.localizedDescription)"
+        }
+        isWorking = false
     }
 
     @MainActor

@@ -16,6 +16,8 @@ Die App überwacht den Netzwerkpfad und prüft zusätzlich über `GET /wp-json/s
 
 Teilnehmer melden sich mit Eventnummer und individueller zweistelliger PIN an und müssen einmalig Frau oder Mann auswählen. Match-Wünsche können eine Nachricht mit bis zu 180 Zeichen enthalten; administrativ gepflegte Schnelltexte stehen direkt bei der Eingabe zur Verfügung. Nachrichten werden gemeinsam mit der Aktion dauerhaft zwischengespeichert und erst aus der Queue entfernt, nachdem der Server das erfolgreiche Datenbank-Speichern bestätigt hat.
 
+Die Admin-App zeigt die PIN jeder freigegebenen Nummer. Unter **PIN verwalten** kann sie manuell geändert oder nach einer Bestätigung automatisch neu erzeugt werden; beide Wege beenden zur Sicherheit alle aktiven Sitzungen der Nummer.
+
 Die Navigation führt Matches und offene Interessen als eigene Rubriken. Die Aktionsübersicht zeigt ausschließlich empfangene Aktionen und bietet Filter nach Kategorie und Absendernummer. Während einer aktiven Sitzung übermittelt das iPad alle 30 Sekunden Akkustand, Ladezustand und App-Version; die Admin-App zeigt Geräte an, deren letzter Heartbeat höchstens drei Minuten zurückliegt.
 
 ## Sende-Warteschlange
