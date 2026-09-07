@@ -8,7 +8,7 @@ struct CustomTextKeyboard: View {
 
     @State private var usesUppercase = true
 
-    private let symbolRow = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "0", ":", "-"]
+    private let symbolRow = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "0", ":", "-", "⌫"]
     private let letterRows = [
         ["Q", "W", "E", "R", "T", "Z", "U", "I", "O", "P", "Ü"],
         ["A", "S", "D", "F", "G", "H", "J", "K", "L", "Ö", "Ä"],
@@ -56,14 +56,6 @@ struct CustomTextKeyboard: View {
                     insert(" ")
                 }
 
-                keyboardButton("⌫", color: SecretMatchTheme.surfaceRaised) {
-                    onActivity()
-                    guard !text.isEmpty else { return }
-                    text.removeLast()
-                }
-                .frame(width: 86)
-                .accessibilityLabel("Letztes Zeichen löschen")
-
                 keyboardButton("Fertig", color: SecretMatchTheme.primary) {
                     onActivity()
                     onClose()
@@ -86,9 +78,15 @@ struct CustomTextKeyboard: View {
         HStack(spacing: 8) {
             ForEach(keys, id: \.self) { key in
                 keyboardButton(displayedKey(key), color: SecretMatchTheme.surfaceRaised) {
-                    insert(typedKey(key))
+                    if key == "⌫" {
+                        deleteLastCharacter()
+                    } else {
+                        insert(typedKey(key))
+                    }
                 }
-                .accessibilityLabel(displayedKey(key))
+                .disabled(key == "⌫" && text.isEmpty)
+                .opacity(key == "⌫" && text.isEmpty ? 0.45 : 1)
+                .accessibilityLabel(key == "⌫" ? "Letztes Zeichen löschen" : displayedKey(key))
             }
         }
     }
@@ -131,5 +129,11 @@ struct CustomTextKeyboard: View {
         } else if value.rangeOfCharacter(from: .letters) != nil {
             usesUppercase = false
         }
+    }
+
+    private func deleteLastCharacter() {
+        onActivity()
+        guard !text.isEmpty else { return }
+        text.removeLast()
     }
 }
