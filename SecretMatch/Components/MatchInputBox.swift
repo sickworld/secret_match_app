@@ -11,6 +11,8 @@ private struct ActionOption: Identifiable {
 
 struct MatchInputBox: View {
     @Environment(\.secretMatchInterfaceScale) private var interfaceScale
+    @State private var replacedCustomMessage: String?
+    @State private var undoMessageTask: Task<Void, Never>?
     @Binding var targetNumber: String
     @Binding var showKeyboard: Bool
     @Binding var showTextKeyboard: Bool
@@ -113,16 +115,73 @@ struct MatchInputBox: View {
                         ScrollView(.horizontal, showsIndicators: false) {
                             HStack(spacing: 8) {
                                 ForEach(quickMessages, id: \.self) { option in
-                                    Button(option) {
-                                        matchMessage = option
-                                        showTextKeyboard = false
+                                    let isSelected = matchMessage == option
+
+                                    Button {
+                                        selectQuickMessage(option)
+                                    } label: {
+                                        HStack(spacing: 7) {
+                                            if isSelected {
+                                                Image(systemName: "checkmark.circle.fill")
+                                            }
+                                            Text(option)
+                                                .lineLimit(1)
+                                        }
+                                        .font(.system(size: 15, weight: .bold, design: .rounded))
+                                        .foregroundStyle(isSelected ? Color.black : Color.white)
+                                        .padding(.horizontal, 14)
+                                        .frame(minHeight: 42)
+                                        .background(
+                                            isSelected
+                                                ? SecretMatchTheme.secondary
+                                                : SecretMatchTheme.surfaceRaised
+                                        )
+                                        .clipShape(Capsule())
+                                        .overlay(
+                                            Capsule()
+                                                .stroke(
+                                                    isSelected
+                                                        ? SecretMatchTheme.secondary
+                                                        : SecretMatchTheme.border,
+                                                    lineWidth: isSelected ? 2 : 1
+                                                )
+                                        )
                                     }
-                                        .buttonStyle(.bordered)
-                                        .tint(SecretMatchTheme.secondary)
+                                    .buttonStyle(.plain)
+                                    .accessibilityAddTraits(isSelected ? .isSelected : [])
                                 }
                             }
                         }
                     }
+
+                    if replacedCustomMessage != nil {
+                        HStack(spacing: 10) {
+                            Image(systemName: "arrow.uturn.backward.circle.fill")
+                                .foregroundStyle(SecretMatchTheme.secondary)
+
+                            Text("Text durch Schnelltext ersetzt")
+                                .font(.subheadline.weight(.semibold))
+                                .foregroundStyle(.white)
+
+                            Spacer()
+
+                            Button("Rückgängig") {
+                                restoreReplacedMessage()
+                            }
+                            .font(.subheadline.bold())
+                            .foregroundStyle(SecretMatchTheme.secondary)
+                        }
+                        .padding(.horizontal, 14)
+                        .frame(minHeight: 48)
+                        .background(SecretMatchTheme.secondary.opacity(0.1))
+                        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                                .stroke(SecretMatchTheme.secondary.opacity(0.35), lineWidth: 1)
+                        )
+                        .transition(.move(edge: .top).combined(with: .opacity))
+                    }
+
                     Button {
                         showKeyboard = false
                         showTextKeyboard = true
@@ -294,5 +353,46 @@ struct MatchInputBox: View {
         }
         .buttonStyle(.plain)
         .animation(.easeOut(duration: 0.18), value: isSelected)
+    }
+
+    private func selectQuickMessage(_ option: String) {
+        let previousMessage = matchMessage
+        guard previousMessage != option else {
+            showTextKeyboard = false
+            return
+        }
+
+        let replacesCustomText = !previousMessage.isEmpty && !quickMessages.contains(previousMessage)
+
+        withAnimation(.easeOut(duration: 0.18)) {
+            matchMessage = option
+            replacedCustomMessage = replacesCustomText ? previousMessage : nil
+        }
+        showTextKeyboard = false
+
+        undoMessageTask?.cancel()
+        guard replacesCustomText else { return }
+
+        undoMessageTask = Task { @MainActor in
+            do {
+                try await Task.sleep(for: .seconds(5))
+            } catch {
+                return
+            }
+
+            withAnimation(.easeOut(duration: 0.18)) {
+                replacedCustomMessage = nil
+            }
+        }
+    }
+
+    private func restoreReplacedMessage() {
+        guard let previousMessage = replacedCustomMessage else { return }
+        undoMessageTask?.cancel()
+
+        withAnimation(.easeOut(duration: 0.18)) {
+            matchMessage = previousMessage
+            replacedCustomMessage = nil
+        }
     }
 }
