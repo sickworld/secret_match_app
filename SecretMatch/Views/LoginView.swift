@@ -38,8 +38,8 @@ struct LoginView: View {
                         .resizable()
                         .scaledToFit()
                         .frame(
-                            width: isHeightConstrained ? 230 : 300,
-                            height: isHeightConstrained ? 150 : 240
+                            width: loginLogoWidth,
+                            height: loginLogoHeight
                         )
                         .shadow(color: SecretMatchTheme.primary.opacity(0.22), radius: 24)
                         .onTapGesture(count: 2) {
@@ -233,6 +233,7 @@ struct LoginView: View {
         }
         .animation(.easeInOut(duration: 0.24), value: showKeyboard)
         .animation(.easeInOut(duration: 0.7), value: showScreensaver)
+        .preference(key: SecretMatchScaleControlsHiddenPreferenceKey.self, value: showScreensaver)
         .simultaneousGesture(
             TapGesture().onEnded {
                 guard !showScreensaver else { return }
@@ -283,9 +284,16 @@ struct LoginView: View {
                 Text("PIN für \(number.displayEventNumber) eingeben")
                     .font(.system(size: 22, weight: .bold, design: .rounded))
                     .foregroundStyle(.white)
-                Text("Nutze deine selbst gewählte zweistellige PIN.")
-                    .font(.callout.weight(.medium))
-                    .foregroundStyle(SecretMatchTheme.muted)
+                if let errorMessage {
+                    Text(errorMessage)
+                        .font(.callout.weight(.bold))
+                        .foregroundStyle(SecretMatchTheme.danger)
+                        .accessibilityLabel("Fehler: \(errorMessage)")
+                } else {
+                    Text("Nutze deine selbst gewählte zweistellige PIN.")
+                        .font(.callout.weight(.medium))
+                        .foregroundStyle(SecretMatchTheme.muted)
+                }
             }
 
             Spacer(minLength: 8)
@@ -348,6 +356,18 @@ struct LoginView: View {
 
     private var loginIsDisabled: Bool {
         isLoading || number.isEmpty || (requiresLoginPIN && pin.count != 2)
+    }
+
+    private var loginLogoWidth: CGFloat {
+        if interfaceScale >= 1.29 { return 240 }
+        if interfaceScale > 1.01 { return 270 }
+        return 300
+    }
+
+    private var loginLogoHeight: CGFloat {
+        if interfaceScale >= 1.29 { return 185 }
+        if interfaceScale > 1.01 { return 209 }
+        return 240
     }
 
     private func editNumber() {

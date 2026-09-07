@@ -11,6 +11,14 @@ extension EnvironmentValues {
     }
 }
 
+struct SecretMatchScaleControlsHiddenPreferenceKey: PreferenceKey {
+    static let defaultValue = false
+
+    static func reduce(value: inout Bool, nextValue: () -> Bool) {
+        value = value || nextValue()
+    }
+}
+
 private enum InterfaceScaleLevel: Int, CaseIterable {
     case standard
     case large
@@ -34,6 +42,7 @@ struct AccessibleInterfaceContainer<Content: View>: View {
     @Environment(\.accessibilityReduceMotion) private var accessibilityReduceMotion
     @State private var contentOpacity = 1.0
     @State private var isChangingScale = false
+    @State private var hidesScaleControls = false
     @State private var scaleChangeTask: Task<Void, Never>?
     private let content: Content
 
@@ -62,20 +71,26 @@ struct AccessibleInterfaceContainer<Content: View>: View {
                         alignment: .topLeading
                     )
                     .opacity(contentOpacity)
+                    .onPreferenceChange(SecretMatchScaleControlsHiddenPreferenceKey.self) { hidden in
+                        hidesScaleControls = hidden
+                    }
 
-                InterfaceScaleControls(level: level) { newLevel in
-                    changeScale(to: newLevel)
+                if !hidesScaleControls {
+                    InterfaceScaleControls(level: level) { newLevel in
+                        changeScale(to: newLevel)
+                    }
+                    .allowsHitTesting(!isChangingScale)
+                    .padding(.top, 8)
+                    .padding(.trailing, 12)
+                    .zIndex(10_000)
                 }
-                .allowsHitTesting(!isChangingScale)
-                .padding(.top, 8)
-                .padding(.trailing, 12)
-                .zIndex(10_000)
             }
         }
         .onDisappear {
             scaleChangeTask?.cancel()
             contentOpacity = 1
             isChangingScale = false
+            hidesScaleControls = false
         }
     }
 
