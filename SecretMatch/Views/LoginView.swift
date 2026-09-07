@@ -359,15 +359,15 @@ struct LoginView: View {
     }
 
     private var loginLogoWidth: CGFloat {
-        if interfaceScale >= 1.29 { return 240 }
-        if interfaceScale > 1.01 { return 270 }
-        return 300
+        300 * loginLogoRenderedScale / interfaceScale
     }
 
     private var loginLogoHeight: CGFloat {
-        if interfaceScale >= 1.29 { return 185 }
-        if interfaceScale > 1.01 { return 209 }
-        return 240
+        240 * loginLogoRenderedScale / interfaceScale
+    }
+
+    private var loginLogoRenderedScale: CGFloat {
+        1 + max(0, interfaceScale - 1) * 0.5
     }
 
     private func editNumber() {
