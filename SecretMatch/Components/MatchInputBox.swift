@@ -182,7 +182,9 @@ struct MatchInputBox: View {
         }
         .frame(
             maxWidth: 780,
-            minHeight: fillsAvailableSpace ? max(0, (availableHeight ?? 0) - 54) : nil
+            minHeight: fillsAvailableSpace && !pinsSendButton
+                ? max(0, (availableHeight ?? 0) - 54)
+                : nil
         )
     }
 

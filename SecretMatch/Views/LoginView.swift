@@ -323,9 +323,14 @@ struct LoginView: View {
             } catch ParticipantLoginError.tooManyAttempts {
                 errorMessage = "Zu viele Login-Versuche. Bitte 20 Sekunden warten."
             } catch ParticipantLoginError.invalidCredentials {
-                errorMessage = requiresLoginPIN
-                    ? "Die PIN ist nicht gültig. Bitte erneut versuchen."
-                    : "Diese Eventnummer ist nicht gültig."
+                if requiresLoginPIN {
+                    pin = ""
+                    activeField = .pin
+                    showKeyboard = true
+                    errorMessage = "Die PIN ist nicht gültig. Bitte erneut versuchen."
+                } else {
+                    errorMessage = "Diese Eventnummer ist nicht gültig."
+                }
             } catch {
                 errorMessage = "Login fehlgeschlagen. Bitte Verbindung prüfen und erneut versuchen."
             }

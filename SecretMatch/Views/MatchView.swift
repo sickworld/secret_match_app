@@ -57,7 +57,7 @@ struct MatchView: View {
     var body: some View {
         GeometryReader { proxy in
             let isCompact = proxy.size.width < proxy.size.height
-            let isShort = !isCompact && proxy.size.height < 850
+            let isShort = !isCompact && proxy.size.height < 930
 
             content(isCompact: isCompact, isShort: isShort, availableHeight: proxy.size.height)
         }
@@ -197,7 +197,7 @@ struct MatchView: View {
         if isCompact {
             ScrollView {
                 VStack(spacing: 0) {
-                    sidebar(isCompact: true, isShort: false)
+                    sidebar(isCompact: true, isShort: false, availableHeight: availableHeight)
 
                     MatchInputBox(
                         targetNumber: $targetNumber,
@@ -217,7 +217,7 @@ struct MatchView: View {
             }
         } else {
             HStack(spacing: 0) {
-                sidebar(isCompact: false, isShort: isShort)
+                sidebar(isCompact: false, isShort: isShort, availableHeight: availableHeight)
 
                 Divider().background(Color.white.opacity(0.3))
 
@@ -242,7 +242,7 @@ struct MatchView: View {
         }
     }
 
-    private func sidebar(isCompact: Bool, isShort: Bool) -> some View {
+    private func sidebar(isCompact: Bool, isShort: Bool, availableHeight: CGFloat) -> some View {
         SidebarView(
             secondsRemaining: secondsRemaining,
             registerActivity: resetInactivityTimer,
@@ -252,7 +252,8 @@ struct MatchView: View {
             showRulesOverlay: $showRulesOverlay,
             showInfoOverlay: $showInfoOverlay,
             isCompact: isCompact,
-            isShort: isShort
+            isShort: isShort,
+            availableHeight: availableHeight
         )
     }
 
