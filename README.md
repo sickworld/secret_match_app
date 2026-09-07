@@ -30,6 +30,10 @@ Beim Login erhält die PIN-Tastatur einen sichtbaren Kontext mit Eventnummer, Er
 
 Die PIN-Erstanlage kann jederzeit über **Abbrechen** verlassen werden. Dabei verwirft die App den begonnenen Login, beendet die vorläufige Teilnehmer-Sitzung und kehrt zur Eingabe der Eventnummer zurück.
 
+## Barrierearme Darstellung
+
+Die dauerhaft eingeblendeten Schaltflächen **A−** und **A+** wechseln zwischen 100 %, 115 % und 130 % Darstellungsgröße. Dabei werden Texte, Bedienelemente und Abstände gemeinsam skaliert; responsive Ansichten brechen bei Bedarf um oder werden scrollbar. Die Auswahl bleibt pro App und Gerät gespeichert.
+
 ## Sende-Warteschlange
 
 Match- und Aktionssendungen werden vor dem ersten Netzwerkversuch lokal vorgemerkt. Bei fehlender oder instabiler Verbindung versucht die App sie mit wachsendem Abstand automatisch erneut; angemeldete Teilnehmer können den Retry zusätzlich über **Jetzt versuchen** auslösen. Offene Einträge bleiben an die ursprüngliche Eventnummer gebunden, überstehen einen App-Neustart und werden nach spätestens 24 Stunden verworfen.

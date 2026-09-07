@@ -8,45 +8,47 @@ struct SecretMatchApp: App {
     
     var body: some Scene {
         WindowGroup {
-            ZStack {
+            AccessibleInterfaceContainer {
+                ZStack {
 #if ADMIN_APP
-                Group {
-                    if api.isAdmin {
-                        AdminMainView()
-                    } else {
-                        AdminLoginView(isPresented: .constant(true), allowsDismiss: false)
-                    }
-                }
-                .environmentObject(api)
-                .preferredColorScheme(.dark)
-#else
-                Group {
-                    if api.isAdmin {
-                        AdminMainView()
-                    } else if api.isLoggedIn {
-                        MatchView()
-                    } else {
-                        LoginView()
-                    }
-                }
-                .environmentObject(api)
-                .preferredColorScheme(.dark)
-#endif
-            }
-            .safeAreaInset(edge: .top, spacing: 0) {
-                ConnectionStatusBanner(
-                    state: api.connectionState,
-                    isChecking: api.isCheckingConnection,
-                    retry: {
-                        Task {
-                            await api.checkConnection()
+                    Group {
+                        if api.isAdmin {
+                            AdminMainView()
+                        } else {
+                            AdminLoginView(isPresented: .constant(true), allowsDismiss: false)
                         }
                     }
-                )
-                .animation(.easeInOut(duration: 0.2), value: api.connectionState)
-            }
-            .task {
-                api.applicationDidBecomeActive()
+                    .environmentObject(api)
+                    .preferredColorScheme(.dark)
+#else
+                    Group {
+                        if api.isAdmin {
+                            AdminMainView()
+                        } else if api.isLoggedIn {
+                            MatchView()
+                        } else {
+                            LoginView()
+                        }
+                    }
+                    .environmentObject(api)
+                    .preferredColorScheme(.dark)
+#endif
+                }
+                .safeAreaInset(edge: .top, spacing: 0) {
+                    ConnectionStatusBanner(
+                        state: api.connectionState,
+                        isChecking: api.isCheckingConnection,
+                        retry: {
+                            Task {
+                                await api.checkConnection()
+                            }
+                        }
+                    )
+                    .animation(.easeInOut(duration: 0.2), value: api.connectionState)
+                }
+                .task {
+                    api.applicationDidBecomeActive()
+                }
             }
         }
         .onChange(of: scenePhase) { _, phase in
