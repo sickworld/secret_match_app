@@ -13,6 +13,7 @@ struct AdminDashboard: Decodable {
     let billboardRotationSeconds: Int
     let telegramConfigured: Bool
     let apnsConfigured: Bool?
+    let apnsDiagnostics: AdminAPNSDiagnostics?
     let adminPushDevices: Int?
     let pluginVersion: String
     let wordpressTime: String
@@ -40,6 +41,7 @@ struct AdminDashboard: Decodable {
         case billboardRotationSeconds = "billboard_rotation_seconds"
         case telegramConfigured = "telegram_configured"
         case apnsConfigured = "apns_configured"
+        case apnsDiagnostics = "apns_diagnostics"
         case adminPushDevices = "admin_push_devices"
         case pluginVersion = "plugin_version"
         case wordpressTime = "wordpress_time"
@@ -53,6 +55,42 @@ struct AdminDashboard: Decodable {
         case topPeople = "top_people"
         case matchMessageOptions = "match_message_options"
         case devices
+    }
+}
+
+struct AdminAPNSDiagnostics: Decodable {
+    let configured: Bool
+    let keyIDValid: Bool
+    let teamIDValid: Bool
+    let topicValid: Bool
+    let privateKeyConfigured: Bool
+    let privateKeyReadable: Bool
+    let privateKeyValid: Bool
+    let keySource: String
+    let curlAvailable: Bool
+    let curlHTTP2: Bool
+    let opensslAvailable: Bool
+
+    var keySourceDescription: String {
+        switch keySource {
+        case "file": return "Schlüsseldatei"
+        case "inline": return "Alte Inline-Konfiguration"
+        default: return "Fehlt"
+        }
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case configured
+        case keyIDValid = "key_id_valid"
+        case teamIDValid = "team_id_valid"
+        case topicValid = "topic_valid"
+        case privateKeyConfigured = "private_key_configured"
+        case privateKeyReadable = "private_key_readable"
+        case privateKeyValid = "private_key_valid"
+        case keySource = "key_source"
+        case curlAvailable = "curl_available"
+        case curlHTTP2 = "curl_http2"
+        case opensslAvailable = "openssl_available"
     }
 }
 

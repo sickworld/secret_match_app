@@ -804,6 +804,31 @@ struct AdminDashboardView: View {
                       ? "Konfiguriert · \(api.adminDashboard?.adminPushDevices ?? 0) Gerät(e)"
                       : "APNs nicht konfiguriert",
                       good: api.adminDashboard?.apnsConfigured == true)
+            if api.adminDashboard?.apnsConfigured != true,
+               let diagnostics = api.adminDashboard?.apnsDiagnostics {
+                Divider().overlay(SecretMatchTheme.muted.opacity(0.35))
+                Text("APNs-Diagnose")
+                    .font(.headline)
+                    .foregroundStyle(.white)
+                statusRow("Key-ID", diagnostics.keyIDValid ? "Gültig" : "Fehlt oder ungültig",
+                          good: diagnostics.keyIDValid)
+                statusRow("Team-ID", diagnostics.teamIDValid ? "Gültig" : "Fehlt oder ungültig",
+                          good: diagnostics.teamIDValid)
+                statusRow("Topic", diagnostics.topicValid ? "Gültig" : "Ungültig",
+                          good: diagnostics.topicValid)
+                statusRow("Key-Quelle", diagnostics.keySourceDescription,
+                          good: diagnostics.privateKeyConfigured)
+                statusRow("Key geladen", diagnostics.privateKeyReadable ? "Lesbar" : "Nicht lesbar",
+                          good: diagnostics.privateKeyReadable)
+                statusRow("Key geprüft", diagnostics.privateKeyValid ? "Gültig" : "Ungültig",
+                          good: diagnostics.privateKeyValid)
+                statusRow("OpenSSL", diagnostics.opensslAvailable ? "Verfügbar" : "Fehlt",
+                          good: diagnostics.opensslAvailable)
+                statusRow("cURL", diagnostics.curlAvailable ? "Verfügbar" : "Fehlt",
+                          good: diagnostics.curlAvailable)
+                statusRow("cURL HTTP/2", diagnostics.curlHTTP2 ? "Verfügbar" : "Fehlt",
+                          good: diagnostics.curlHTTP2)
+            }
             statusRow("Billboard-Sessions", "\(api.adminDashboard?.billboardSessions ?? 0)")
             statusRow("WordPress-Zeit", api.adminDashboard?.wordpressTime ?? "–")
             statusRow("Letzte Aktivität", api.adminDashboard?.latestActivity.isEmpty == false
