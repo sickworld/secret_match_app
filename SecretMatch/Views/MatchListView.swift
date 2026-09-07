@@ -10,7 +10,6 @@ struct MatchListView: View {
         let id: String
         let other: String
         let type: String
-        let createdAt: String
     }
 
     @EnvironmentObject var api: APIService
@@ -174,11 +173,11 @@ struct MatchListView: View {
         switch selectedSection {
         case .matches:
             return matches.map {
-                OverviewEntry(id: $0.id, other: $0.other, type: $0.type, createdAt: $0.created_at)
+                OverviewEntry(id: $0.id, other: $0.other, type: $0.type)
             }
         case .interests:
             return interests.map {
-                OverviewEntry(id: $0.id, other: $0.other, type: $0.type, createdAt: $0.created_at)
+                OverviewEntry(id: $0.id, other: $0.other, type: $0.type)
             }
         }
     }
@@ -273,10 +272,6 @@ struct MatchListView: View {
                 Text(typeTitle(for: entry.type))
                     .font(.caption.weight(.semibold))
                     .foregroundStyle(SecretMatchTheme.muted)
-
-                Text(displayDate(entry.createdAt))
-                    .font(.caption.monospacedDigit())
-                    .foregroundStyle(.white.opacity(0.5))
             }
 
             Spacer()
@@ -353,16 +348,5 @@ struct MatchListView: View {
         case "normal": return Color(hex: "#E83E8C")
         default: return SecretMatchTheme.secondary
         }
-    }
-
-    private func displayDate(_ value: String) -> String {
-        let input = DateFormatter()
-        input.locale = Locale(identifier: "en_US_POSIX")
-        input.dateFormat = "yyyy-MM-dd HH:mm:ss"
-        guard let date = input.date(from: value) else { return value }
-        let output = DateFormatter()
-        output.locale = Locale(identifier: "de_DE")
-        output.dateFormat = "dd.MM."
-        return output.string(from: date)
     }
 }

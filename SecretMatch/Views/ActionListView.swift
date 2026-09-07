@@ -170,19 +170,9 @@ struct ActionListView: View {
                 .background(color.opacity(0.2))
                 .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
 
-            VStack(alignment: .leading, spacing: 5) {
-                Text(actionLabel(for: action.action_type))
-                    .foregroundStyle(.white)
-                    .font(.system(size: 20, weight: .bold, design: .rounded))
-
-                Text(action.sender_number == api.number ? "Gesendet an" : "Erhalten von")
-                    .font(.caption.weight(.semibold))
-                    .foregroundStyle(SecretMatchTheme.muted)
-
-                Text(displayDate(action.created_at))
-                    .font(.caption.monospacedDigit())
-                    .foregroundStyle(.white.opacity(0.5))
-            }
+            Text(actionLabel(for: action.action_type))
+                .foregroundStyle(.white)
+                .font(.system(size: 20, weight: .bold, design: .rounded))
 
             Spacer()
 
@@ -241,16 +231,5 @@ struct ActionListView: View {
         action.sender_number == api.number
             ? action.receiver_number
             : action.sender_number
-    }
-
-    private func displayDate(_ value: String) -> String {
-        let input = DateFormatter()
-        input.locale = Locale(identifier: "en_US_POSIX")
-        input.dateFormat = "yyyy-MM-dd HH:mm:ss"
-        guard let date = input.date(from: value) else { return value }
-        let output = DateFormatter()
-        output.locale = Locale(identifier: "de_DE")
-        output.dateFormat = "dd.MM."
-        return output.string(from: date)
     }
 }
