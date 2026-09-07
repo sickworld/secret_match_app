@@ -10,6 +10,7 @@ private struct ActionOption: Identifiable {
 }
 
 struct MatchInputBox: View {
+    @Environment(\.secretMatchInterfaceScale) private var interfaceScale
     @Binding var targetNumber: String
     @Binding var showKeyboard: Bool
     @Binding var showTextKeyboard: Bool
@@ -32,12 +33,21 @@ struct MatchInputBox: View {
         ActionOption(type: "ljob", title: "Lick-Job", emoji: "👅", color: Color(hex: "#D65C8D"))
     ]
 
-    private var isHeightConstrained: Bool {
-        fillsAvailableSpace && (availableHeight ?? .infinity) < 700
+    private var normalizedScale: CGFloat {
+        fillsAvailableSpace ? max(interfaceScale, 1) : 1
+    }
+
+    private var zoomProgress: CGFloat {
+        min(max((normalizedScale - 1) / 0.30, 0), 1)
+    }
+
+    private func metric(_ standard: CGFloat, _ extraLarge: CGFloat) -> CGFloat {
+        let renderedValue = standard + (extraLarge - standard) * zoomProgress
+        return renderedValue / normalizedScale
     }
 
     private var pinsSendButton: Bool {
-        fillsAvailableSpace && isHeightConstrained
+        fillsAvailableSpace
     }
 
     private var content: some View {
@@ -49,24 +59,27 @@ struct MatchInputBox: View {
                     .foregroundStyle(SecretMatchTheme.secondary)
 
                 Text("Was möchtest du senden?")
-                    .font(.system(size: isHeightConstrained ? 30 : 34, weight: .bold, design: .rounded))
+                    .font(.system(size: metric(34, 40), weight: .bold, design: .rounded))
                     .foregroundStyle(.white)
 
                 Text("Wähle eine oder mehrere Aktionen und gib die Event-Nummer ein.")
-                    .font(.system(size: 17, weight: .medium, design: .rounded))
+                    .font(.system(size: metric(17, 19), weight: .medium, design: .rounded))
                     .foregroundStyle(SecretMatchTheme.muted)
                     .multilineTextAlignment(.center)
             }
 
-            Spacer(minLength: isHeightConstrained ? 14 : (fillsAvailableSpace ? 22 : 26))
+            Spacer(minLength: fillsAvailableSpace ? metric(22, 20) : 26)
 
-            LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 12) {
+            LazyVGrid(
+                columns: [GridItem(.flexible()), GridItem(.flexible())],
+                spacing: fillsAvailableSpace ? metric(12, 12) : 12
+            ) {
                 ForEach(options) { option in
                     selectionButton(for: option)
                 }
             }
 
-            Spacer(minLength: isHeightConstrained ? 18 : (fillsAvailableSpace ? 34 : 26))
+            Spacer(minLength: fillsAvailableSpace ? metric(34, 28) : 26)
 
             VStack(alignment: .leading, spacing: 8) {
                 Text("ZIEL-NUMMER")
@@ -76,7 +89,7 @@ struct MatchInputBox: View {
 
                 Text(targetNumber.isEmpty ? "Ziel-Nummer eingeben" : targetNumber.displayEventNumber)
                     .foregroundStyle(targetNumber.isEmpty ? SecretMatchTheme.muted : .white)
-                    .font(.system(size: isHeightConstrained ? 30 : 34, weight: .bold, design: .rounded))
+                    .font(.system(size: metric(34, 40), weight: .bold, design: .rounded))
                     .multilineTextAlignment(.center)
                     .minimumScaleFactor(0.78)
                     .secretInput(highlighted: showKeyboard)
@@ -136,7 +149,7 @@ struct MatchInputBox: View {
             }
 
             if !pinsSendButton {
-                Spacer(minLength: isHeightConstrained ? 18 : (fillsAvailableSpace ? 28 : 26))
+                Spacer(minLength: 26)
                 sendButton
             }
 
@@ -181,9 +194,9 @@ struct MatchInputBox: View {
             }
         }
         .frame(
-            maxWidth: 780,
-            minHeight: fillsAvailableSpace && !pinsSendButton
-                ? max(0, (availableHeight ?? 0) - 54)
+            maxWidth: fillsAvailableSpace ? .infinity : 780,
+            minHeight: fillsAvailableSpace
+                ? max(0, (availableHeight ?? 0) - metric(105, 105))
                 : nil
         )
     }
@@ -194,12 +207,12 @@ struct MatchInputBox: View {
             VStack(spacing: 0) {
                 ScrollView {
                     content
-                        .padding(.horizontal, 30)
-                        .padding(.top, isHeightConstrained ? 18 : 24)
-                        .padding(.bottom, isHeightConstrained ? 18 : 30)
+                        .padding(.horizontal, metric(30, 30))
+                        .padding(.top, metric(24, 20))
+                        .padding(.bottom, metric(30, 20))
                         .frame(
                             maxWidth: .infinity,
-                            minHeight: pinsSendButton ? 0 : max(0, (availableHeight ?? 0) - 54),
+                            minHeight: max(0, (availableHeight ?? 0) - metric(105, 105)),
                             alignment: .top
                         )
                 }
@@ -209,8 +222,8 @@ struct MatchInputBox: View {
                         .overlay(SecretMatchTheme.border)
 
                     sendButton
-                        .padding(.horizontal, 30)
-                        .padding(.vertical, 12)
+                        .padding(.horizontal, metric(30, 30))
+                        .padding(.vertical, metric(12, 12))
                         .background(SecretMatchTheme.surface.opacity(0.98))
                 }
             }
@@ -231,8 +244,8 @@ struct MatchInputBox: View {
             }
         }
         .buttonStyle(SecretPrimaryButtonStyle(
-            fontSize: isHeightConstrained ? 19 : 21,
-            minHeight: isHeightConstrained ? 68 : 80
+            fontSize: metric(21, 23),
+            minHeight: metric(80, 86)
         ))
         .disabled(selectedActions.isEmpty || targetNumber.isEmpty)
         .opacity(selectedActions.isEmpty || targetNumber.isEmpty ? 0.5 : 1)
@@ -248,22 +261,22 @@ struct MatchInputBox: View {
                 selectedActions.insert(option.type)
             }
         } label: {
-            HStack(spacing: 14) {
+            HStack(spacing: metric(14, 15)) {
                 Text(option.emoji)
-                    .font(.system(size: isHeightConstrained ? 27 : 30))
-                    .frame(width: 38)
+                    .font(.system(size: metric(30, 32)))
+                    .frame(width: metric(38, 40))
 
                 Text(option.title)
-                    .font(.system(size: 17, weight: .bold, design: .rounded))
+                    .font(.system(size: metric(17, 20), weight: .bold, design: .rounded))
                     .lineLimit(1)
                     .minimumScaleFactor(0.8)
                 Spacer()
                 Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
-                    .font(.system(size: 19, weight: .semibold))
+                    .font(.system(size: metric(19, 22), weight: .semibold))
             }
             .foregroundColor(.white)
-            .padding(.horizontal, 16)
-            .frame(maxWidth: .infinity, minHeight: isHeightConstrained ? 62 : 72)
+            .padding(.horizontal, metric(16, 18))
+            .frame(maxWidth: .infinity, minHeight: metric(72, 80))
             .background(
                 isSelected
                     ? option.color.opacity(0.9)
@@ -277,7 +290,6 @@ struct MatchInputBox: View {
             .shadow(color: isSelected ? option.color.opacity(0.28) : .clear, radius: 12)
         }
         .buttonStyle(.plain)
-        .scaleEffect(isSelected ? 1.015 : 1)
         .animation(.easeOut(duration: 0.18), value: isSelected)
     }
 }
