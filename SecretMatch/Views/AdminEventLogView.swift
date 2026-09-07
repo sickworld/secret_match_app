@@ -7,7 +7,10 @@ struct AdminEventLogView: View {
     @State private var search = ""
     @State private var isLoading = false
     @State private var isLoadingMore = false
+    @State private var isCreatingExamples = false
     @State private var errorMessage: String?
+    @State private var statusMessage: String?
+    @State private var actionErrorMessage: String?
     @State private var selectedEntry: AdminEventLogEntry?
     @State private var hasMore = true
 
@@ -15,6 +18,24 @@ struct AdminEventLogView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 18) {
                 header
+                if let statusMessage {
+                    Label(statusMessage, systemImage: "checkmark.circle.fill")
+                        .font(.subheadline.bold())
+                        .foregroundStyle(.green)
+                        .padding(.horizontal, 14)
+                        .padding(.vertical, 10)
+                        .background(Color.green.opacity(0.12))
+                        .clipShape(RoundedRectangle(cornerRadius: 12))
+                }
+                if let actionErrorMessage {
+                    Label(actionErrorMessage, systemImage: "exclamationmark.triangle.fill")
+                        .font(.subheadline.bold())
+                        .foregroundStyle(.orange)
+                        .padding(.horizontal, 14)
+                        .padding(.vertical, 10)
+                        .background(Color.orange.opacity(0.12))
+                        .clipShape(RoundedRectangle(cornerRadius: 12))
+                }
                 incidentSummary
                 filters
 
@@ -89,7 +110,7 @@ struct AdminEventLogView: View {
     }
 
     private var header: some View {
-        HStack(alignment: .top, spacing: 16) {
+        VStack(alignment: .leading, spacing: 14) {
             VStack(alignment: .leading, spacing: 5) {
                 Text("BETRIEB & SICHERHEIT")
                     .font(.caption.bold())
@@ -102,18 +123,35 @@ struct AdminEventLogView: View {
                     .font(.subheadline.weight(.medium))
                     .foregroundStyle(SecretMatchTheme.muted)
             }
-            Spacer()
-            ShareLink(
-                item: csvText,
-                subject: Text("SecretMatch Eventprotokoll"),
-                message: Text("CSV-Export aus der Admin-App")
-            ) {
-                Label("CSV exportieren", systemImage: "square.and.arrow.up")
-                    .font(.headline)
+
+            HStack(spacing: 10) {
+                Button {
+                    Task { await createExamples() }
+                } label: {
+                    if isCreatingExamples {
+                        ProgressView().tint(.white)
+                    } else {
+                        Label("Alle Testlogs anlegen", systemImage: "wand.and.stars")
+                    }
+                }
+                .buttonStyle(.borderedProminent)
+                .tint(SecretMatchTheme.primary)
+                .disabled(isCreatingExamples)
+
+                Spacer()
+
+                ShareLink(
+                    item: csvText,
+                    subject: Text("SecretMatch Eventprotokoll"),
+                    message: Text("CSV-Export aus der Admin-App")
+                ) {
+                    Label("CSV exportieren", systemImage: "square.and.arrow.up")
+                        .font(.headline)
+                }
+                .buttonStyle(.bordered)
+                .tint(SecretMatchTheme.secondary)
+                .disabled(api.adminEventLog.isEmpty)
             }
-            .buttonStyle(.bordered)
-            .tint(SecretMatchTheme.secondary)
-            .disabled(api.adminEventLog.isEmpty)
         }
     }
 
@@ -311,6 +349,21 @@ struct AdminEventLogView: View {
             }
         } catch {
             if !quietly { errorMessage = "Die Ereignisse konnten nicht geladen werden." }
+        }
+    }
+
+    private func createExamples() async {
+        guard !isCreatingExamples else { return }
+        isCreatingExamples = true
+        statusMessage = nil
+        actionErrorMessage = nil
+        defer { isCreatingExamples = false }
+        do {
+            let result = try await api.createAdminEventLogExamples()
+            await load(reset: true)
+            statusMessage = "\(result.created) von \(result.available) Testlogs wurden angelegt."
+        } catch {
+            actionErrorMessage = "Die Testlogs konnten nicht angelegt werden."
         }
     }
 

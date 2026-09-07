@@ -633,6 +633,18 @@ class APIService: ObservableObject {
         return entries.count
     }
 
+    func createAdminEventLogExamples() async throws -> AdminEventLogExamplesResponse {
+        let url = baseURL
+            .appendingPathComponent("admin")
+            .appendingPathComponent("event-log")
+            .appendingPathComponent("examples")
+        var request = try adminRequest(url: url)
+        request.httpMethod = "POST"
+        let (data, response) = try await URLSession.shared.data(for: request)
+        try validateAdminResponse(response)
+        return try JSONDecoder().decode(AdminEventLogExamplesResponse.self, from: data)
+    }
+
     func loadAdminStatistics() async throws {
         let url = baseURL.appendingPathComponent("admin/statistics")
         let (data, response) = try await URLSession.shared.data(for: adminRequest(url: url))

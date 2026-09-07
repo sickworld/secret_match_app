@@ -34,6 +34,9 @@ struct AdminEventLogEntry: Identifiable, Decodable {
             "battery_warning": "Akkustand niedrig",
             "battery_critical": "Akkustand kritisch",
             "battery_recovered": "Akkustand erholt",
+            "connection_lost": "Verbindung verloren",
+            "connection_recovered": "Verbindung wiederhergestellt",
+            "notification_delivery_failed": "Benachrichtigung fehlgeschlagen",
             "participant_login_success": "Teilnehmer angemeldet",
             "participant_login_failed": "Teilnehmer-Login fehlgeschlagen",
             "participant_pin_set_success": "PIN angelegt",
@@ -41,13 +44,17 @@ struct AdminEventLogEntry: Identifiable, Decodable {
             "participant_profile_updated_success": "Teilnehmerprofil aktualisiert",
             "participant_profile_updated_failed": "Profiländerung fehlgeschlagen",
             "participant_logout_success": "Teilnehmer abgemeldet",
+            "participant_logout_failed": "Abmeldung fehlgeschlagen",
             "match_request_submitted_success": "Match-Wunsch angenommen",
             "match_request_submitted_failed": "Match-Wunsch abgelehnt",
             "action_submitted_success": "Aktion angenommen",
             "action_submitted_failed": "Aktion abgelehnt",
             "feedback_submitted_success": "Feedback eingegangen",
+            "feedback_submitted_failed": "Feedback fehlgeschlagen",
             "admin_login_success": "Admin angemeldet",
             "admin_login_failed": "Admin-Login fehlgeschlagen",
+            "admin_logout_success": "Admin abgemeldet",
+            "admin_logout_failed": "Admin-Abmeldung fehlgeschlagen",
         ]
         if let title = titles[eventType] {
             return title
@@ -85,6 +92,11 @@ struct AdminEventLogEntry: Identifiable, Decodable {
         case deviceID = "device_id"
         case requestID = "request_id"
     }
+}
+
+struct AdminEventLogExamplesResponse: Decodable {
+    let created: Int
+    let available: Int
 }
 
 enum LogContextValue: Decodable {
