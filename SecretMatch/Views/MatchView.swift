@@ -221,23 +221,21 @@ struct MatchView: View {
 
                 Divider().background(Color.white.opacity(0.3))
 
-                ScrollView {
-                    MatchInputBox(
-                        targetNumber: $targetNumber,
-                        showKeyboard: $showKeyboard,
-                        showTextKeyboard: $showTextKeyboard,
-                        selectedActions: $selectedActions,
-                        responseMessage: $responseMessage,
-                        matchMessage: $matchMessage,
-                        quickMessages: api.matchMessageOptions,
-                        onSend: sendInteractions,
-                        queuedSendCount: api.queuedSendCount,
-                        isRetryingQueuedSends: api.isRetryingQueuedSends,
-                        onRetryQueuedSends: retryQueuedSends,
-                        fillsAvailableSpace: true,
-                        availableHeight: availableHeight
-                    )
-                }
+                MatchInputBox(
+                    targetNumber: $targetNumber,
+                    showKeyboard: $showKeyboard,
+                    showTextKeyboard: $showTextKeyboard,
+                    selectedActions: $selectedActions,
+                    responseMessage: $responseMessage,
+                    matchMessage: $matchMessage,
+                    quickMessages: api.matchMessageOptions,
+                    onSend: sendInteractions,
+                    queuedSendCount: api.queuedSendCount,
+                    isRetryingQueuedSends: api.isRetryingQueuedSends,
+                    onRetryQueuedSends: retryQueuedSends,
+                    fillsAvailableSpace: true,
+                    availableHeight: availableHeight
+                )
                 .frame(maxWidth: .infinity)
                 .background(SecretMatchTheme.surface.opacity(0.97))
             }

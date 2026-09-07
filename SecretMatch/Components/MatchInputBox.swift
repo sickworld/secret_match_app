@@ -32,6 +32,14 @@ struct MatchInputBox: View {
         ActionOption(type: "ljob", title: "Lick-Job", emoji: "👅", color: Color(hex: "#D65C8D"))
     ]
 
+    private var isHeightConstrained: Bool {
+        fillsAvailableSpace && (availableHeight ?? .infinity) < 700
+    }
+
+    private var pinsSendButton: Bool {
+        fillsAvailableSpace && isHeightConstrained
+    }
+
     private var content: some View {
         VStack(spacing: 0) {
             VStack(spacing: 6) {
@@ -41,7 +49,7 @@ struct MatchInputBox: View {
                     .foregroundStyle(SecretMatchTheme.secondary)
 
                 Text("Was möchtest du senden?")
-                    .font(.system(size: 34, weight: .bold, design: .rounded))
+                    .font(.system(size: isHeightConstrained ? 30 : 34, weight: .bold, design: .rounded))
                     .foregroundStyle(.white)
 
                 Text("Wähle eine oder mehrere Aktionen und gib die Event-Nummer ein.")
@@ -50,7 +58,7 @@ struct MatchInputBox: View {
                     .multilineTextAlignment(.center)
             }
 
-            Spacer(minLength: fillsAvailableSpace ? 22 : 26)
+            Spacer(minLength: isHeightConstrained ? 14 : (fillsAvailableSpace ? 22 : 26))
 
             LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 12) {
                 ForEach(options) { option in
@@ -58,7 +66,7 @@ struct MatchInputBox: View {
                 }
             }
 
-            Spacer(minLength: fillsAvailableSpace ? 34 : 26)
+            Spacer(minLength: isHeightConstrained ? 18 : (fillsAvailableSpace ? 34 : 26))
 
             VStack(alignment: .leading, spacing: 8) {
                 Text("ZIEL-NUMMER")
@@ -68,7 +76,7 @@ struct MatchInputBox: View {
 
                 Text(targetNumber.isEmpty ? "Ziel-Nummer eingeben" : targetNumber.displayEventNumber)
                     .foregroundStyle(targetNumber.isEmpty ? SecretMatchTheme.muted : .white)
-                    .font(.system(size: 34, weight: .bold, design: .rounded))
+                    .font(.system(size: isHeightConstrained ? 30 : 34, weight: .bold, design: .rounded))
                     .multilineTextAlignment(.center)
                     .minimumScaleFactor(0.78)
                     .secretInput(highlighted: showKeyboard)
@@ -127,18 +135,10 @@ struct MatchInputBox: View {
                 }
             }
 
-            Spacer(minLength: fillsAvailableSpace ? 28 : 26)
-
-            Button(action: onSend) {
-                HStack {
-                    Text(selectedActions.count == 1 ? "Aktion senden" : "\(selectedActions.count) Aktionen senden")
-                    Spacer()
-                    Image(systemName: "paperplane.fill")
-                }
+            if !pinsSendButton {
+                Spacer(minLength: isHeightConstrained ? 18 : (fillsAvailableSpace ? 28 : 26))
+                sendButton
             }
-            .buttonStyle(SecretPrimaryButtonStyle(fontSize: 21, minHeight: 80))
-            .disabled(selectedActions.isEmpty || targetNumber.isEmpty)
-            .opacity(selectedActions.isEmpty || targetNumber.isEmpty ? 0.5 : 1)
 
             if queuedSendCount > 0 {
                 Spacer(minLength: 16)
@@ -189,16 +189,51 @@ struct MatchInputBox: View {
     @ViewBuilder
     var body: some View {
         if fillsAvailableSpace {
-            content
-                .padding(.horizontal, 30)
-                .padding(.top, 24)
-                .padding(.bottom, 30)
-                .frame(maxWidth: .infinity, minHeight: 0, alignment: .top)
+            VStack(spacing: 0) {
+                ScrollView {
+                    content
+                        .padding(.horizontal, 30)
+                        .padding(.top, isHeightConstrained ? 18 : 24)
+                        .padding(.bottom, isHeightConstrained ? 18 : 30)
+                        .frame(
+                            maxWidth: .infinity,
+                            minHeight: pinsSendButton ? 0 : max(0, (availableHeight ?? 0) - 54),
+                            alignment: .top
+                        )
+                }
+
+                if pinsSendButton {
+                    Divider()
+                        .overlay(SecretMatchTheme.border)
+
+                    sendButton
+                        .padding(.horizontal, 30)
+                        .padding(.vertical, 12)
+                        .background(SecretMatchTheme.surface.opacity(0.98))
+                }
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
         } else {
             content
                 .padding(.horizontal, 24)
                 .secretCard(cornerRadius: 24, padding: 30)
         }
+    }
+
+    private var sendButton: some View {
+        Button(action: onSend) {
+            HStack {
+                Text(selectedActions.count == 1 ? "Aktion senden" : "\(selectedActions.count) Aktionen senden")
+                Spacer()
+                Image(systemName: "paperplane.fill")
+            }
+        }
+        .buttonStyle(SecretPrimaryButtonStyle(
+            fontSize: isHeightConstrained ? 19 : 21,
+            minHeight: isHeightConstrained ? 68 : 80
+        ))
+        .disabled(selectedActions.isEmpty || targetNumber.isEmpty)
+        .opacity(selectedActions.isEmpty || targetNumber.isEmpty ? 0.5 : 1)
     }
 
     private func selectionButton(for option: ActionOption) -> some View {
@@ -213,7 +248,7 @@ struct MatchInputBox: View {
         } label: {
             HStack(spacing: 14) {
                 Text(option.emoji)
-                    .font(.system(size: 30))
+                    .font(.system(size: isHeightConstrained ? 27 : 30))
                     .frame(width: 38)
 
                 Text(option.title)
@@ -226,7 +261,7 @@ struct MatchInputBox: View {
             }
             .foregroundColor(.white)
             .padding(.horizontal, 16)
-            .frame(maxWidth: .infinity, minHeight: 72)
+            .frame(maxWidth: .infinity, minHeight: isHeightConstrained ? 62 : 72)
             .background(
                 isSelected
                     ? option.color.opacity(0.9)
