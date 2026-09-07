@@ -160,6 +160,7 @@ struct AdminEventStatistics: Decodable {
     let errorCount: Int
     let requestTypes: [AdminStatisticCount]
     let actionTypes: [AdminStatisticCount]
+    let topParticipants: [AdminParticipantStatistic]?
     let timeline: [AdminStatisticTimelinePoint]
 
     private enum CodingKeys: String, CodingKey {
@@ -177,8 +178,19 @@ struct AdminEventStatistics: Decodable {
         case errorCount = "error_count"
         case requestTypes = "request_types"
         case actionTypes = "action_types"
+        case topParticipants = "top_participants"
         case timeline
     }
+}
+
+struct AdminParticipantStatistic: Decodable, Identifiable {
+    let number: String
+    let sent: Int
+    let received: Int
+    let matches: Int
+
+    var id: String { number }
+    var activityTotal: Int { sent + received + matches * 2 }
 }
 
 struct AdminStatisticCount: Decodable, Identifiable {
