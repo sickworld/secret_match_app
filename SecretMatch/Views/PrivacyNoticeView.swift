@@ -51,6 +51,12 @@ struct PrivacyNoticeView: View {
                         )
 
                         privacyPoint(
+                            icon: "wifi.exclamationmark",
+                            title: "Senden bei schlechtem Netz",
+                            text: "Kann eine Aktion nicht sofort gesendet werden, speichert die App Absender- und Ziel-Eventnummer sowie die gewählte Aktion vorübergehend auf diesem iPad. Nach erfolgreichem Versand oder spätestens nach 24 Stunden wird der Eintrag gelöscht."
+                        )
+
+                        privacyPoint(
                             icon: "eye.slash.fill",
                             title: "Keine Profilbildung",
                             text: "Die Daten werden nicht für Werbung, dauerhafte Profile oder eine Verknüpfung mit deinem JOYclub-Konto genutzt."

@@ -1,15 +1,24 @@
 import Foundation
 import Combine
+import Network
 import SwiftUI
 
 @MainActor
 class APIService: ObservableObject {
     static let shared = APIService()
+    private static let pendingInteractionsKey = "secretmatch.pending-interactions.v1"
+    private static let pendingInteractionLifetime: TimeInterval = 24 * 60 * 60
+
     private init() {
+        pendingInteractions = Self.loadPendingInteractions()
+        removeExpiredPendingInteractions()
+
         if let savedAdminToken = AdminSessionStore.loadToken(), !savedAdminToken.isEmpty {
             adminToken = savedAdminToken
             hasSavedAdminSession = true
         }
+
+        startNetworkMonitoring()
     }
 
     @Published var isLoggedIn: Bool = false
@@ -23,11 +32,22 @@ class APIService: ObservableObject {
     @Published var adminFeedback: [AdminFeedback] = []
     @Published var adminDashboard: AdminDashboard?
     @Published var adminParticipants = AdminParticipants(allowed: [], active: [])
+    @Published private(set) var queuedSendCount = 0
+    @Published private(set) var isRetryingQueuedSends = false
     private var adminToken: String?
     private let baseURL = URL(string: "https://secret-match.de/wp-json/secretmatch/v1")!
+    private var pendingInteractions: [PendingInteraction]
+    private var isNetworkAvailable = true
+    private var isProcessingSendQueue = false
+    private var retryTask: Task<Void, Never>?
+    private let networkMonitor = NWPathMonitor()
+    private let networkMonitorQueue = DispatchQueue(label: "de.secret-match.send-queue.network")
 
     func login(number: String) async throws -> Bool {
         if isAdmin { return false }
+        await waitForSendQueueToFinish()
+        await retryPendingSendsForPreviousSession()
+
         let normalizedNumber = number.normalizedEventNumber
         let url = baseURL.appendingPathComponent("login")
         var request = URLRequest(url: url)
@@ -42,6 +62,8 @@ class APIService: ObservableObject {
 
         let result = try JSONDecoder().decode(ParticipantLoginResponse.self, from: data)
         self.number = result.number ?? normalizedNumber
+        updateQueuedSendCount()
+        triggerQueueProcessing(for: self.number)
         return result.needsGender
     }
 
@@ -91,22 +113,77 @@ class APIService: ObservableObject {
 
     func finishParticipantLogin() {
         isLoggedIn = true
+        triggerQueueProcessing(for: number)
     }
 
-    func submitMatch(targetNumber: String, type: String) async throws -> String {
+    func submitInteractions(targetNumber: String, types: [String]) async throws -> InteractionSubmissionResult {
+        let senderNumber = number.normalizedEventNumber
         let normalizedTargetNumber = targetNumber.normalizedEventNumber
+        let supportedTypes = Set(["normal", "hot", "bjob", "hjob", "ljob"])
+        guard !senderNumber.isEmpty,
+              !normalizedTargetNumber.isEmpty,
+              senderNumber != normalizedTargetNumber,
+              !types.isEmpty,
+              types.allSatisfy(supportedTypes.contains) else {
+            throw InteractionSendError.rejected
+        }
+
+        let batchID = UUID()
+        let now = Date()
+        let interactions = types.map { type in
+            PendingInteraction(
+                id: UUID(),
+                batchID: batchID,
+                senderNumber: senderNumber,
+                targetNumber: normalizedTargetNumber,
+                type: type,
+                kind: type == "normal" || type == "hot" ? .match : .action,
+                createdAt: now,
+                retryCount: 0,
+                nextAttemptAt: now
+            )
+        }
+
+        pendingInteractions.append(contentsOf: interactions)
+        persistPendingInteractions()
+        updateQueuedSendCount()
+
+        let messages = await processSendQueue(for: senderNumber, collecting: Set(interactions.map(\.id)))
+        let queuedCount = pendingInteractions.filter { $0.batchID == batchID }.count
+        guard queuedCount > 0 || messages.count == interactions.count else {
+            throw InteractionSendError.rejected
+        }
+        return InteractionSubmissionResult(messages: messages, queuedCount: queuedCount)
+    }
+
+    func retryPendingSends() async {
+        let senderNumber = number.normalizedEventNumber
+        guard !senderNumber.isEmpty else { return }
+        if let index = pendingInteractions.firstIndex(where: { $0.senderNumber == senderNumber }) {
+            pendingInteractions[index].nextAttemptAt = Date()
+            persistPendingInteractions()
+        }
+        _ = await processSendQueue(for: senderNumber)
+    }
+
+    private func sendMatch(_ interaction: PendingInteraction) async throws -> String {
         let url = baseURL.appendingPathComponent("match")
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
         request.httpBody = formBody([
-            "target_number": normalizedTargetNumber,
-            "match_type": type
+            "target_number": interaction.targetNumber,
+            "match_type": interaction.type,
+            "request_id": interaction.id.uuidString.lowercased()
         ])
         request.setValue("application/x-www-form-urlencoded", forHTTPHeaderField: "Content-Type")
+        request.timeoutInterval = 12
 
         let (data, response) = try await URLSession.shared.data(for: request)
-        guard let http = response as? HTTPURLResponse, http.statusCode == 200 else {
-            throw URLError(.badServerResponse)
+        guard let http = response as? HTTPURLResponse else {
+            throw InteractionSendError.invalidResponse
+        }
+        guard http.statusCode == 200 else {
+            throw InteractionSendError.httpStatus(http.statusCode)
         }
 
         let decoded = try JSONDecoder().decode(MatchResponse.self, from: data)
@@ -122,8 +199,6 @@ class APIService: ObservableObject {
             throw URLError(.badServerResponse)
         }
 
-        print(String(data: data, encoding: .utf8) ?? "Kein JSON")
-
         let decoded = try JSONDecoder().decode([Match].self, from: data)
         return decoded
     }
@@ -137,8 +212,7 @@ class APIService: ObservableObject {
     }
     
     @MainActor
-    func submitAction(targetNumber: String, type: String) async throws -> String {
-        let normalizedTargetNumber = targetNumber.normalizedEventNumber
+    private func sendAction(_ interaction: PendingInteraction) async throws -> String {
         let url = baseURL.appendingPathComponent("actions")
 
         var request = URLRequest(url: url)
@@ -146,22 +220,22 @@ class APIService: ObservableObject {
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
 
         let body: [String: String] = [
-            "target_number": normalizedTargetNumber,
-            "action_type": type
+            "target_number": interaction.targetNumber,
+            "action_type": interaction.type,
+            "request_id": interaction.id.uuidString.lowercased()
         ]
 
         request.httpBody = try JSONSerialization.data(withJSONObject: body)
+        request.timeoutInterval = 12
 
         let (data, response) = try await URLSession.shared.data(for: request)
 
         guard let http = response as? HTTPURLResponse else {
-            throw URLError(.badServerResponse)
+            throw InteractionSendError.invalidResponse
         }
 
         if http.statusCode != 200 {
-            let msg = String(data: data, encoding: .utf8) ?? "Serverfehler"
-            throw NSError(domain: "", code: http.statusCode,
-                          userInfo: [NSLocalizedDescriptionKey: msg])
+            throw InteractionSendError.httpStatus(http.statusCode)
         }
 
         let json = try JSONSerialization.jsonObject(with: data) as? [String: Any]
@@ -414,6 +488,8 @@ class APIService: ObservableObject {
         hasSavedAdminSession = false
         self.isLoggedIn = false
         self.number = ""
+        retryTask?.cancel()
+        updateQueuedSendCount()
         self.matches = []
         self.actions = []
         self.adminFeedback = []
@@ -459,6 +535,228 @@ class APIService: ObservableObject {
         return components.percentEncodedQuery?.data(using: .utf8)
     }
 
+    private func startNetworkMonitoring() {
+        networkMonitor.pathUpdateHandler = { [weak self] path in
+            Task { @MainActor [weak self] in
+                guard let self else { return }
+                isNetworkAvailable = path.status == .satisfied
+                if isNetworkAvailable, isLoggedIn, !number.isEmpty {
+                    triggerQueueProcessing(for: number)
+                }
+            }
+        }
+        networkMonitor.start(queue: networkMonitorQueue)
+    }
+
+    private func triggerQueueProcessing(for senderNumber: String) {
+        guard !senderNumber.isEmpty else { return }
+        Task { @MainActor [weak self] in
+            _ = await self?.processSendQueue(for: senderNumber)
+        }
+    }
+
+    private func processSendQueue(
+        for senderNumber: String,
+        collecting requestedIDs: Set<UUID> = [],
+        allowsLoggedOutSession: Bool = false
+    ) async -> [String] {
+        removeExpiredPendingInteractions()
+        guard !isProcessingSendQueue, isNetworkAvailable else {
+            scheduleRetry(for: senderNumber)
+            return []
+        }
+
+        isProcessingSendQueue = true
+        isRetryingQueuedSends = true
+        retryTask?.cancel()
+        defer {
+            isProcessingSendQueue = false
+            isRetryingQueuedSends = false
+            updateQueuedSendCount()
+            scheduleRetry(for: senderNumber)
+        }
+
+        var messages: [String] = []
+
+        while (allowsLoggedOutSession || (isLoggedIn && number.normalizedEventNumber == senderNumber)),
+              let index = nextPendingInteractionIndex(for: senderNumber) {
+            let interaction = pendingInteractions[index]
+            do {
+                let message: String
+                switch interaction.kind {
+                case .match:
+                    message = try await sendMatch(interaction)
+                case .action:
+                    message = try await sendAction(interaction)
+                }
+
+                pendingInteractions.remove(at: index)
+                persistPendingInteractions()
+                if requestedIDs.contains(interaction.id) {
+                    messages.append(message)
+                }
+            } catch {
+                if shouldRetry(error) {
+                    markPendingInteractionForRetry(at: index)
+                    break
+                }
+
+                pendingInteractions.remove(at: index)
+                persistPendingInteractions()
+                throwAwayInvalidBatchIfNeeded(batchID: interaction.batchID, senderNumber: senderNumber)
+            }
+        }
+
+        return messages
+    }
+
+    private func nextPendingInteractionIndex(for senderNumber: String) -> Int? {
+        let now = Date()
+        guard let index = pendingInteractions.firstIndex(where: { $0.senderNumber == senderNumber }),
+              pendingInteractions[index].nextAttemptAt <= now else {
+            return nil
+        }
+        return index
+    }
+
+    private func markPendingInteractionForRetry(at index: Int) {
+        pendingInteractions[index].retryCount += 1
+        let exponent = min(pendingInteractions[index].retryCount - 1, 4)
+        let delay = min(pow(2, Double(exponent)) * 2, 30)
+        pendingInteractions[index].nextAttemptAt = Date().addingTimeInterval(delay)
+        persistPendingInteractions()
+    }
+
+    private func throwAwayInvalidBatchIfNeeded(batchID: UUID, senderNumber: String) {
+        pendingInteractions.removeAll {
+            $0.batchID == batchID && $0.senderNumber == senderNumber
+        }
+        persistPendingInteractions()
+    }
+
+    private func shouldRetry(_ error: Error) -> Bool {
+        if let sendError = error as? InteractionSendError {
+            switch sendError {
+            case .invalidResponse:
+                return true
+            case .httpStatus(let statusCode):
+                return statusCode == 401
+                    || statusCode == 403
+                    || statusCode == 408
+                    || statusCode == 425
+                    || statusCode == 429
+                    || statusCode >= 500
+            case .rejected:
+                return false
+            }
+        }
+
+        guard let urlError = error as? URLError else {
+            return error is DecodingError
+        }
+
+        return [
+            .cannotFindHost,
+            .cannotConnectToHost,
+            .dataNotAllowed,
+            .dnsLookupFailed,
+            .internationalRoamingOff,
+            .networkConnectionLost,
+            .notConnectedToInternet,
+            .resourceUnavailable,
+            .secureConnectionFailed,
+            .timedOut
+        ].contains(urlError.code)
+    }
+
+    private func scheduleRetry(for senderNumber: String) {
+        retryTask?.cancel()
+        guard isNetworkAvailable,
+              isLoggedIn,
+              number.normalizedEventNumber == senderNumber,
+              let nextAttempt = pendingInteractions
+                .first(where: { $0.senderNumber == senderNumber })?
+                .nextAttemptAt else {
+            return
+        }
+
+        let delay = max(0.25, nextAttempt.timeIntervalSinceNow)
+        retryTask = Task { @MainActor [weak self] in
+            do {
+                try await Task.sleep(for: .seconds(delay))
+            } catch {
+                return
+            }
+            guard !Task.isCancelled else { return }
+            self?.retryTask = nil
+            _ = await self?.processSendQueue(for: senderNumber)
+        }
+    }
+
+    private func retryPendingSendsForPreviousSession() async {
+        guard isNetworkAvailable,
+              !pendingInteractions.isEmpty,
+              number.isEmpty,
+              let sessionNumber = try? await loadServerSessionNumber(),
+              !sessionNumber.isEmpty else {
+            return
+        }
+
+        _ = await processSendQueue(for: sessionNumber, allowsLoggedOutSession: true)
+    }
+
+    private func waitForSendQueueToFinish() async {
+        while isProcessingSendQueue {
+            do {
+                try await Task.sleep(for: .milliseconds(50))
+            } catch {
+                return
+            }
+        }
+    }
+
+    private func loadServerSessionNumber() async throws -> String {
+        let url = baseURL.appendingPathComponent("status")
+        var request = URLRequest(url: url)
+        request.timeoutInterval = 8
+        let (data, response) = try await URLSession.shared.data(for: request)
+        guard let http = response as? HTTPURLResponse, http.statusCode == 200 else {
+            throw InteractionSendError.invalidResponse
+        }
+        let status = try JSONDecoder().decode(ParticipantStatusResponse.self, from: data)
+        return status.loggedIn ? status.number?.normalizedEventNumber ?? "" : ""
+    }
+
+    private func updateQueuedSendCount() {
+        let senderNumber = number.normalizedEventNumber
+        queuedSendCount = pendingInteractions.filter { $0.senderNumber == senderNumber }.count
+    }
+
+    private func persistPendingInteractions() {
+        guard let data = try? JSONEncoder().encode(pendingInteractions) else { return }
+        UserDefaults.standard.set(data, forKey: Self.pendingInteractionsKey)
+        updateQueuedSendCount()
+    }
+
+    private static func loadPendingInteractions() -> [PendingInteraction] {
+        guard let data = UserDefaults.standard.data(forKey: pendingInteractionsKey),
+              let interactions = try? JSONDecoder().decode([PendingInteraction].self, from: data) else {
+            return []
+        }
+        return interactions
+    }
+
+    private func removeExpiredPendingInteractions() {
+        let cutoff = Date().addingTimeInterval(-Self.pendingInteractionLifetime)
+        let originalCount = pendingInteractions.count
+        pendingInteractions.removeAll { $0.createdAt < cutoff }
+        if pendingInteractions.count != originalCount {
+            persistPendingInteractions()
+        } else {
+            updateQueuedSendCount()
+        }
+    }
+
     private func handleExpiredAdminToken(_ response: URLResponse) {
         guard let statusCode = (response as? HTTPURLResponse)?.statusCode,
               statusCode == 401 || statusCode == 403 else {
@@ -469,6 +767,22 @@ class APIService: ObservableObject {
         AdminSessionStore.clearToken()
         hasSavedAdminSession = false
         isAdmin = false
+    }
+}
+
+private enum InteractionSendError: Error {
+    case invalidResponse
+    case httpStatus(Int)
+    case rejected
+}
+
+private struct ParticipantStatusResponse: Decodable {
+    let loggedIn: Bool
+    let number: String?
+
+    private enum CodingKeys: String, CodingKey {
+        case loggedIn = "logged_in"
+        case number
     }
 }
 

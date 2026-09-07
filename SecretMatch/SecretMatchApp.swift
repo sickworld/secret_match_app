@@ -34,6 +34,9 @@ struct SecretMatchApp: App {
         .onChange(of: scenePhase) { _, phase in
             if phase == .active {
                 UIApplication.shared.isIdleTimerDisabled = true
+                Task {
+                    await api.retryPendingSends()
+                }
             }
         }
     }

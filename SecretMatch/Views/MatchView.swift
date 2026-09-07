@@ -182,7 +182,10 @@ struct MatchView: View {
                         showKeyboard: $showKeyboard,
                         selectedActions: $selectedActions,
                         responseMessage: $responseMessage,
-                        onSend: sendInteractions
+                        onSend: sendInteractions,
+                        queuedSendCount: api.queuedSendCount,
+                        isRetryingQueuedSends: api.isRetryingQueuedSends,
+                        onRetryQueuedSends: retryQueuedSends
                     )
                     .padding(18)
                 }
@@ -200,6 +203,9 @@ struct MatchView: View {
                         selectedActions: $selectedActions,
                         responseMessage: $responseMessage,
                         onSend: sendInteractions,
+                        queuedSendCount: api.queuedSendCount,
+                        isRetryingQueuedSends: api.isRetryingQueuedSends,
+                        onRetryQueuedSends: retryQueuedSends,
                         fillsAvailableSpace: true,
                         availableHeight: availableHeight
                     )
@@ -247,20 +253,22 @@ struct MatchView: View {
             do {
                 let orderedTypes = ["normal", "hot", "bjob", "hjob", "ljob"]
                     .filter(selectedActions.contains)
-                var results: [String] = []
-
-                for type in orderedTypes {
-                    if type == "normal" || type == "hot" {
-                        results.append(try await api.submitMatch(targetNumber: targetNumber, type: type))
-                    } else {
-                        results.append(try await api.submitAction(targetNumber: targetNumber, type: type))
-                    }
-                }
-
-                responseMessage = results.joined(separator: "\n")
+                let result = try await api.submitInteractions(
+                    targetNumber: targetNumber,
+                    types: orderedTypes
+                )
+                responseMessage = result.userMessage
             } catch {
-                responseMessage = "Nicht alle Aktionen konnten gesendet werden: \(error.localizedDescription)"
+                responseMessage = "Die Aktionen konnten nicht vorgemerkt werden. Bitte versuche es erneut."
             }
+        }
+    }
+
+    private func retryQueuedSends() {
+        Task {
+            pauseInactivityTimer()
+            await api.retryPendingSends()
+            resetInactivityTimer()
         }
     }
 }

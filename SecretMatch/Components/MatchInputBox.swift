@@ -15,6 +15,9 @@ struct MatchInputBox: View {
     @Binding var selectedActions: Set<String>
     @Binding var responseMessage: String
     let onSend: () -> Void
+    var queuedSendCount = 0
+    var isRetryingQueuedSends = false
+    var onRetryQueuedSends: () -> Void = {}
     var fillsAvailableSpace = false
     var availableHeight: CGFloat?
 
@@ -85,6 +88,32 @@ struct MatchInputBox: View {
             .buttonStyle(SecretPrimaryButtonStyle(fontSize: 21, minHeight: 80))
             .disabled(selectedActions.isEmpty || targetNumber.isEmpty)
             .opacity(selectedActions.isEmpty || targetNumber.isEmpty ? 0.5 : 1)
+
+            if queuedSendCount > 0 {
+                Spacer(minLength: 16)
+
+                HStack(spacing: 12) {
+                    Image(systemName: isRetryingQueuedSends ? "arrow.trianglehead.2.clockwise.rotate.90" : "wifi.exclamationmark")
+                        .foregroundStyle(SecretMatchTheme.secondary)
+
+                    Text(queuedSendCount == 1 ? "1 Aktion wartet aufs Senden" : "\(queuedSendCount) Aktionen warten aufs Senden")
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(.white)
+
+                    Spacer()
+
+                    Button(isRetryingQueuedSends ? "Wird versucht…" : "Jetzt versuchen") {
+                        onRetryQueuedSends()
+                    }
+                    .font(.subheadline.bold())
+                    .foregroundStyle(SecretMatchTheme.secondary)
+                    .disabled(isRetryingQueuedSends)
+                }
+                .padding(14)
+                .background(SecretMatchTheme.secondary.opacity(0.1))
+                .clipShape(RoundedRectangle(cornerRadius: 14))
+                .overlay(RoundedRectangle(cornerRadius: 14).stroke(SecretMatchTheme.secondary.opacity(0.35)))
+            }
 
             if !responseMessage.isEmpty {
                 Spacer(minLength: 20)

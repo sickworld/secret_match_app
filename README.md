@@ -1,5 +1,13 @@
 # secret_match_app
 
+## Sende-Warteschlange
+
+Match- und Aktionssendungen werden vor dem ersten Netzwerkversuch lokal vorgemerkt. Bei fehlender oder instabiler Verbindung versucht die App sie mit wachsendem Abstand automatisch erneut; angemeldete Teilnehmer können den Retry zusätzlich über **Jetzt versuchen** auslösen. Offene Einträge bleiben an die ursprüngliche Eventnummer gebunden, überstehen einen App-Neustart und werden nach spätestens 24 Stunden verworfen.
+
+Jede Sendung enthält eine UUID als `request_id`. Der Aktions-Endpunkt des WordPress-Moduls speichert diese ID eindeutig und beantwortet einen Retry derselben ID erfolgreich, ohne eine zweite Aktion anzulegen. Das aktualisierte WordPress-Modul muss deshalb vor oder zusammen mit diesem App-Build veröffentlicht werden.
+
+Während ein Eintrag wartet, liegen Absender-Eventnummer, Ziel-Eventnummer und Aktionstyp ausschließlich im lokalen App-Container. Nach erfolgreichem Versand, einem endgültigen Validierungsfehler oder Ablauf der 24 Stunden wird der Eintrag entfernt.
+
 ## Admin-Billboard
 
 Angemeldete Administratoren können das WordPress-Billboard über **Billboard Vollbild** direkt in der App öffnen. Die App fordert dafür über `POST /wp-json/secretmatch/v1/admin/billboard-access` einen kurzlebigen Einmal-Link an; Admin- oder Billboard-Passwörter werden nicht in der WebView-URL übertragen.
