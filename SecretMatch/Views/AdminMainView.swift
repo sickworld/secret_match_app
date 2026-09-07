@@ -4,6 +4,7 @@ struct AdminMainView: View {
     @EnvironmentObject var api: APIService
 
     @State private var showAdminActions = false
+    @State private var showAdminRequests = false
     @State private var showAdminMatches = false
     @State private var showBillboard = false
     @State private var showAdminMenu = false
@@ -51,6 +52,11 @@ struct AdminMainView: View {
 
             if showAdminMatches {
                 AdminMatchListView(isPresented: $showAdminMatches)
+                    .environmentObject(api)
+            }
+
+            if showAdminRequests {
+                AdminMatchRequestListView(isPresented: $showAdminRequests)
                     .environmentObject(api)
             }
 #endif
@@ -131,6 +137,9 @@ struct AdminMainView: View {
         case .actions:
             AdminActionListView(isPresented: .constant(true), isEmbedded: true)
                 .environmentObject(api)
+        case .requests:
+            AdminMatchRequestListView(isPresented: .constant(true), isEmbedded: true)
+                .environmentObject(api)
         case .matches:
             AdminMatchListView(isPresented: .constant(true), isEmbedded: true)
                 .environmentObject(api)
@@ -148,6 +157,7 @@ struct AdminMainView: View {
     private func sidebar(isCompact: Bool) -> some View {
         AdminSidebarView(
             showActions: $showAdminActions,
+            showRequests: $showAdminRequests,
             showMatches: $showAdminMatches,
             showBillboard: $showBillboard,
             showLiveFeed: $showLiveFeed,

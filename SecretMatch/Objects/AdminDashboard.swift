@@ -4,6 +4,7 @@ struct AdminDashboard: Decodable {
     let activeParticipants: Int
     let allowedParticipants: Int
     let matches: Int
+    let requests: Int?
     let actions: Int
     let latestActivity: String
     let topTestActive: Bool
@@ -27,6 +28,7 @@ struct AdminDashboard: Decodable {
         case activeParticipants = "active_participants"
         case allowedParticipants = "allowed_participants"
         case matches
+        case requests
         case actions
         case latestActivity = "latest_activity"
         case topTestActive = "top_test_active"
@@ -120,7 +122,7 @@ struct AdminParticipants: Decodable {
         allowed = try container.decode([String].self, forKey: .allowed)
         active = try container.decode([AdminActiveParticipant].self, forKey: .active)
         profiles = try container.decodeIfPresent([AdminParticipantProfile].self, forKey: .profiles) ?? []
-        pins = try container.decodeIfPresent([String: String].self, forKey: .pins) ?? [:]
+        pins = (try? container.decode([String: String].self, forKey: .pins)) ?? [:]
     }
 }
 

@@ -30,6 +30,7 @@ class APIService: ObservableObject {
     @Published private(set) var hasSavedAdminSession: Bool = false
     @Published var adminActions: [AdminAction] = []
     @Published var adminMatches: [AdminMatch] = []
+    @Published var adminMatchRequests: [AdminMatchRequest] = []
     @Published var adminFeedback: [AdminFeedback] = []
     @Published var adminDashboard: AdminDashboard?
     @Published var adminParticipants = AdminParticipants(allowed: [], active: [])
@@ -410,6 +411,15 @@ class APIService: ObservableObject {
         adminMatches = try JSONDecoder().decode([AdminMatch].self, from: data)
     }
 
+    @MainActor
+    func loadAdminMatchRequests() async throws {
+        let url = baseURL.appendingPathComponent("admin/requests")
+
+        let (data, response) = try await URLSession.shared.data(for: adminRequest(url: url))
+        try validateAdminResponse(response)
+        adminMatchRequests = try JSONDecoder().decode([AdminMatchRequest].self, from: data)
+    }
+
     func loadAdminFeedback() async throws {
         let url = baseURL.appendingPathComponent("admin/feedback")
         let request = try adminRequest(url: url)
@@ -534,6 +544,27 @@ class APIService: ObservableObject {
         try? await loadAdminMatches()
     }
 
+    func updateAdminMatchRequest(
+        id: String,
+        participantA: String,
+        participantB: String,
+        type: String,
+        message: String
+    ) async throws {
+        try await mutateAdminResource(
+            path: ["admin", "requests", id],
+            method: "PATCH",
+            body: [
+                "participant_a": participantA.normalizedEventNumber,
+                "participant_b": participantB.normalizedEventNumber,
+                "type": type,
+                "message": message
+            ]
+        )
+        try? await loadAdminMatchRequests()
+        try? await loadAdminDashboard()
+    }
+
     func createAdminParticipant(number: String) async throws {
         try await mutateAdminResource(
             path: ["admin", "participants"],
@@ -642,6 +673,18 @@ class APIService: ObservableObject {
         try? await loadAdminDashboard()
     }
 
+    func deleteAdminMatchRequest(id: String) async throws {
+        let url = baseURL
+            .appendingPathComponent("admin/requests")
+            .appendingPathComponent(id)
+        var request = try adminRequest(url: url)
+        request.httpMethod = "DELETE"
+        let (_, response) = try await URLSession.shared.data(for: request)
+        try validateAdminResponse(response)
+        adminMatchRequests.removeAll { $0.id == id }
+        try? await loadAdminDashboard()
+    }
+
     func deleteAdminFeedback(id: String) async throws {
         let url = baseURL
             .appendingPathComponent("admin/feedback")
@@ -672,6 +715,7 @@ class APIService: ObservableObject {
         let result = try JSONDecoder().decode(EventResetResponse.self, from: data)
         adminActions = []
         adminMatches = []
+        adminMatchRequests = []
         adminFeedback = []
         try await refreshAdminControlData()
         return result
@@ -703,6 +747,9 @@ class APIService: ObservableObject {
         updateQueuedSendCount()
         self.matches = []
         self.actions = []
+        self.adminActions = []
+        self.adminMatches = []
+        self.adminMatchRequests = []
         self.adminFeedback = []
         self.isAdmin = false
     }

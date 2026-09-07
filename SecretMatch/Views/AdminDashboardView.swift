@@ -1,7 +1,7 @@
 import SwiftUI
 
 enum AdminDashboardSection {
-    case overview, liveFeed, actions, matches, feedback, controls, participants, system
+    case overview, liveFeed, actions, requests, matches, feedback, controls, participants, system
 }
 
 private struct AdminDashboardSectionKey: EnvironmentKey {
@@ -124,7 +124,7 @@ struct AdminDashboardView: View {
             systemStatus
             deviceStatus
             resetCard
-        case .liveFeed, .actions, .matches, .feedback:
+        case .liveFeed, .actions, .requests, .matches, .feedback:
             EmptyView()
         }
     }
@@ -195,6 +195,7 @@ struct AdminDashboardView: View {
         LazyVGrid(columns: [GridItem(.adaptive(minimum: 180), spacing: 14)], spacing: 14) {
             metric("👥", "Gerade aktiv", api.adminDashboard?.activeParticipants ?? 0, SecretMatchTheme.secondary)
             metric("❤️", "Matches", api.adminDashboard?.matches ?? 0, Color(hex: "#E83E8C"))
+            metric("📨", "Requests", api.adminDashboard?.requests ?? 0, Color(hex: "#8E63D2"))
             metric("💌", "Aktionen", api.adminDashboard?.actions ?? 0, Color(hex: "#3E9ED6"))
             metric("#️⃣", "Freigegeben", api.adminDashboard?.allowedParticipants ?? 0, Color(hex: "#E6923E"))
         }

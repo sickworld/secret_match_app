@@ -4,6 +4,7 @@ struct AdminSidebarView: View {
     @EnvironmentObject var api: APIService
 
     @Binding var showActions: Bool
+    @Binding var showRequests: Bool
     @Binding var showMatches: Bool
     @Binding var showBillboard: Bool
     @Binding var showLiveFeed: Bool
@@ -79,6 +80,18 @@ struct AdminSidebarView: View {
 #endif
             } label: {
                 Label("Alle Aktionen", systemImage: "paperplane.fill")
+            }
+            .buttonStyle(SidebarButtonStyle())
+
+            Button {
+#if ADMIN_APP
+                dashboardSection = .requests
+                dismissMenu()
+#else
+                showRequests = true
+#endif
+            } label: {
+                Label("Match-Requests", systemImage: "heart.text.square.fill")
             }
             .buttonStyle(SidebarButtonStyle())
 

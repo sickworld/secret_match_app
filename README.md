@@ -2,9 +2,9 @@
 
 ## Admin-CRUD
 
-Die iPhone-Admin-App kann Aktionen und Matches anlegen, bearbeiten und löschen. In der Teilnehmerverwaltung lassen sich Nummern freigeben und sperren sowie Gender-Angaben setzen oder zurücksetzen. Jede Gender-Änderung und jeder Reset widerruft die aktive Sitzung der betroffenen Nummer; nach einem Reset erscheint die Gender-Auswahl beim nächsten Login erneut. Feedback bleibt als anonymer, unveränderlicher Datensatz bewusst auf Lesen und Löschen begrenzt.
+Die iPhone-Admin-App kann Aktionen und Matches anlegen, bearbeiten und löschen sowie Match-Requests einsehen und verwalten. In der Teilnehmerverwaltung lassen sich Nummern freigeben und sperren sowie Gender-Angaben setzen oder zurücksetzen. Jede Gender-Änderung und jeder Reset widerruft die aktive Sitzung der betroffenen Nummer; nach einem Reset erscheint die Gender-Auswahl beim nächsten Login erneut. Feedback bleibt als anonymer, unveränderlicher Datensatz bewusst auf Lesen und Löschen begrenzt.
 
-Diese Funktionen benötigen das WordPress-Modul ab Version `2026.09.07.5`; das Modul muss vor oder zusammen mit diesem App-Build veröffentlicht werden.
+Diese Funktionen benötigen das WordPress-Modul ab Version `2026.09.07.6`; das Modul muss vor oder zusammen mit diesem App-Build veröffentlicht werden.
 
 ## Eingehende Interessen
 
@@ -17,6 +17,8 @@ Die App überwacht den Netzwerkpfad und prüft zusätzlich über `GET /wp-json/s
 Beim ersten Login mit einer freigegebenen Eventnummer legt der Teilnehmer selbst eine zweistellige PIN fest und wählt Frau oder Mann. Bei jedem späteren Login werden Eventnummer und diese PIN benötigt. Match-Wünsche können eine Nachricht mit bis zu 180 Zeichen enthalten; administrativ gepflegte Schnelltexte stehen direkt bei der Eingabe zur Verfügung. Nachrichten werden gemeinsam mit der Aktion dauerhaft zwischengespeichert und erst aus der Queue entfernt, nachdem der Server das erfolgreiche Datenbank-Speichern bestätigt hat.
 
 Die Admin-App zeigt gesetzte PINs. Unter **PIN verwalten** kann eine PIN manuell geändert oder zurückgesetzt werden. Nach einem Reset beendet der Server alle Sitzungen; der Teilnehmer legt beim nächsten Login selbst eine neue PIN fest.
+
+Die Admin-App besitzt eine eigene Rubrik **Match-Requests**. Sie zeigt alle gesendeten Wünsche mit Absender, Empfänger, Typ, Freitext und dem Status offen oder gematcht. Requests können gesucht, gefiltert, bearbeitet und einzeln gelöscht werden; vorhandene gegenseitige Matches bleiben dabei eigenständig bestehen.
 
 Die Navigation führt Matches und offene Interessen als eigene Rubriken. Die Aktionsübersicht zeigt ausschließlich empfangene Aktionen und bietet Filter nach Kategorie und Absendernummer. Während einer aktiven Sitzung übermittelt das iPad alle 30 Sekunden Akkustand, Ladezustand und App-Version; die Admin-App zeigt Geräte an, deren letzter Heartbeat höchstens drei Minuten zurückliegt.
 
