@@ -47,3 +47,23 @@ struct ParticipantLoginRequirements {
     let needsPin: Bool
     let needsGender: Bool
 }
+
+struct ParticipantLoginErrorResponse: Decodable {
+    let code: String
+}
+
+enum ParticipantLoginError: LocalizedError {
+    case pinRequired
+    case invalidCredentials
+    case tooManyAttempts
+    case invalidResponse
+
+    var errorDescription: String? {
+        switch self {
+        case .pinRequired: return "Bitte persönliche PIN eingeben."
+        case .invalidCredentials: return "Nummer oder PIN ist nicht gültig."
+        case .tooManyAttempts: return "Zu viele Login-Versuche. Bitte kurz warten."
+        case .invalidResponse: return "Der Login-Server antwortet nicht korrekt."
+        }
+    }
+}

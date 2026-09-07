@@ -66,20 +66,35 @@ struct TopPerson: Decodable, Identifiable {
 }
 
 struct AdminDeviceStatus: Decodable, Identifiable {
+    let deviceID: String?
     let number: String
     let batteryLevel: Int
     let batteryState: String
     let appVersion: String
     let lastSeen: Int
+    let online: Bool?
 
-    var id: String { "\(number)-\(lastSeen)" }
+    var id: String { deviceID ?? "\(number)-\(appVersion)" }
+
+    var isOnline: Bool {
+        online ?? (lastSeen >= Int(Date().timeIntervalSince1970) - 180)
+    }
+
+    var lastSeenDescription: String {
+        let seconds = max(0, Int(Date().timeIntervalSince1970) - lastSeen)
+        if seconds < 60 { return "gerade eben" }
+        if seconds < 3600 { return "vor \(seconds / 60) Min." }
+        return "vor \(seconds / 3600) Std."
+    }
 
     private enum CodingKeys: String, CodingKey {
+        case deviceID = "device_id"
         case number
         case batteryLevel = "battery_level"
         case batteryState = "battery_state"
         case appVersion = "app_version"
         case lastSeen = "last_seen"
+        case online
     }
 }
 

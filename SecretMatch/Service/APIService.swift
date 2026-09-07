@@ -64,8 +64,17 @@ class APIService: ObservableObject {
         request.setValue("application/x-www-form-urlencoded", forHTTPHeaderField: "Content-Type")
 
         let (data, response) = try await URLSession.shared.data(for: request)
-        guard let http = response as? HTTPURLResponse, http.statusCode == 200 else {
-            throw URLError(.badServerResponse)
+        guard let http = response as? HTTPURLResponse else {
+            throw ParticipantLoginError.invalidResponse
+        }
+        guard http.statusCode == 200 else {
+            let responseError = try? JSONDecoder().decode(ParticipantLoginErrorResponse.self, from: data)
+            switch responseError?.code {
+            case "pin_required": throw ParticipantLoginError.pinRequired
+            case "too_many_attempts": throw ParticipantLoginError.tooManyAttempts
+            case "invalid_credentials": throw ParticipantLoginError.invalidCredentials
+            default: throw ParticipantLoginError.invalidResponse
+            }
         }
 
         let result = try JSONDecoder().decode(ParticipantLoginResponse.self, from: data)

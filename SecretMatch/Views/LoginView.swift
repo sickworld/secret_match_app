@@ -4,6 +4,7 @@ import Combine
 struct LoginView: View {
     @State private var number: String = ""
     @State private var pin: String = ""
+    @State private var requiresLoginPIN = false
     @State private var activeField: LoginField = .number
     @EnvironmentObject var api: APIService
     @State private var showKeyboard = false
@@ -50,36 +51,59 @@ struct LoginView: View {
                             .font(.system(size: 40, weight: .bold, design: .rounded))
                             .foregroundStyle(SecretMatchTheme.text)
 
-                        Text("Gib deine Event-Nummer ein und entdecke, wer mit dir matcht.")
+                        Text(requiresLoginPIN
+                             ? "Gib jetzt deine persönliche PIN ein."
+                             : "Gib zuerst deine Event-Nummer ein.")
                             .font(.system(size: 20, weight: .medium, design: .rounded))
                             .foregroundStyle(SecretMatchTheme.muted)
                             .multilineTextAlignment(.center)
                     }
 
                     VStack(alignment: .leading, spacing: 14) {
-                        Text(number.isEmpty ? "Deine Nummer eingeben" : number.displayEventNumber)
-                            .foregroundStyle(number.isEmpty ? SecretMatchTheme.muted : SecretMatchTheme.text)
-                            .font(.system(size: 36, weight: .bold, design: .rounded))
-                            .multilineTextAlignment(.center)
-                            .minimumScaleFactor(0.75)
-                            .secretInput(highlighted: showKeyboard)
-                            .onTapGesture {
-                                withAnimation(.easeOut(duration: 0.2)) {
-                                    activeField = .number
+                        if requiresLoginPIN {
+                            HStack {
+                                VStack(alignment: .leading, spacing: 4) {
+                                    Text("DEINE EVENTNUMMER")
+                                        .font(.caption.bold())
+                                        .tracking(1.5)
+                                        .foregroundStyle(SecretMatchTheme.secondary)
+                                    Text(number.displayEventNumber)
+                                        .font(.system(size: 30, weight: .bold, design: .rounded).monospacedDigit())
+                                        .foregroundStyle(SecretMatchTheme.text)
+                                }
+                                Spacer()
+                                Button("Ändern") { editNumber() }
+                                    .font(.callout.bold())
+                                    .foregroundStyle(SecretMatchTheme.secondary)
+                            }
+                            .padding(.horizontal, 18)
+
+                            Text(pin.isEmpty ? "Deine 2-stellige PIN" : String(repeating: "•", count: pin.count))
+                                .foregroundStyle(pin.isEmpty ? SecretMatchTheme.muted : SecretMatchTheme.text)
+                                .font(.system(size: 32, weight: .bold, design: .rounded))
+                                .multilineTextAlignment(.center)
+                                .secretInput(highlighted: showKeyboard)
+                                .onTapGesture {
+                                    activeField = .pin
                                     showKeyboard = true
                                 }
-                            }
-
-                        Text(pin.isEmpty ? "PIN · beim ersten Login leer lassen" : String(repeating: "•", count: pin.count))
-                            .foregroundStyle(pin.isEmpty ? SecretMatchTheme.muted : SecretMatchTheme.text)
-                            .font(.system(size: 32, weight: .bold, design: .rounded))
-                            .multilineTextAlignment(.center)
-                            .secretInput(highlighted: showKeyboard && activeField == .pin)
-                            .onTapGesture {
-                                activeField = .pin
-                                showKeyboard = true
-                            }
+                                .transition(.move(edge: .trailing).combined(with: .opacity))
+                        } else {
+                            Text(number.isEmpty ? "Deine Nummer eingeben" : number.displayEventNumber)
+                                .foregroundStyle(number.isEmpty ? SecretMatchTheme.muted : SecretMatchTheme.text)
+                                .font(.system(size: 36, weight: .bold, design: .rounded))
+                                .multilineTextAlignment(.center)
+                                .minimumScaleFactor(0.75)
+                                .secretInput(highlighted: showKeyboard)
+                                .onTapGesture {
+                                    withAnimation(.easeOut(duration: 0.2)) {
+                                        activeField = .number
+                                        showKeyboard = true
+                                    }
+                                }
+                        }
                     }
+                    .animation(.easeInOut(duration: 0.22), value: requiresLoginPIN)
 
                     if let errorMessage {
                         Text(errorMessage)
@@ -95,14 +119,14 @@ struct LoginView: View {
 
                     Button(action: submitLogin) {
                         HStack {
-                            Text("Anmelden")
+                            Text(requiresLoginPIN ? "Anmelden" : "Weiter")
                             Spacer()
                             Image(systemName: "arrow.right")
                         }
                     }
                     .buttonStyle(SecretPrimaryButtonStyle(fontSize: 21, minHeight: 78))
-                    .disabled(isLoading || number.isEmpty || pin.count == 1)
-                    .opacity(number.isEmpty || pin.count == 1 ? 0.55 : 1)
+                    .disabled(loginIsDisabled)
+                    .opacity(loginIsDisabled ? 0.55 : 1)
 
                     Button {
                             showKeyboard = false
@@ -144,7 +168,8 @@ struct LoginView: View {
                     VStack(spacing: 10) {
                         CustomNumberKeyboard(
                             text: activeField == .number ? $number : $pin,
-                            doneLabel: "Einloggen",
+                            doneLabel: requiresLoginPIN ? "Einloggen" : "Weiter",
+                            placeholder: activeField == .number ? "Nummer…" : "PIN…",
                             maxDigits: activeField == .number ? 3 : 2,
                             obscuresText: activeField == .pin,
                             onClose: { withAnimation { showKeyboard = false } }
@@ -226,7 +251,7 @@ struct LoginView: View {
     }
 
     private func submitLogin() {
-        guard !number.isEmpty, pin.count != 1, !isLoading else { return }
+        guard !loginIsDisabled else { return }
 
         showKeyboard = false
         errorMessage = nil
@@ -244,10 +269,33 @@ struct LoginView: View {
                 } else {
                     api.finishParticipantLogin()
                 }
+            } catch ParticipantLoginError.pinRequired {
+                requiresLoginPIN = true
+                pin = ""
+                activeField = .pin
+                showKeyboard = true
+            } catch ParticipantLoginError.tooManyAttempts {
+                errorMessage = "Zu viele Login-Versuche. Bitte kurz warten."
+            } catch ParticipantLoginError.invalidCredentials {
+                errorMessage = requiresLoginPIN
+                    ? "Die PIN ist nicht gültig. Bitte erneut versuchen."
+                    : "Diese Eventnummer ist nicht gültig."
             } catch {
-                errorMessage = "Login fehlgeschlagen. Bitte Nummer und PIN prüfen."
+                errorMessage = "Login fehlgeschlagen. Bitte Verbindung prüfen und erneut versuchen."
             }
         }
+    }
+
+    private var loginIsDisabled: Bool {
+        isLoading || number.isEmpty || (requiresLoginPIN && pin.count != 2)
+    }
+
+    private func editNumber() {
+        requiresLoginPIN = false
+        pin = ""
+        errorMessage = nil
+        activeField = .number
+        showKeyboard = true
     }
 
     private func submitNewPIN(_ newPIN: String, confirmation: String) {
@@ -327,49 +375,137 @@ private struct ParticipantPINSetupView: View {
     let onSave: (String, String) -> Void
     @State private var pin = ""
     @State private var confirmation = ""
+    @State private var activeField = PINSetupField.pin
 
     var body: some View {
-        ZStack {
-            Color.black.opacity(0.84).ignoresSafeArea()
-            VStack(spacing: 20) {
-                Text("DEINE PERSÖNLICHE PIN")
-                    .font(.caption.bold()).tracking(2)
-                    .foregroundStyle(SecretMatchTheme.secondary)
-                Text("Lege deine PIN fest")
-                    .font(.system(size: 32, weight: .bold, design: .rounded))
-                    .foregroundStyle(.white)
-                Text("Du brauchst diese zweistellige PIN bei jedem weiteren Login.")
-                    .font(.system(size: 17, weight: .medium, design: .rounded))
-                    .foregroundStyle(SecretMatchTheme.muted)
-                    .multilineTextAlignment(.center)
-                pinField("Neue PIN", text: $pin)
-                pinField("PIN wiederholen", text: $confirmation)
-                Button("PIN speichern") { onSave(pin, confirmation) }
-                    .buttonStyle(SecretPrimaryButtonStyle())
-                    .disabled(isSubmitting || pin.count != 2 || confirmation.count != 2 || pin != confirmation)
-                if isSubmitting { ProgressView().tint(.white) }
-                if let errorMessage {
-                    Text(errorMessage).font(.footnote.bold()).foregroundStyle(SecretMatchTheme.secondary)
+        GeometryReader { proxy in
+            ZStack {
+                Color.black.opacity(0.9).ignoresSafeArea()
+                if proxy.size.width > 900 {
+                    HStack(spacing: 24) {
+                        setupDetails
+                            .frame(maxWidth: 420)
+                        numberKeyboard
+                            .frame(maxWidth: 620)
+                    }
+                    .padding(28)
+                } else {
+                    ScrollView {
+                        VStack(spacing: 20) {
+                            setupDetails
+                            numberKeyboard
+                        }
+                        .padding(24)
+                    }
                 }
             }
-            .frame(maxWidth: 620)
-            .secretCard(cornerRadius: 28, padding: 34)
-            .padding(28)
         }
     }
 
-    private func pinField(_ title: String, text: Binding<String>) -> some View {
-        SecureField(title, text: text)
-            .keyboardType(.numberPad)
-            .font(.system(size: 24, weight: .bold, design: .rounded))
-            .foregroundStyle(.white)
+    private var setupDetails: some View {
+        VStack(spacing: 18) {
+            Text("DEINE PERSÖNLICHE PIN")
+                .font(.caption.bold()).tracking(2)
+                .foregroundStyle(SecretMatchTheme.secondary)
+            Text(activeField == .pin ? "Lege deine PIN fest" : "PIN wiederholen")
+                .font(.system(size: 32, weight: .bold, design: .rounded))
+                .foregroundStyle(.white)
+            Text("Du brauchst diese zweistellige PIN bei jedem weiteren Login.")
+                .font(.system(size: 17, weight: .medium, design: .rounded))
+                .foregroundStyle(SecretMatchTheme.muted)
+                .multilineTextAlignment(.center)
+
+            pinField("Neue PIN", value: pin, field: .pin)
+            pinField("PIN wiederholen", value: confirmation, field: .confirmation)
+
+            Button("PIN speichern") { saveIfValid() }
+                .buttonStyle(SecretPrimaryButtonStyle())
+                .disabled(!canSave)
+            if isSubmitting { ProgressView().tint(.white) }
+            if let errorMessage {
+                Text(errorMessage)
+                    .font(.footnote.bold())
+                    .foregroundStyle(SecretMatchTheme.secondary)
+            } else if !confirmation.isEmpty && pin != confirmation {
+                Text("Die beiden PINs stimmen noch nicht überein.")
+                    .font(.footnote.bold())
+                    .foregroundStyle(SecretMatchTheme.secondary)
+            }
+        }
+        .frame(maxWidth: 620)
+        .secretCard(cornerRadius: 28, padding: 28)
+    }
+
+    private var numberKeyboard: some View {
+        CustomNumberKeyboard(
+            text: activePIN,
+            doneLabel: activeField == .pin ? "Weiter" : "PIN speichern",
+            placeholder: "PIN…",
+            maxDigits: 2,
+            obscuresText: true,
+            showsCloseButton: false
+        ) {
+            if activeField == .pin, pin.count == 2 {
+                activeField = .confirmation
+            } else {
+                saveIfValid()
+            }
+        }
+        .disabled(isSubmitting)
+    }
+
+    private var activePIN: Binding<String> {
+        Binding(
+            get: { activeField == .pin ? pin : confirmation },
+            set: { value in
+                if activeField == .pin {
+                    pin = value
+                } else {
+                    confirmation = value
+                }
+            }
+        )
+    }
+
+    private func pinField(_ title: String, value: String, field: PINSetupField) -> some View {
+        Button {
+            activeField = field
+        } label: {
+            HStack {
+                Text(title)
+                    .font(.callout.bold())
+                    .foregroundStyle(field == activeField ? SecretMatchTheme.secondary : SecretMatchTheme.muted)
+                Spacer()
+                Text(value.isEmpty ? "– –" : String(repeating: "•", count: value.count))
+                    .font(.system(size: 24, weight: .bold, design: .rounded).monospacedDigit())
+                    .foregroundStyle(.white)
+            }
             .padding(16)
             .background(SecretMatchTheme.surfaceRaised)
             .clipShape(RoundedRectangle(cornerRadius: 14))
-            .onChange(of: text.wrappedValue) { _, value in
-                text.wrappedValue = String(value.filter(\.isNumber).prefix(2))
-            }
+            .overlay(
+                RoundedRectangle(cornerRadius: 14)
+                    .stroke(field == activeField ? SecretMatchTheme.secondary : SecretMatchTheme.border, lineWidth: 1.5)
+            )
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(title)
+        .accessibilityValue(value.isEmpty ? "Leer" : "\(value.count) Stellen eingegeben")
     }
+
+    private var canSave: Bool {
+        !isSubmitting && pin.count == 2 && confirmation.count == 2 && pin == confirmation
+    }
+
+    private func saveIfValid() {
+        guard canSave else { return }
+        onSave(pin, confirmation)
+    }
+}
+
+private enum PINSetupField {
+    case pin
+    case confirmation
 }
 
 private enum LoginField {

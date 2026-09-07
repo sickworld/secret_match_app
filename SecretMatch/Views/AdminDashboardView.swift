@@ -61,6 +61,7 @@ struct AdminDashboardView: View {
 #else
                 header
                 liveStatus
+                deviceStatus
                 metrics
                 liveFeed
                 controls
@@ -109,8 +110,8 @@ struct AdminDashboardView: View {
         case .overview:
             header
             liveStatus
-            metrics
             deviceStatus
+            metrics
             topPreview
         case .controls:
             sectionHeading("Eventsteuerung", subtitle: "Billboard und Testdaten verwalten")
@@ -151,7 +152,7 @@ struct AdminDashboardView: View {
         return HStack(spacing: 14) {
             Circle().fill(color).frame(width: 16, height: 16)
             VStack(alignment: .leading, spacing: 3) {
-                Text(online ? (testMode ? "TESTMODUS LÄUFT" : "EVENT LÄUFT") : "BILLBOARD OFFLINE")
+                Text(online ? (testMode ? "BILLBOARD · TESTMODUS" : "BILLBOARD ONLINE") : "BILLBOARD OFFLINE")
                     .font(.headline.bold())
                     .foregroundStyle(color)
                 Text(online
@@ -497,22 +498,31 @@ struct AdminDashboardView: View {
 
     private var deviceStatus: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("🔋 Aktive iPads")
+            Text("🔋 iPads")
                 .font(.title2.bold())
                 .foregroundStyle(.white)
             if (api.adminDashboard?.devices ?? []).isEmpty {
-                Text("In den letzten 3 Minuten wurde kein iPad-Heartbeat empfangen.")
+                Text("Für dieses Event wurde noch kein iPad-Heartbeat empfangen.")
                     .foregroundStyle(SecretMatchTheme.muted)
             } else {
                 ForEach(api.adminDashboard?.devices ?? []) { device in
-                    HStack {
-                        Text(device.number.displayEventNumber).font(.title3.bold().monospacedDigit())
+                    HStack(spacing: 12) {
+                        Circle()
+                            .fill(device.isOnline ? Color.green : Color.red)
+                            .frame(width: 13, height: 13)
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(device.number.displayEventNumber)
+                                .font(.title3.bold().monospacedDigit())
+                            Text(device.isOnline ? "Online" : "Offline · zuletzt \(device.lastSeenDescription)")
+                                .font(.caption.bold())
+                                .foregroundStyle(device.isOnline ? Color.green : Color.red)
+                        }
                         Spacer()
                         Image(systemName: device.batteryState == "charging" ? "battery.100percent.bolt" : "battery.100percent")
                         Text("\(device.batteryLevel) %").font(.title3.bold().monospacedDigit())
                         Text("v\(device.appVersion)").foregroundStyle(SecretMatchTheme.muted)
                     }
-                    .foregroundStyle(device.batteryLevel < 20 ? .red : .white)
+                    .foregroundStyle(device.batteryLevel < 20 || !device.isOnline ? .red : .white)
                     .padding(10)
                     .background(Color.white.opacity(0.06))
                     .clipShape(RoundedRectangle(cornerRadius: 12))

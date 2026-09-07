@@ -3,8 +3,10 @@ import SwiftUI
 struct CustomNumberKeyboard: View {
     @Binding var text: String
     var doneLabel = "Fertig"
+    var placeholder = "Nummer…"
     var maxDigits = 3
     var obscuresText = false
+    var showsCloseButton = true
     var onActivity: () -> Void = {}
     var onClose: () -> Void = {}
     var onDone: () -> Void
@@ -18,7 +20,7 @@ struct CustomNumberKeyboard: View {
 
     var body: some View {
         VStack(spacing: 24) {
-            Text(text.isEmpty ? "Nummer…" : (obscuresText ? String(repeating: "•", count: text.count) : text.displayEventNumber))
+            Text(text.isEmpty ? placeholder : (obscuresText ? String(repeating: "•", count: text.count) : text.displayEventNumber))
                 .font(.system(size: 44, weight: .bold, design: .rounded))
                 .foregroundStyle(.white)
                 .frame(maxWidth: .infinity)
@@ -43,6 +45,7 @@ struct CustomNumberKeyboard: View {
                                     )
                                     .shadow(color: key == "✓" ? SecretMatchTheme.primary.opacity(0.25) : .clear, radius: 12)
                             }
+                            .accessibilityLabel(key == "✓" ? doneLabel : (key == "←" ? "Löschen" : key))
                         }
                     }
                 }
@@ -55,19 +58,21 @@ struct CustomNumberKeyboard: View {
                 .stroke(Color.white.opacity(0.12), lineWidth: 1)
         )
         .overlay(alignment: .topTrailing) {
-            Button {
-                onActivity()
-                onClose()
-            } label: {
-                Image(systemName: "xmark")
-                    .font(.headline.bold())
-                    .foregroundStyle(.white)
-                    .frame(width: 48, height: 48)
-                    .background(SecretMatchTheme.surfaceRaised)
-                    .clipShape(Circle())
+            if showsCloseButton {
+                Button {
+                    onActivity()
+                    onClose()
+                } label: {
+                    Image(systemName: "xmark")
+                        .font(.headline.bold())
+                        .foregroundStyle(.white)
+                        .frame(width: 48, height: 48)
+                        .background(SecretMatchTheme.surfaceRaised)
+                        .clipShape(Circle())
+                }
+                .accessibilityLabel("Tastatur schließen")
+                .padding(20)
             }
-            .accessibilityLabel("Tastatur schließen")
-            .padding(20)
         }
         .padding(.horizontal, 20)
     }
