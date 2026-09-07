@@ -11,6 +11,10 @@ struct LoginView: View {
     @State private var showAdminLogin = false
     @State private var showInfoSupport = false
     @State private var showGenderChoice = false
+    @State private var showPINSetup = false
+    @State private var pinSetupSubmitting = false
+    @State private var pinSetupError: String?
+    @State private var needsGenderAfterPIN = false
     @State private var genderSubmitting = false
     @State private var genderError: String?
     @State private var errorMessage: String?
@@ -66,7 +70,7 @@ struct LoginView: View {
                                 }
                             }
 
-                        Text(pin.isEmpty ? "2-stellige PIN eingeben" : String(repeating: "•", count: pin.count))
+                        Text(pin.isEmpty ? "PIN · beim ersten Login leer lassen" : String(repeating: "•", count: pin.count))
                             .foregroundStyle(pin.isEmpty ? SecretMatchTheme.muted : SecretMatchTheme.text)
                             .font(.system(size: 32, weight: .bold, design: .rounded))
                             .multilineTextAlignment(.center)
@@ -97,8 +101,8 @@ struct LoginView: View {
                         }
                     }
                     .buttonStyle(SecretPrimaryButtonStyle(fontSize: 21, minHeight: 78))
-                    .disabled(isLoading || number.isEmpty || pin.count != 2)
-                    .opacity(number.isEmpty || pin.count != 2 ? 0.55 : 1)
+                    .disabled(isLoading || number.isEmpty || pin.count == 1)
+                    .opacity(number.isEmpty || pin.count == 1 ? 0.55 : 1)
 
                     Button {
                             showKeyboard = false
@@ -171,6 +175,13 @@ struct LoginView: View {
                 .zIndex(45)
             }
 
+            if showPINSetup {
+                ParticipantPINSetupView(isSubmitting: pinSetupSubmitting, errorMessage: pinSetupError) { newPIN, confirmation in
+                    submitNewPIN(newPIN, confirmation: confirmation)
+                }
+                .zIndex(46)
+            }
+
             if showScreensaver {
                 LoginScreensaverView {
                     restartScreensaverTimer()
@@ -200,6 +211,7 @@ struct LoginView: View {
         .onChange(of: showKeyboard) { _, _ in restartScreensaverTimer() }
         .onChange(of: showInfoSupport) { _, _ in restartScreensaverTimer() }
         .onChange(of: showGenderChoice) { _, _ in restartScreensaverTimer() }
+        .onChange(of: showPINSetup) { _, _ in restartScreensaverTimer() }
         .onChange(of: showAdminLogin) { _, isPresented in
             if isPresented {
                 suspendScreensaver()
@@ -214,7 +226,7 @@ struct LoginView: View {
     }
 
     private func submitLogin() {
-        guard !number.isEmpty, pin.count == 2, !isLoading else { return }
+        guard !number.isEmpty, pin.count != 1, !isLoading else { return }
 
         showKeyboard = false
         errorMessage = nil
@@ -223,14 +235,37 @@ struct LoginView: View {
             defer { isLoading = false }
 
             do {
-                let needsGender = try await api.login(number: number, pin: pin)
-                if needsGender {
+                let requirements = try await api.login(number: number, pin: pin)
+                needsGenderAfterPIN = requirements.needsGender
+                if requirements.needsPin {
+                    showPINSetup = true
+                } else if requirements.needsGender {
                     showGenderChoice = true
                 } else {
                     api.finishParticipantLogin()
                 }
             } catch {
                 errorMessage = "Login fehlgeschlagen. Bitte Nummer und PIN prüfen."
+            }
+        }
+    }
+
+    private func submitNewPIN(_ newPIN: String, confirmation: String) {
+        guard !pinSetupSubmitting else { return }
+        pinSetupSubmitting = true
+        pinSetupError = nil
+        Task {
+            defer { pinSetupSubmitting = false }
+            do {
+                try await api.setParticipantPIN(newPIN, confirmation: confirmation)
+                showPINSetup = false
+                if needsGenderAfterPIN {
+                    showGenderChoice = true
+                } else {
+                    api.finishParticipantLogin()
+                }
+            } catch {
+                pinSetupError = "Die PIN konnte nicht gespeichert werden. Bitte prüfe beide Eingaben."
             }
         }
     }
@@ -271,6 +306,7 @@ struct LoginView: View {
             guard !showKeyboard,
                   !showInfoSupport,
                   !showGenderChoice,
+                  !showPINSetup,
                   !showAdminLogin,
                   !isLoading else { return }
 
@@ -282,6 +318,57 @@ struct LoginView: View {
         screensaverTask?.cancel()
         screensaverTask = nil
         showScreensaver = false
+    }
+}
+
+private struct ParticipantPINSetupView: View {
+    let isSubmitting: Bool
+    let errorMessage: String?
+    let onSave: (String, String) -> Void
+    @State private var pin = ""
+    @State private var confirmation = ""
+
+    var body: some View {
+        ZStack {
+            Color.black.opacity(0.84).ignoresSafeArea()
+            VStack(spacing: 20) {
+                Text("DEINE PERSÖNLICHE PIN")
+                    .font(.caption.bold()).tracking(2)
+                    .foregroundStyle(SecretMatchTheme.secondary)
+                Text("Lege deine PIN fest")
+                    .font(.system(size: 32, weight: .bold, design: .rounded))
+                    .foregroundStyle(.white)
+                Text("Du brauchst diese zweistellige PIN bei jedem weiteren Login.")
+                    .font(.system(size: 17, weight: .medium, design: .rounded))
+                    .foregroundStyle(SecretMatchTheme.muted)
+                    .multilineTextAlignment(.center)
+                pinField("Neue PIN", text: $pin)
+                pinField("PIN wiederholen", text: $confirmation)
+                Button("PIN speichern") { onSave(pin, confirmation) }
+                    .buttonStyle(SecretPrimaryButtonStyle())
+                    .disabled(isSubmitting || pin.count != 2 || confirmation.count != 2 || pin != confirmation)
+                if isSubmitting { ProgressView().tint(.white) }
+                if let errorMessage {
+                    Text(errorMessage).font(.footnote.bold()).foregroundStyle(SecretMatchTheme.secondary)
+                }
+            }
+            .frame(maxWidth: 620)
+            .secretCard(cornerRadius: 28, padding: 34)
+            .padding(28)
+        }
+    }
+
+    private func pinField(_ title: String, text: Binding<String>) -> some View {
+        SecureField(title, text: text)
+            .keyboardType(.numberPad)
+            .font(.system(size: 24, weight: .bold, design: .rounded))
+            .foregroundStyle(.white)
+            .padding(16)
+            .background(SecretMatchTheme.surfaceRaised)
+            .clipShape(RoundedRectangle(cornerRadius: 14))
+            .onChange(of: text.wrappedValue) { _, value in
+                text.wrappedValue = String(value.filter(\.isNumber).prefix(2))
+            }
     }
 }
 

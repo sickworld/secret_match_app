@@ -427,7 +427,7 @@ struct AdminDashboardView: View {
                                     pinDraft = api.adminParticipants.pins[number] ?? ""
                                     pinEditorNumber = number
                                 }
-                                Button("Neue PIN erzeugen", role: .destructive) {
+                                Button("PIN zurücksetzen", role: .destructive) {
                                     confirmation = .resetPIN(number)
                                 }
                             } label: {
@@ -645,7 +645,7 @@ struct AdminDashboardView: View {
         case .resetGender(let number):
             return "Das Gender von \(number.displayEventNumber) zurücksetzen und alle Sitzungen dieser Nummer abmelden? Beim nächsten Login wird die Auswahl erneut angezeigt."
         case .resetPIN(let number):
-            return "Für \(number.displayEventNumber) eine neue zufällige PIN erzeugen? Die bisherige PIN wird sofort ungültig und alle Sitzungen dieser Nummer werden beendet."
+            return "Die PIN von \(number.displayEventNumber) zurücksetzen? Die bisherige PIN wird sofort ungültig, alle Sitzungen werden beendet und beim nächsten Login legt der Teilnehmer selbst eine neue PIN fest."
         case .blockParticipant(let number):
             return "\(number.displayEventNumber) sperren, das Profil löschen und alle Sitzungen dieser Nummer abmelden?"
         case nil: return ""
@@ -801,8 +801,8 @@ struct AdminDashboardView: View {
     private func resetPIN(for number: String) async {
         isWorking = true
         do {
-            let newPIN = try await api.resetParticipantPIN(number: number)
-            statusMessage = "Neue PIN für \(number.displayEventNumber): \(newPIN) · Alle Sitzungen wurden beendet."
+            try await api.resetParticipantPIN(number: number)
+            statusMessage = "PIN für \(number.displayEventNumber) zurückgesetzt. Beim nächsten Login wird eine neue PIN festgelegt."
             errorMessage = nil
         } catch {
             errorMessage = "PIN-Reset fehlgeschlagen: \(error.localizedDescription)"

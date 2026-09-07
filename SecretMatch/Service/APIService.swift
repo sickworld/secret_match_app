@@ -50,8 +50,8 @@ class APIService: ObservableObject {
     private let networkMonitor = NWPathMonitor()
     private let networkMonitorQueue = DispatchQueue(label: "de.secret-match.send-queue.network")
 
-    func login(number: String, pin: String) async throws -> Bool {
-        if isAdmin { return false }
+    func login(number: String, pin: String) async throws -> ParticipantLoginRequirements {
+        if isAdmin { return ParticipantLoginRequirements(needsPin: false, needsGender: false) }
         await waitForSendQueueToFinish()
         await retryPendingSendsForPreviousSession()
 
@@ -70,8 +70,19 @@ class APIService: ObservableObject {
         let result = try JSONDecoder().decode(ParticipantLoginResponse.self, from: data)
         self.number = result.number ?? normalizedNumber
         updateQueuedSendCount()
-        triggerQueueProcessing(for: self.number)
-        return result.needsGender
+        return ParticipantLoginRequirements(needsPin: result.needsPin, needsGender: result.needsGender)
+    }
+
+    func setParticipantPIN(_ pin: String, confirmation: String) async throws {
+        let url = baseURL.appendingPathComponent("pin")
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.httpBody = formBody(["pin": pin, "pin_confirmation": confirmation])
+        request.setValue("application/x-www-form-urlencoded", forHTTPHeaderField: "Content-Type")
+        let (_, response) = try await URLSession.shared.data(for: request)
+        guard let http = response as? HTTPURLResponse, http.statusCode == 200 else {
+            throw URLError(.badServerResponse)
+        }
     }
 
     func submitParticipantGender(_ gender: ParticipantGender) async throws {
@@ -552,7 +563,7 @@ class APIService: ObservableObject {
         try? await loadAdminParticipants()
     }
 
-    func resetParticipantPIN(number: String) async throws -> String {
+    func resetParticipantPIN(number: String) async throws {
         let url = baseURL
             .appendingPathComponent("admin")
             .appendingPathComponent("participants")
@@ -569,7 +580,7 @@ class APIService: ObservableObject {
         }
         let result = try JSONDecoder().decode(AdminParticipantMutationResponse.self, from: data)
         try? await loadAdminParticipants()
-        return result.pin
+        guard result.pinReset else { throw AdminMutationError(message: "PIN-Reset wurde nicht bestätigt.") }
     }
 
     func updateMatchMessageOptions(_ options: [String]) async throws {
@@ -1058,7 +1069,13 @@ private struct AdminMutationResponseError: Decodable {
 }
 
 private struct AdminParticipantMutationResponse: Decodable {
-    let pin: String
+    let pin: String?
+    let pinReset: Bool
+
+    private enum CodingKeys: String, CodingKey {
+        case pin
+        case pinReset = "pin_reset"
+    }
 }
 
 private struct AdminMutationError: LocalizedError {

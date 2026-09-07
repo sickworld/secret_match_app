@@ -26,10 +26,24 @@ enum ParticipantGender: String, CaseIterable, Identifiable, Codable {
 
 struct ParticipantLoginResponse: Decodable {
     let number: String?
+    let needsPin: Bool
     let needsGender: Bool
 
     private enum CodingKeys: String, CodingKey {
         case number
+        case needsPin = "needs_pin"
         case needsGender = "needs_gender"
     }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        number = try container.decodeIfPresent(String.self, forKey: .number)
+        needsPin = try container.decodeIfPresent(Bool.self, forKey: .needsPin) ?? false
+        needsGender = try container.decode(Bool.self, forKey: .needsGender)
+    }
+}
+
+struct ParticipantLoginRequirements {
+    let needsPin: Bool
+    let needsGender: Bool
 }
