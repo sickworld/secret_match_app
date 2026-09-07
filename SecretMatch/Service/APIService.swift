@@ -34,12 +34,16 @@ class APIService: ObservableObject {
     @Published var adminParticipants = AdminParticipants(allowed: [], active: [])
     @Published private(set) var queuedSendCount = 0
     @Published private(set) var isRetryingQueuedSends = false
+    @Published private(set) var connectionState: ConnectionState = .checking
+    @Published private(set) var isCheckingConnection = false
     private var adminToken: String?
     private let baseURL = URL(string: "https://secret-match.de/wp-json/secretmatch/v1")!
     private var pendingInteractions: [PendingInteraction]
     private var isNetworkAvailable = true
     private var isProcessingSendQueue = false
+    private var isApplicationActive = false
     private var retryTask: Task<Void, Never>?
+    private var connectionPollingTask: Task<Void, Never>?
     private let networkMonitor = NWPathMonitor()
     private let networkMonitorQueue = DispatchQueue(label: "de.secret-match.send-queue.network")
 
@@ -164,6 +168,57 @@ class APIService: ObservableObject {
             persistPendingInteractions()
         }
         _ = await processSendQueue(for: senderNumber)
+    }
+
+    func applicationDidBecomeActive() {
+        isApplicationActive = true
+        startConnectionPolling()
+        Task { @MainActor [weak self] in
+            await self?.checkConnection()
+            guard self?.isApplicationActive == true,
+                  self?.connectionState == .online else { return }
+            await self?.retryPendingSends()
+        }
+    }
+
+    func applicationDidEnterBackground() {
+        isApplicationActive = false
+        connectionPollingTask?.cancel()
+        connectionPollingTask = nil
+    }
+
+    func checkConnection() async {
+        guard isApplicationActive else { return }
+        guard !isCheckingConnection else { return }
+        guard isNetworkAvailable else {
+            connectionState = .offline
+            return
+        }
+
+        isCheckingConnection = true
+        defer { isCheckingConnection = false }
+
+        let url = baseURL.appendingPathComponent("status")
+        var request = URLRequest(url: url)
+        request.timeoutInterval = 6
+
+        do {
+            let (_, response) = try await URLSession.shared.data(for: request)
+            guard let http = response as? HTTPURLResponse,
+                  (200...299).contains(http.statusCode) else {
+                connectionState = .serverUnavailable
+                return
+            }
+
+            connectionState = .online
+            if isLoggedIn, !number.isEmpty {
+                triggerQueueProcessing(for: number)
+            }
+        } catch let error as URLError where error.code == .notConnectedToInternet {
+            connectionState = .offline
+        } catch {
+            connectionState = .serverUnavailable
+        }
     }
 
     private func sendMatch(_ interaction: PendingInteraction) async throws -> String {
@@ -540,12 +595,29 @@ class APIService: ObservableObject {
             Task { @MainActor [weak self] in
                 guard let self else { return }
                 isNetworkAvailable = path.status == .satisfied
-                if isNetworkAvailable, isLoggedIn, !number.isEmpty {
-                    triggerQueueProcessing(for: number)
+                if !isNetworkAvailable {
+                    connectionState = .offline
+                } else if isApplicationActive {
+                    await checkConnection()
                 }
             }
         }
         networkMonitor.start(queue: networkMonitorQueue)
+    }
+
+    private func startConnectionPolling() {
+        connectionPollingTask?.cancel()
+        connectionPollingTask = Task { @MainActor [weak self] in
+            while !Task.isCancelled {
+                do {
+                    try await Task.sleep(for: .seconds(15))
+                } catch {
+                    return
+                }
+                guard !Task.isCancelled else { return }
+                await self?.checkConnection()
+            }
+        }
     }
 
     private func triggerQueueProcessing(for senderNumber: String) {
