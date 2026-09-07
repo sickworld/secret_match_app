@@ -22,22 +22,18 @@ struct SidebarView: View {
         isShort || interfaceScale > 1.01 || isVeryShort
     }
 
-    private var usesCompactButtons: Bool {
-        isCompact || isVeryShort
-    }
-
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             Image("logo")
                 .resizable()
                 .scaledToFit()
-                .frame(maxWidth: isCompact ? 132 : (isVeryShort ? 134 : (usesCondensedLayout ? 150 : 156)))
-                .frame(height: isCompact ? 86 : (isVeryShort ? 88 : (usesCondensedLayout ? 104 : 110)))
+                .frame(maxWidth: isCompact ? 132 : (isVeryShort ? 112 : (usesCondensedLayout ? 142 : 156)))
+                .frame(height: isCompact ? 86 : (isVeryShort ? 64 : (usesCondensedLayout ? 86 : 110)))
                 .frame(maxWidth: .infinity, alignment: .center)
                 .shadow(color: SecretMatchTheme.primary.opacity(0.16), radius: 18)
 
             Spacer()
-                .frame(height: isCompact ? 14 : (isVeryShort ? 4 : (usesCondensedLayout ? 8 : 12)))
+                .frame(height: isCompact ? 14 : (isVeryShort ? 8 : (usesCondensedLayout ? 10 : 12)))
 
             HStack(spacing: 10) {
                 Circle()
@@ -110,11 +106,11 @@ struct SidebarView: View {
                     }
                 }
             }
-            .buttonStyle(SidebarButtonStyle(compact: usesCompactButtons, veryCompact: isVeryShort))
+            .buttonStyle(SidebarButtonStyle(compact: usesCondensedLayout, veryCompact: isVeryShort))
             .accessibilityLabel("Deine Übersicht: Matches, Interesse und Aktionen")
 
             Spacer()
-                .frame(height: isCompact ? 12 : (isVeryShort ? 4 : (usesCondensedLayout ? 8 : 10)))
+                .frame(height: isCompact ? 12 : (isVeryShort ? 8 : 10))
 
             Button {
                 registerActivity()
@@ -122,10 +118,10 @@ struct SidebarView: View {
             } label: {
                 Label("So funktioniert's", systemImage: "questionmark.circle.fill")
             }
-            .buttonStyle(SidebarButtonStyle(compact: usesCompactButtons, veryCompact: isVeryShort))
+            .buttonStyle(SidebarButtonStyle(compact: usesCondensedLayout, veryCompact: isVeryShort))
 
             Spacer()
-                .frame(height: isCompact ? 12 : (isVeryShort ? 4 : (usesCondensedLayout ? 8 : 10)))
+                .frame(height: isCompact ? 12 : (isVeryShort ? 8 : 10))
 
             Button {
                 registerActivity()
@@ -133,10 +129,10 @@ struct SidebarView: View {
             } label: {
                 Label("Spielregeln", systemImage: "list.bullet.clipboard.fill")
             }
-            .buttonStyle(SidebarButtonStyle(compact: usesCompactButtons, veryCompact: isVeryShort))
+            .buttonStyle(SidebarButtonStyle(compact: usesCondensedLayout, veryCompact: isVeryShort))
 
             Spacer()
-                .frame(height: isCompact ? 12 : (isVeryShort ? 4 : (usesCondensedLayout ? 8 : 10)))
+                .frame(height: isCompact ? 12 : (isVeryShort ? 8 : 10))
 
             Button {
                 registerActivity()
@@ -144,7 +140,7 @@ struct SidebarView: View {
             } label: {
                 Label("Info & Support", systemImage: "info.circle.fill")
             }
-            .buttonStyle(SidebarButtonStyle(compact: usesCompactButtons, veryCompact: isVeryShort))
+            .buttonStyle(SidebarButtonStyle(compact: usesCondensedLayout, veryCompact: isVeryShort))
             .accessibilityHint("Öffnet Feedback, Datenschutz und Impressum")
 
             if !isCompact {
@@ -158,10 +154,10 @@ struct SidebarView: View {
             } label: {
                 Label("Abmelden", systemImage: "rectangle.portrait.and.arrow.right")
             }
-            .buttonStyle(LogoutButtonStyle(compact: usesCompactButtons, veryCompact: isVeryShort))
+            .buttonStyle(LogoutButtonStyle(compact: usesCondensedLayout, veryCompact: isVeryShort))
 
             Spacer()
-                .frame(height: isCompact ? 14 : (isVeryShort ? 4 : (usesCondensedLayout ? 8 : 10)))
+                .frame(height: isCompact ? 14 : (isVeryShort ? 8 : 10))
 
             HStack {
                 if isCompact {
@@ -172,8 +168,8 @@ struct SidebarView: View {
                         .resizable()
                         .scaledToFit()
                         .frame(
-                            width: isVeryShort ? 50 : (usesCondensedLayout ? 58 : 64),
-                            height: isVeryShort ? 36 : (usesCondensedLayout ? 42 : 48)
+                            width: isVeryShort ? 44 : (usesCondensedLayout ? 58 : 64),
+                            height: isVeryShort ? 32 : (usesCondensedLayout ? 42 : 48)
                         )
                         .shadow(color: SecretMatchTheme.primary.opacity(0.18), radius: 12)
                         .accessibilityLabel("Hot Chili Events")
@@ -182,8 +178,8 @@ struct SidebarView: View {
                         .resizable()
                         .scaledToFit()
                         .frame(
-                            width: isVeryShort ? 52 : (usesCondensedLayout ? 62 : 68),
-                            height: isVeryShort ? 30 : (usesCondensedLayout ? 34 : 38)
+                            width: isVeryShort ? 46 : (usesCondensedLayout ? 62 : 68),
+                            height: isVeryShort ? 26 : (usesCondensedLayout ? 34 : 38)
                         )
                         .padding(.horizontal, 6)
                         .padding(.vertical, 4)
@@ -195,8 +191,8 @@ struct SidebarView: View {
                         .resizable()
                         .scaledToFit()
                         .frame(
-                            width: isCompact ? 112 : (isVeryShort ? 72 : (usesCondensedLayout ? 88 : 98)),
-                            height: isCompact ? 76 : (isVeryShort ? 50 : (usesCondensedLayout ? 62 : 68))
+                            width: isCompact ? 112 : (isVeryShort ? 62 : (usesCondensedLayout ? 88 : 98)),
+                            height: isCompact ? 76 : (isVeryShort ? 42 : (usesCondensedLayout ? 62 : 68))
                         )
                         .accessibilityLabel("Club 2020")
                 }
