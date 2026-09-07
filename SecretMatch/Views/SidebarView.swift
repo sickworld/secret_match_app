@@ -5,9 +5,7 @@ struct SidebarView: View {
     var secondsRemaining: Int
     var registerActivity: () -> Void
     var logout: () -> Void
-    @Binding var showMatchesOverlay: Bool
-    @Binding var showInterestsOverlay: Bool
-    @Binding var showActionsOverlay: Bool
+    @Binding var showOverviewOverlay: Bool
     @Binding var showGuideOverlay: Bool
     @Binding var showRulesOverlay: Bool
     @Binding var showInfoOverlay: Bool
@@ -82,31 +80,20 @@ struct SidebarView: View {
 
             Button {
                 registerActivity()
-                showMatchesOverlay = true
+                showOverviewOverlay = true
             } label: {
-                Label("Matches", systemImage: "sparkles")
+                HStack(spacing: 12) {
+                    Image(systemName: "rectangle.grid.1x2.fill")
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Deine Übersicht")
+                        Text("Matches · Interesse · Aktionen")
+                            .font(.caption.weight(.semibold))
+                            .foregroundStyle(SecretMatchTheme.muted)
+                    }
+                }
             }
             .buttonStyle(SidebarButtonStyle(compact: isShort))
-
-            Spacer(minLength: isCompact ? 12 : (isShort ? 8 : 12))
-
-            Button {
-                registerActivity()
-                showInterestsOverlay = true
-            } label: {
-                Label("Interesse", systemImage: "heart.text.square.fill")
-            }
-            .buttonStyle(SidebarButtonStyle(compact: isShort))
-
-            Spacer(minLength: isCompact ? 12 : (isShort ? 8 : 12))
-
-            Button {
-                registerActivity()
-                showActionsOverlay = true
-            } label: {
-                Label("Deine Aktionen", systemImage: "paperplane.fill")
-            }
-            .buttonStyle(SidebarButtonStyle(compact: isShort))
+            .accessibilityLabel("Deine Übersicht: Matches, Interesse und Aktionen")
 
             Spacer(minLength: isCompact ? 12 : (isShort ? 8 : 12))
 

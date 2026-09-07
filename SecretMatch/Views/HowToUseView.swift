@@ -281,7 +281,7 @@ struct HowToUseView: View {
         HStack(alignment: .top, spacing: 10) {
             Image(systemName: "checkmark.seal.fill")
                 .foregroundStyle(SecretMatchTheme.secondary)
-            Text("Demo erfolgreich. Im echten Modus erscheint die gesendete Aktion danach unter \"Deine Aktionen\".")
+            Text("Demo erfolgreich. Im echten Modus findest du empfangene Vorschläge unter \"Deine Übersicht → Aktionen\".")
                 .font(.subheadline.weight(.semibold))
                 .foregroundStyle(.white)
                 .fixedSize(horizontal: false, vertical: true)

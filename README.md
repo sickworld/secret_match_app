@@ -8,7 +8,7 @@ Diese Funktionen benötigen das WordPress-Modul ab Version `2026.09.07.9`; das M
 
 ## Eingehende Interessen
 
-Die getrennten Teilnehmeransichten **Matches** und **Interesse** unterscheiden gegenseitige Matches von noch offenen, eingehenden Match-Wünschen. `GET /wp-json/secretmatch/v1/interests` liefert ausschließlich Wünsche an die aktuell angemeldete Eventnummer, für die noch kein gegenseitiges Match besteht. Mehrere Wünsche derselben Nummer werden zu einem Eintrag zusammengefasst; ein Fuck-Wunsch hat dabei Vorrang. Das aktualisierte WordPress-Modul muss vor oder zusammen mit diesem App-Build veröffentlicht werden.
+Die Reiter **Matches** und **Interesse** in der Teilnehmerübersicht unterscheiden gegenseitige Matches von noch offenen, eingehenden Match-Wünschen. `GET /wp-json/secretmatch/v1/interests` liefert ausschließlich Wünsche an die aktuell angemeldete Eventnummer, für die noch kein gegenseitiges Match besteht. Mehrere Wünsche derselben Nummer werden zu einem Eintrag zusammengefasst; ein Fuck-Wunsch hat dabei Vorrang. Das aktualisierte WordPress-Modul muss vor oder zusammen mit diesem App-Build veröffentlicht werden.
 
 ## Verbindungsstatus
 
@@ -24,7 +24,9 @@ Die Admin-App zeigt gesetzte PINs. Unter **PIN verwalten** kann eine PIN manuell
 
 Die Admin-App besitzt eine eigene Rubrik **Match-Requests**. Sie zeigt alle gesendeten Wünsche mit Absender, Empfänger, Typ, Freitext und dem Status offen oder gematcht. Requests können gesucht, gefiltert, bearbeitet und einzeln gelöscht werden; vorhandene gegenseitige Matches bleiben dabei eigenständig bestehen.
 
-Die Navigation führt Matches und offene Interessen als eigene Rubriken. Die Aktionsübersicht zeigt ausschließlich empfangene Aktionen und bietet Filter nach Kategorie und Absendernummer. Während einer aktiven Sitzung übermittelt das iPad alle 30 Sekunden Akkustand, Ladezustand und App-Version; die Admin-App zeigt Geräte an, deren letzter Heartbeat höchstens drei Minuten zurückliegt.
+Die Teilnehmernavigation bündelt Matches, offene Interessen und erhaltene Aktionen unter **Deine Übersicht**. Drei klar erklärte Reiter unterscheiden gegenseitig bestätigte Matches, noch offene Interessen und direkt empfangene Aktionen. Einheitliche Karten stellen die Eventnummer zuerst dar; Typ- und Nummernfilter funktionieren in allen drei Bereichen. Während einer aktiven Sitzung übermittelt das iPad alle 30 Sekunden Akkustand, Ladezustand und App-Version; die Admin-App zeigt Geräte an, deren letzter Heartbeat höchstens drei Minuten zurückliegt.
+
+Beim Login erhält die PIN-Tastatur einen sichtbaren Kontext mit Eventnummer, Erklärung und direkter Möglichkeit, die Nummer zu ändern. Die PIN-Erstanlage kennzeichnet die Eingabe und Bestätigung zusätzlich eindeutig als Schritt 1 und Schritt 2.
 
 ## Sende-Warteschlange
 

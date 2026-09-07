@@ -166,9 +166,12 @@ struct LoginView: View {
                 VStack {
                     Spacer()
                     VStack(spacing: 10) {
+                        if activeField == .pin {
+                            loginPINPrompt
+                        }
                         CustomNumberKeyboard(
                             text: activeField == .number ? $number : $pin,
-                            doneLabel: requiresLoginPIN ? "Einloggen" : "Weiter",
+                            doneLabel: requiresLoginPIN ? "Anmelden" : "Weiter",
                             placeholder: activeField == .number ? "Nummer…" : "PIN…",
                             maxDigits: activeField == .number ? 3 : 2,
                             obscuresText: activeField == .pin,
@@ -248,6 +251,45 @@ struct LoginView: View {
             AdminLoginView(isPresented: $showAdminLogin)
                 .environmentObject(api)
         }
+    }
+
+    private var loginPINPrompt: some View {
+        HStack(spacing: 15) {
+            Image(systemName: "lock.fill")
+                .font(.system(size: 22, weight: .bold))
+                .foregroundStyle(SecretMatchTheme.secondary)
+                .frame(width: 48, height: 48)
+                .background(SecretMatchTheme.secondary.opacity(0.14))
+                .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+
+            VStack(alignment: .leading, spacing: 3) {
+                Text("ANMELDUNG · PIN")
+                    .font(.caption.bold())
+                    .tracking(1.5)
+                    .foregroundStyle(SecretMatchTheme.secondary)
+                Text("PIN für \(number.displayEventNumber) eingeben")
+                    .font(.system(size: 22, weight: .bold, design: .rounded))
+                    .foregroundStyle(.white)
+                Text("Nutze deine selbst gewählte zweistellige PIN.")
+                    .font(.callout.weight(.medium))
+                    .foregroundStyle(SecretMatchTheme.muted)
+            }
+
+            Spacer(minLength: 8)
+
+            Button("Nummer ändern") {
+                editNumber()
+            }
+            .font(.callout.bold())
+            .foregroundStyle(SecretMatchTheme.secondary)
+        }
+        .padding(16)
+        .frame(maxWidth: 700)
+        .background(SecretMatchTheme.surface)
+        .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: 20).stroke(SecretMatchTheme.secondary.opacity(0.42)))
+        .padding(.horizontal, 20)
+        .accessibilityElement(children: .contain)
     }
 
     private func submitLogin() {
@@ -437,18 +479,40 @@ private struct ParticipantPINSetupView: View {
     }
 
     private var numberKeyboard: some View {
-        CustomNumberKeyboard(
-            text: activePIN,
-            doneLabel: activeField == .pin ? "Weiter" : "PIN speichern",
-            placeholder: "PIN…",
-            maxDigits: 2,
-            obscuresText: true,
-            showsCloseButton: false
-        ) {
-            if activeField == .pin, pin.count == 2 {
-                activeField = .confirmation
-            } else {
-                saveIfValid()
+        VStack(spacing: 10) {
+            HStack(spacing: 12) {
+                Text(activeField == .pin ? "1" : "2")
+                    .font(.headline.bold())
+                    .foregroundStyle(.white)
+                    .frame(width: 38, height: 38)
+                    .background(SecretMatchTheme.secondary)
+                    .clipShape(Circle())
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(activeField == .pin ? "SCHRITT 1 VON 2" : "SCHRITT 2 VON 2")
+                        .font(.caption.bold())
+                        .tracking(1.3)
+                        .foregroundStyle(SecretMatchTheme.secondary)
+                    Text(activeField == .pin ? "Neue PIN eingeben" : "Dieselbe PIN bestätigen")
+                        .font(.system(size: 20, weight: .bold, design: .rounded))
+                        .foregroundStyle(.white)
+                }
+                Spacer()
+            }
+            .padding(.horizontal, 20)
+
+            CustomNumberKeyboard(
+                text: activePIN,
+                doneLabel: activeField == .pin ? "Weiter zur Bestätigung" : "PIN speichern",
+                placeholder: "PIN…",
+                maxDigits: 2,
+                obscuresText: true,
+                showsCloseButton: false
+            ) {
+                if activeField == .pin, pin.count == 2 {
+                    activeField = .confirmation
+                } else {
+                    saveIfValid()
+                }
             }
         }
         .disabled(isSubmitting)

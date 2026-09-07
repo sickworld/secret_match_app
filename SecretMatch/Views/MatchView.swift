@@ -3,8 +3,7 @@ import SwiftUI
 struct MatchView: View {
     @EnvironmentObject var api: APIService
     
-    @State private var showMatchesOverlay = false
-    @State private var showActionsOverlay = false
+    @State private var showOverviewOverlay = false
     @State private var showGuideOverlay = false
     @State private var showRulesOverlay = false
     @State private var showInfoOverlay = false
@@ -12,7 +11,6 @@ struct MatchView: View {
     @State private var selectedActions: Set<String> = []
     @State private var responseMessage = ""
     @State private var matchMessage = ""
-    @State private var showInterestsOverlay = false
 
 
     // Inactivity / Auto-Logout
@@ -111,20 +109,8 @@ struct MatchView: View {
                     resetInactivityTimer()
                 }
             
-            if showMatchesOverlay {
-                MatchListView(isPresented: $showMatchesOverlay, initialSection: .matches)
-                    .environmentObject(api)
-                    .zIndex(5)
-            }
-
-            if showInterestsOverlay {
-                MatchListView(isPresented: $showInterestsOverlay, initialSection: .interests)
-                    .environmentObject(api)
-                    .zIndex(5)
-            }
-
-            if showActionsOverlay {
-                ActionListView(isPresented: $showActionsOverlay)
+            if showOverviewOverlay {
+                ParticipantOverviewView(isPresented: $showOverviewOverlay)
                     .environmentObject(api)
                     .zIndex(5)
             }
@@ -233,9 +219,7 @@ struct MatchView: View {
             secondsRemaining: secondsRemaining,
             registerActivity: resetInactivityTimer,
             logout: { api.logout() },
-            showMatchesOverlay: $showMatchesOverlay,
-            showInterestsOverlay: $showInterestsOverlay,
-            showActionsOverlay: $showActionsOverlay,
+            showOverviewOverlay: $showOverviewOverlay,
             showGuideOverlay: $showGuideOverlay,
             showRulesOverlay: $showRulesOverlay,
             showInfoOverlay: $showInfoOverlay,
