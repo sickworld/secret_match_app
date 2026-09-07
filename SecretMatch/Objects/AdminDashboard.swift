@@ -12,6 +12,8 @@ struct AdminDashboard: Decodable {
     let billboardSessions: Int
     let billboardRotationSeconds: Int
     let telegramConfigured: Bool
+    let apnsConfigured: Bool?
+    let adminPushDevices: Int?
     let pluginVersion: String
     let wordpressTime: String
     let apiOK: Bool
@@ -36,6 +38,8 @@ struct AdminDashboard: Decodable {
         case billboardSessions = "billboard_sessions"
         case billboardRotationSeconds = "billboard_rotation_seconds"
         case telegramConfigured = "telegram_configured"
+        case apnsConfigured = "apns_configured"
+        case adminPushDevices = "admin_push_devices"
         case pluginVersion = "plugin_version"
         case wordpressTime = "wordpress_time"
         case apiOK = "api_ok"

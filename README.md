@@ -4,7 +4,7 @@
 
 Die iPhone-Admin-App kann Aktionen und Matches anlegen, bearbeiten und löschen sowie Match-Requests einsehen und verwalten. In der Teilnehmerverwaltung lassen sich Nummern freigeben und sperren sowie Gender-Angaben setzen oder zurücksetzen. Jede Gender-Änderung und jeder Reset widerruft die aktive Sitzung der betroffenen Nummer; nach einem Reset erscheint die Gender-Auswahl beim nächsten Login erneut. Feedback bleibt als anonymer, unveränderlicher Datensatz bewusst auf Lesen und Löschen begrenzt.
 
-Diese Funktionen benötigen das WordPress-Modul ab Version `2026.09.07.8`; das Modul muss vor oder zusammen mit diesem App-Build veröffentlicht werden.
+Diese Funktionen benötigen das WordPress-Modul ab Version `2026.09.07.9`; das Modul muss vor oder zusammen mit diesem App-Build veröffentlicht werden.
 
 ## Eingehende Interessen
 
@@ -15,6 +15,8 @@ Die getrennten Teilnehmeransichten **Matches** und **Interesse** unterscheiden g
 Die App überwacht den Netzwerkpfad und prüft zusätzlich über `GET /wp-json/secretmatch/v1/status`, ob der SecretMatch-Server tatsächlich erreichbar ist. Bei fehlendem Internet oder einem nicht erreichbaren Server erscheint appweit ein Hinweis mit manueller Neuprüfung. Solange die App aktiv ist, wird der Status außerdem alle 15 Sekunden aktualisiert. Ein erfolgreicher Check stößt offene Einträge der Sende-Warteschlange erneut an.
 
 Im Admin-Dashboard stehen Billboard und iPads direkt am Anfang der Übersicht. Bekannte iPads bleiben auch offline sichtbar. Das WordPress-Modul sendet über die bestehende Telegram-Konfiguration einmalige Warnungen und Entwarnungen, wenn Heartbeats länger ausbleiben beziehungsweise zurückkehren.
+
+Die eigenständige Admin-App registriert sich nach erfolgreicher Anmeldung für Apple-Push-Nachrichten. Dadurch erreichen Billboard- und iPad-Ausfallwarnungen das Admin-iPhone auch bei gesperrtem Gerät oder beendeter App. Push muss für die App-ID `com.SecretMatch.Admin` im Apple-Developer-Portal aktiviert sein; die APNs-Zugangsdaten werden ausschließlich serverseitig konfiguriert. Für verlässliche Warnzeiten muss der Server `wp-cron.php` mindestens einmal pro Minute ausführen.
 
 Der Login fragt zunächst nur die Eventnummer ab. Ist bereits eine PIN gesetzt, erscheint sie anschließend als eigener zweiter Schritt. Beim ersten Login mit einer freigegebenen Eventnummer legt der Teilnehmer stattdessen direkt selbst eine zweistellige PIN fest und wählt Frau oder Mann. Sowohl Anmeldung als auch PIN-Ersteinrichtung verwenden ausschließlich die vorhandene appinterne Zahlentastatur. Match-Wünsche können eine Nachricht mit bis zu 180 Zeichen enthalten; administrativ gepflegte Schnelltexte stehen direkt bei der Eingabe zur Verfügung. Nachrichten werden gemeinsam mit der Aktion dauerhaft zwischengespeichert und erst aus der Queue entfernt, nachdem der Server das erfolgreiche Datenbank-Speichern bestätigt hat.
 

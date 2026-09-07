@@ -607,6 +607,10 @@ struct AdminDashboardView: View {
             statusRow("App-Version", appVersion)
             statusRow("Telegram", api.adminDashboard?.telegramConfigured == true ? "Konfiguriert" : "Nicht konfiguriert",
                       good: api.adminDashboard?.telegramConfigured == true)
+            statusRow("Admin-App-Warnungen", api.adminDashboard?.apnsConfigured == true
+                      ? "Konfiguriert · \(api.adminDashboard?.adminPushDevices ?? 0) Gerät(e)"
+                      : "APNs nicht konfiguriert",
+                      good: api.adminDashboard?.apnsConfigured == true)
             statusRow("Billboard-Sessions", "\(api.adminDashboard?.billboardSessions ?? 0)")
             statusRow("WordPress-Zeit", api.adminDashboard?.wordpressTime ?? "–")
             statusRow("Letzte Aktivität", api.adminDashboard?.latestActivity.isEmpty == false

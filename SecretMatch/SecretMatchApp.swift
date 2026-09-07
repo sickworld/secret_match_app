@@ -2,6 +2,7 @@ import SwiftUI
 
 @main
 struct SecretMatchApp: App {
+    @UIApplicationDelegateAdaptor(SecretMatchAppDelegate.self) private var appDelegate
     @StateObject private var api = APIService.shared
     @Environment(\.scenePhase) private var scenePhase
     

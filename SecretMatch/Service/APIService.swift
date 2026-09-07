@@ -9,6 +9,8 @@ class APIService: ObservableObject {
     static let shared = APIService()
     private static let pendingInteractionsKey = "secretmatch.pending-interactions.v1"
     private static let pendingInteractionLifetime: TimeInterval = 24 * 60 * 60
+    private static let adminPushTokenKey = "secretmatch.admin-push-device-token"
+    private static let adminPushEnvironmentKey = "secretmatch.admin-push-environment"
 
     private init() {
         pendingInteractions = Self.loadPendingInteractions()
@@ -208,6 +210,9 @@ class APIService: ObservableObject {
                   self?.connectionState == .online else { return }
             await self?.retryPendingSends()
             self?.startDeviceHeartbeat()
+            if self?.isAdmin == true {
+                await self?.syncAdminPushToken()
+            }
         }
     }
 
@@ -392,6 +397,51 @@ class APIService: ObservableObject {
         matches = []
         actions = []
         return true
+    }
+
+    func registerAdminPushToken(_ token: String, environment: String) async {
+        guard token.count >= 32, token.count <= 200, token.count.isMultiple(of: 2),
+              token.range(of: "^[0-9a-f]+$", options: .regularExpression) != nil,
+              environment == "sandbox" || environment == "production" else { return }
+        UserDefaults.standard.set(token, forKey: Self.adminPushTokenKey)
+        UserDefaults.standard.set(environment, forKey: Self.adminPushEnvironmentKey)
+        await syncAdminPushToken()
+    }
+
+    private func syncAdminPushToken() async {
+        guard adminToken != nil,
+              let token = UserDefaults.standard.string(forKey: Self.adminPushTokenKey),
+              let environment = UserDefaults.standard.string(forKey: Self.adminPushEnvironmentKey) else { return }
+        do {
+            let url = baseURL.appendingPathComponent("admin/push-token")
+            var request = try adminRequest(url: url)
+            request.httpMethod = "POST"
+            request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+            request.httpBody = try JSONSerialization.data(withJSONObject: [
+                "device_token": token,
+                "environment": environment,
+            ])
+            let (_, response) = try await URLSession.shared.data(for: request)
+            try validateAdminResponse(response)
+        } catch {
+            // A later activation or APNs registration retries without logging token details.
+        }
+    }
+
+    func unregisterAdminPushToken() async {
+        guard adminToken != nil,
+              let token = UserDefaults.standard.string(forKey: Self.adminPushTokenKey) else { return }
+        do {
+            let url = baseURL.appendingPathComponent("admin/push-token")
+            var request = try adminRequest(url: url)
+            request.httpMethod = "DELETE"
+            request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+            request.httpBody = try JSONSerialization.data(withJSONObject: ["device_token": token])
+            let (_, response) = try await URLSession.shared.data(for: request)
+            try validateAdminResponse(response)
+        } catch {
+            // Explicit logout also attempts removal; network failures remain non-blocking.
+        }
     }
     
     @MainActor
@@ -737,11 +787,25 @@ class APIService: ObservableObject {
 
     func logout() {
         if let adminToken {
-            var request = URLRequest(url: baseURL.appendingPathComponent("admin/logout"))
-            request.httpMethod = "POST"
-            request.setValue("Bearer \(adminToken)", forHTTPHeaderField: "Authorization")
+            let authorization = "Bearer \(adminToken)"
+            var logoutRequest = URLRequest(url: baseURL.appendingPathComponent("admin/logout"))
+            logoutRequest.httpMethod = "POST"
+            logoutRequest.setValue(authorization, forHTTPHeaderField: "Authorization")
+
+            var unregisterRequest: URLRequest?
+            if let pushToken = UserDefaults.standard.string(forKey: Self.adminPushTokenKey) {
+                var request = URLRequest(url: baseURL.appendingPathComponent("admin/push-token"))
+                request.httpMethod = "DELETE"
+                request.setValue(authorization, forHTTPHeaderField: "Authorization")
+                request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+                request.httpBody = try? JSONSerialization.data(withJSONObject: ["device_token": pushToken])
+                unregisterRequest = request
+            }
             Task {
-                _ = try? await URLSession.shared.data(for: request)
+                if let unregisterRequest {
+                    _ = try? await URLSession.shared.data(for: unregisterRequest)
+                }
+                _ = try? await URLSession.shared.data(for: logoutRequest)
             }
         }
 

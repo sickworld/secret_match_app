@@ -36,6 +36,9 @@ struct AdminMainView: View {
             showAdminMenu = false
         }
 #endif
+        .task {
+            await AdminPushNotifications.requestAuthorizationAndRegister()
+        }
     }
 
     private func content(isCompact: Bool) -> some View {
