@@ -164,9 +164,9 @@ struct ParticipantOverviewView: View {
                     filterButton("❤️ Hot \(count(for: "normal"))", type: "normal", color: Color(hex: "#E83E8C"))
                     filterButton("🍆 Fuck \(count(for: "hot"))", type: "hot", color: Color(hex: "#8E63D2"))
                     if selectedSection == .actions {
-                        filterButton("👄 Blow \(count(for: "bjob"))", type: "bjob", color: Color(hex: "#3E9ED6"))
-                        filterButton("✋ Hand \(count(for: "hjob"))", type: "hjob", color: Color(hex: "#E6923E"))
-                        filterButton("👅 Lick \(count(for: "ljob"))", type: "ljob", color: Color(hex: "#D65C8D"))
+                        filterButton("👄 Blow-Job \(count(for: "bjob"))", type: "bjob", color: Color(hex: "#3E9ED6"))
+                        filterButton("✋ Hand-Job \(count(for: "hjob"))", type: "hjob", color: Color(hex: "#E6923E"))
+                        filterButton("👅 Lick-Job \(count(for: "ljob"))", type: "ljob", color: Color(hex: "#D65C8D"))
                     }
                 }
             }
@@ -416,9 +416,9 @@ struct ParticipantOverviewView: View {
         switch type {
         case "normal": return "Hot"
         case "hot": return "Fuck"
-        case "bjob": return "Blow"
-        case "hjob": return "Hand"
-        case "ljob": return "Lick"
+        case "bjob": return "Blow-Job"
+        case "hjob": return "Hand-Job"
+        case "ljob": return "Lick-Job"
         default: return "Andere"
         }
     }

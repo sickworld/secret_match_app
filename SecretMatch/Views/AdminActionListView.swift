@@ -86,9 +86,9 @@ struct AdminActionListView: View {
                         Text("Alle").tag("all")
                         Text("❤️ Hot").tag("normal")
                         Text("🍆 Fuck").tag("hot")
-                        Text("👄 Blow").tag("bjob")
-                        Text("✋ Hand").tag("hjob")
-                        Text("👅 Lick").tag("ljob")
+                        Text("👄 Blow-Job").tag("bjob")
+                        Text("✋ Hand-Job").tag("hjob")
+                        Text("👅 Lick-Job").tag("ljob")
                     }
                     .pickerStyle(.menu)
                     .tint(.white)

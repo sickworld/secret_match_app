@@ -20,6 +20,10 @@ private enum InterfaceScaleLevel: Int, CaseIterable {
 
 struct AccessibleInterfaceContainer<Content: View>: View {
     @AppStorage("secretmatch.interface-scale-level") private var storedLevel = InterfaceScaleLevel.standard.rawValue
+    @Environment(\.accessibilityReduceMotion) private var accessibilityReduceMotion
+    @State private var contentOpacity = 1.0
+    @State private var isChangingScale = false
+    @State private var scaleChangeTask: Task<Void, Never>?
     private let content: Content
 
     init(@ViewBuilder content: () -> Content) {
@@ -31,6 +35,9 @@ struct AccessibleInterfaceContainer<Content: View>: View {
             let level = InterfaceScaleLevel(rawValue: storedLevel) ?? .standard
 
             ZStack(alignment: .topTrailing) {
+                Color.black
+                    .ignoresSafeArea()
+
                 content
                     .frame(
                         width: proxy.size.width / level.scale,
@@ -42,16 +49,67 @@ struct AccessibleInterfaceContainer<Content: View>: View {
                         height: proxy.size.height,
                         alignment: .topLeading
                     )
+                    .opacity(contentOpacity)
 
                 InterfaceScaleControls(level: level) { newLevel in
-                    withAnimation(.easeInOut(duration: 0.2)) {
-                        storedLevel = newLevel.rawValue
-                    }
+                    changeScale(to: newLevel)
                 }
+                .allowsHitTesting(!isChangingScale)
                 .padding(.top, 8)
                 .padding(.trailing, 12)
                 .zIndex(10_000)
             }
+        }
+        .onDisappear {
+            scaleChangeTask?.cancel()
+            contentOpacity = 1
+            isChangingScale = false
+        }
+    }
+
+    @MainActor
+    private func changeScale(to newLevel: InterfaceScaleLevel) {
+        guard newLevel.rawValue != storedLevel, !isChangingScale else { return }
+
+        if accessibilityReduceMotion {
+            var transaction = Transaction()
+            transaction.disablesAnimations = true
+            withTransaction(transaction) {
+                storedLevel = newLevel.rawValue
+            }
+            return
+        }
+
+        isChangingScale = true
+        scaleChangeTask?.cancel()
+
+        withAnimation(.easeOut(duration: 0.08)) {
+            contentOpacity = 0
+        }
+
+        scaleChangeTask = Task { @MainActor in
+            do {
+                try await Task.sleep(for: .milliseconds(80))
+            } catch {
+                return
+            }
+
+            var transaction = Transaction()
+            transaction.disablesAnimations = true
+            withTransaction(transaction) {
+                storedLevel = newLevel.rawValue
+            }
+
+            withAnimation(.easeIn(duration: 0.14)) {
+                contentOpacity = 1
+            }
+
+            do {
+                try await Task.sleep(for: .milliseconds(140))
+            } catch {
+                return
+            }
+            isChangingScale = false
         }
     }
 }
