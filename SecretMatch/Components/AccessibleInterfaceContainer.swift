@@ -1,5 +1,16 @@
 import SwiftUI
 
+private struct SecretMatchInterfaceScaleKey: EnvironmentKey {
+    static let defaultValue: CGFloat = 1
+}
+
+extension EnvironmentValues {
+    var secretMatchInterfaceScale: CGFloat {
+        get { self[SecretMatchInterfaceScaleKey.self] }
+        set { self[SecretMatchInterfaceScaleKey.self] = newValue }
+    }
+}
+
 private enum InterfaceScaleLevel: Int, CaseIterable {
     case standard
     case large
@@ -39,6 +50,7 @@ struct AccessibleInterfaceContainer<Content: View>: View {
                     .ignoresSafeArea()
 
                 content
+                    .environment(\.secretMatchInterfaceScale, level.scale)
                     .frame(
                         width: proxy.size.width / level.scale,
                         height: proxy.size.height / level.scale

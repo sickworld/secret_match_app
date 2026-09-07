@@ -2,6 +2,7 @@ import SwiftUI
 import Combine
 
 struct LoginView: View {
+    @Environment(\.secretMatchInterfaceScale) private var interfaceScale
     @State private var number: String = ""
     @State private var pin: String = ""
     @State private var requiresLoginPIN = false
@@ -28,13 +29,18 @@ struct LoginView: View {
                 .ignoresSafeArea()
 
             GeometryReader { proxy in
+                let isHeightConstrained = interfaceScale >= 1.29 || proxy.size.height < 700
+
                 ScrollView {
                     VStack(spacing: 0) {
-                        VStack(spacing: 34) {
+                        VStack(spacing: isHeightConstrained ? 20 : 34) {
                     Image("logo")
                         .resizable()
                         .scaledToFit()
-                        .frame(width: 300, height: 240)
+                        .frame(
+                            width: isHeightConstrained ? 230 : 300,
+                            height: isHeightConstrained ? 150 : 240
+                        )
                         .shadow(color: SecretMatchTheme.primary.opacity(0.22), radius: 24)
                         .onTapGesture(count: 2) {
                             UIImpactFeedbackGenerator(style: .medium).impactOccurred()
@@ -48,13 +54,13 @@ struct LoginView: View {
                             .foregroundStyle(SecretMatchTheme.secondary)
 
                         Text("Bereit für Match&Play?")
-                            .font(.system(size: 40, weight: .bold, design: .rounded))
+                            .font(.system(size: isHeightConstrained ? 34 : 40, weight: .bold, design: .rounded))
                             .foregroundStyle(SecretMatchTheme.text)
 
                         Text(requiresLoginPIN
                              ? "Gib jetzt deine persönliche PIN ein."
                              : "Gib zuerst deine Event-Nummer ein.")
-                            .font(.system(size: 20, weight: .medium, design: .rounded))
+                            .font(.system(size: isHeightConstrained ? 18 : 20, weight: .medium, design: .rounded))
                             .foregroundStyle(SecretMatchTheme.muted)
                             .multilineTextAlignment(.center)
                     }
@@ -124,7 +130,10 @@ struct LoginView: View {
                             Image(systemName: "arrow.right")
                         }
                     }
-                    .buttonStyle(SecretPrimaryButtonStyle(fontSize: 21, minHeight: 78))
+                    .buttonStyle(SecretPrimaryButtonStyle(
+                        fontSize: isHeightConstrained ? 19 : 21,
+                        minHeight: isHeightConstrained ? 68 : 78
+                    ))
                     .disabled(loginIsDisabled)
                     .opacity(loginIsDisabled ? 0.55 : 1)
 
@@ -140,8 +149,8 @@ struct LoginView: View {
                     .accessibilityHint("Öffnet Info, Feedback, Datenschutz und Impressum")
                         }
                         .frame(maxWidth: 680)
-                        .padding(.horizontal, 50)
-                        .padding(.vertical, 36)
+                        .padding(.horizontal, isHeightConstrained ? 36 : 50)
+                        .padding(.vertical, isHeightConstrained ? 20 : 36)
                     }
                     .frame(maxWidth: .infinity, minHeight: proxy.size.height)
                     .padding(.horizontal, 28)

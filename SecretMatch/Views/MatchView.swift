@@ -57,7 +57,7 @@ struct MatchView: View {
     var body: some View {
         GeometryReader { proxy in
             let isCompact = proxy.size.width < proxy.size.height
-            let isShort = !isCompact && proxy.size.height < 930
+            let isShort = !isCompact && proxy.size.height < 760
 
             content(isCompact: isCompact, isShort: isShort, availableHeight: proxy.size.height)
         }

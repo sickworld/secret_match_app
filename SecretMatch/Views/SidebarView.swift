@@ -2,6 +2,7 @@ import SwiftUI
 
 struct SidebarView: View {
     @EnvironmentObject var api: APIService
+    @Environment(\.secretMatchInterfaceScale) private var interfaceScale
     var secondsRemaining: Int
     var registerActivity: () -> Void
     var logout: () -> Void
@@ -14,11 +15,11 @@ struct SidebarView: View {
     var availableHeight: CGFloat?
 
     private var isVeryShort: Bool {
-        !isCompact && (availableHeight ?? .infinity) < 800
+        !isCompact && (interfaceScale >= 1.29 || (availableHeight ?? .infinity) < 680)
     }
 
     private var usesCondensedLayout: Bool {
-        isShort || isVeryShort
+        isShort || interfaceScale > 1.01 || isVeryShort
     }
 
     var body: some View {
@@ -26,11 +27,12 @@ struct SidebarView: View {
             Image("logo")
                 .resizable()
                 .scaledToFit()
-                .frame(maxWidth: isCompact ? 132 : (isVeryShort ? 112 : (usesCondensedLayout ? 142 : 174)))
-                .frame(height: isCompact ? 86 : (isVeryShort ? 64 : (usesCondensedLayout ? 86 : 142)))
+                .frame(maxWidth: isCompact ? 132 : (isVeryShort ? 112 : (usesCondensedLayout ? 142 : 156)))
+                .frame(height: isCompact ? 86 : (isVeryShort ? 64 : (usesCondensedLayout ? 86 : 110)))
                 .shadow(color: SecretMatchTheme.primary.opacity(0.16), radius: 18)
 
-            Spacer(minLength: isCompact ? 14 : (isVeryShort ? 4 : (usesCondensedLayout ? 8 : 14)))
+            Spacer()
+                .frame(height: isCompact ? 14 : (isVeryShort ? 4 : (usesCondensedLayout ? 8 : 12)))
 
             HStack(spacing: 10) {
                 Circle()
@@ -63,7 +65,8 @@ struct SidebarView: View {
             )
             .accessibilityLabel("Automatischer Logout in \(secondsRemaining) Sekunden")
 
-            Spacer(minLength: isCompact ? 18 : (isVeryShort ? 8 : (usesCondensedLayout ? 16 : 24)))
+            Spacer()
+                .frame(height: isCompact ? 18 : (isVeryShort ? 8 : (usesCondensedLayout ? 16 : 18)))
 
             VStack(alignment: .leading, spacing: 8) {
                 Text("DEIN EVENT PASS")
@@ -85,7 +88,8 @@ struct SidebarView: View {
                 .overlay(RoundedRectangle(cornerRadius: 16).stroke(SecretMatchTheme.border))
             }
 
-            Spacer(minLength: isCompact ? 18 : (isVeryShort ? 8 : (usesCondensedLayout ? 16 : 24)))
+            Spacer()
+                .frame(height: isCompact ? 18 : (isVeryShort ? 8 : (usesCondensedLayout ? 16 : 18)))
 
             Button {
                 registerActivity()
@@ -104,7 +108,8 @@ struct SidebarView: View {
             .buttonStyle(SidebarButtonStyle(compact: usesCondensedLayout, veryCompact: isVeryShort))
             .accessibilityLabel("Deine Übersicht: Matches, Interesse und Aktionen")
 
-            Spacer(minLength: isCompact ? 12 : (isVeryShort ? 4 : (usesCondensedLayout ? 8 : 12)))
+            Spacer()
+                .frame(height: isCompact ? 12 : (isVeryShort ? 4 : (usesCondensedLayout ? 8 : 10)))
 
             Button {
                 registerActivity()
@@ -114,7 +119,8 @@ struct SidebarView: View {
             }
             .buttonStyle(SidebarButtonStyle(compact: usesCondensedLayout, veryCompact: isVeryShort))
 
-            Spacer(minLength: isCompact ? 12 : (isVeryShort ? 4 : (usesCondensedLayout ? 8 : 12)))
+            Spacer()
+                .frame(height: isCompact ? 12 : (isVeryShort ? 4 : (usesCondensedLayout ? 8 : 10)))
 
             Button {
                 registerActivity()
@@ -124,7 +130,8 @@ struct SidebarView: View {
             }
             .buttonStyle(SidebarButtonStyle(compact: usesCondensedLayout, veryCompact: isVeryShort))
 
-            Spacer(minLength: isCompact ? 12 : (isVeryShort ? 4 : (usesCondensedLayout ? 8 : 12)))
+            Spacer()
+                .frame(height: isCompact ? 12 : (isVeryShort ? 4 : (usesCondensedLayout ? 8 : 10)))
 
             Button {
                 registerActivity()
@@ -148,7 +155,8 @@ struct SidebarView: View {
             }
             .buttonStyle(LogoutButtonStyle(compact: usesCondensedLayout, veryCompact: isVeryShort))
 
-            Spacer(minLength: isCompact ? 14 : (isVeryShort ? 4 : (usesCondensedLayout ? 8 : 14)))
+            Spacer()
+                .frame(height: isCompact ? 14 : (isVeryShort ? 4 : (usesCondensedLayout ? 8 : 10)))
 
             HStack {
                 if isCompact {
@@ -193,7 +201,7 @@ struct SidebarView: View {
                 }
             }
         }
-        .padding(isCompact ? 16 : (isVeryShort ? 10 : (usesCondensedLayout ? 14 : 22)))
+        .padding(isCompact ? 16 : (isVeryShort ? 10 : (usesCondensedLayout ? 14 : 16)))
         .frame(width: isCompact ? nil : 304)
         .frame(maxWidth: isCompact ? .infinity : nil)
         .background(SecretMatchTheme.surface.opacity(0.97))

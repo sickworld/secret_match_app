@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct CustomNumberKeyboard: View {
+    @Environment(\.secretMatchInterfaceScale) private var interfaceScale
     @Binding var text: String
     var doneLabel = "Fertig"
     var placeholder = "Nummer…"
@@ -18,26 +19,29 @@ struct CustomNumberKeyboard: View {
         ["←", "0", "✓"]
     ]
 
+    private var isZoomed: Bool { interfaceScale > 1.01 }
+    private var isExtraLarge: Bool { interfaceScale >= 1.29 }
+
     var body: some View {
-        VStack(spacing: 24) {
+        VStack(spacing: isZoomed ? 16 : 24) {
             Text(text.isEmpty ? placeholder : (obscuresText ? String(repeating: "•", count: text.count) : text.displayEventNumber))
-                .font(.system(size: 44, weight: .bold, design: .rounded))
+                .font(.system(size: isZoomed ? 36 : 44, weight: .bold, design: .rounded))
                 .foregroundStyle(.white)
                 .frame(maxWidth: .infinity)
                 .padding(.trailing, 44)
 
-            VStack(spacing: 14) {
+            VStack(spacing: isZoomed ? 10 : 14) {
                 ForEach(keys, id: \.self) { row in
-                    HStack(spacing: 14) {
+                    HStack(spacing: isZoomed ? 10 : 14) {
                         ForEach(row, id: \.self) { key in
                             Button(action: {
                                 handleTap(key)
                             }) {
                                 Text(key)
-                                    .frame(maxWidth: .infinity, minHeight: 94)
+                                    .frame(maxWidth: .infinity, minHeight: isExtraLarge ? 74 : (isZoomed ? 82 : 94))
                                     .background(key == "✓" ? SecretMatchTheme.primary : SecretMatchTheme.surfaceRaised)
                                     .foregroundStyle(.white)
-                                    .font(.system(size: 40, weight: .bold, design: .rounded))
+                                    .font(.system(size: isZoomed ? 34 : 40, weight: .bold, design: .rounded))
                                     .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
                                     .overlay(
                                         RoundedRectangle(cornerRadius: 16)
@@ -52,7 +56,7 @@ struct CustomNumberKeyboard: View {
             }
         }
         .frame(maxWidth: 700)
-        .secretCard(cornerRadius: 30, padding: 32)
+        .secretCard(cornerRadius: 30, padding: isExtraLarge ? 22 : (isZoomed ? 26 : 32))
         .overlay(
             RoundedRectangle(cornerRadius: 28)
                 .stroke(Color.white.opacity(0.12), lineWidth: 1)
@@ -74,7 +78,7 @@ struct CustomNumberKeyboard: View {
                 .padding(20)
             }
         }
-        .padding(.horizontal, 20)
+        .padding(.horizontal, isZoomed ? 14 : 20)
     }
 
     private func handleTap(_ key: String) {
