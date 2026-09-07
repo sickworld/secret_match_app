@@ -34,6 +34,8 @@ Die PIN-Erstanlage kann jederzeit über **Abbrechen** verlassen werden. Dabei ve
 
 Die dauerhaft eingeblendeten Schaltflächen **A−** und **A+** wechseln zwischen 100 %, 115 % und 130 % Darstellungsgröße. Dabei werden Texte, Bedienelemente und Abstände gemeinsam skaliert; responsive Ansichten brechen bei Bedarf um oder werden scrollbar. Die Auswahl bleibt pro App und Gerät gespeichert.
 
+Freie Match-Nachrichten werden über eine appinterne QWERTZ-Tastatur mit Umlauten, Zahlen und Satzzeichen eingegeben. Die Schnelltexte lassen sich sowohl in der Admin-App unter **Steuerung → Match-Schnelltexte** als auch im WordPress-Backend unter **SecretMatch → Einstellungen** pflegen; beide Oberflächen bearbeiten dieselbe Liste.
+
 ## Sende-Warteschlange
 
 Match- und Aktionssendungen werden vor dem ersten Netzwerkversuch lokal vorgemerkt. Bei fehlender oder instabiler Verbindung versucht die App sie mit wachsendem Abstand automatisch erneut; angemeldete Teilnehmer können den Retry zusätzlich über **Jetzt versuchen** auslösen. Offene Einträge bleiben an die ursprüngliche Eventnummer gebunden, überstehen einen App-Neustart und werden nach spätestens 24 Stunden verworfen.

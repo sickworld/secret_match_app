@@ -30,6 +30,7 @@ struct AdminDashboardView: View {
     @State private var showResetAssistant = false
     @State private var resetConfirmation = ""
     @State private var quickMessagesText = ""
+    @State private var quickMessagesSaveState = QuickMessagesSaveState.idle
     @State private var pinEditorNumber: String?
     @State private var pinDraft = ""
     @State private var equipmentEditor: EquipmentEditor?
@@ -38,6 +39,13 @@ struct AdminDashboardView: View {
     @State private var generatedBillboardURL: URL?
     @State private var participantRangeMax = ""
     @State private var participantRangeConfirmation = ""
+
+    private enum QuickMessagesSaveState: Equatable {
+        case idle
+        case saving
+        case saved
+        case failed(String)
+    }
 
     private enum EquipmentEditor: Identifiable {
         case device(id: String, currentName: String)
@@ -404,8 +412,38 @@ struct AdminDashboardView: View {
                     .frame(minHeight: 150)
                     .foregroundStyle(.primary)
                     .clipShape(RoundedRectangle(cornerRadius: 10))
-                Button("Schnelltexte speichern") { Task { await saveQuickMessages() } }
+                    .onChange(of: quickMessagesText) { _, _ in
+                        if quickMessagesSaveState != .saving {
+                            quickMessagesSaveState = .idle
+                        }
+                    }
+
+                Button { Task { await saveQuickMessages() } } label: {
+                    HStack(spacing: 10) {
+                        if quickMessagesSaveState == .saving {
+                            ProgressView()
+                                .tint(.white)
+                        } else {
+                            Image(systemName: "square.and.arrow.down.fill")
+                        }
+                        Text(quickMessagesSaveState == .saving ? "Wird gespeichert…" : "Schnelltexte speichern")
+                    }
+                }
                     .buttonStyle(SecretPrimaryButtonStyle())
+                    .disabled(isWorking || quickMessagesSaveState == .saving)
+
+                switch quickMessagesSaveState {
+                case .idle, .saving:
+                    EmptyView()
+                case .saved:
+                    Label("Schnelltexte gespeichert", systemImage: "checkmark.circle.fill")
+                        .font(.callout.bold())
+                        .foregroundStyle(.green)
+                case .failed(let message):
+                    Label(message, systemImage: "exclamationmark.triangle.fill")
+                        .font(.callout.bold())
+                        .foregroundStyle(.red)
+                }
             }
         }
     }
@@ -1073,8 +1111,29 @@ struct AdminDashboardView: View {
 
     @MainActor
     private func saveQuickMessages() async {
+        guard !isWorking else { return }
         let options = quickMessagesText.split(separator: "\n").map { String($0).trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty }
-        await operation("Schnelltexte gespeichert.") { try await api.updateMatchMessageOptions(Array(options.prefix(8))) }
+        guard options.count <= 8 else {
+            quickMessagesSaveState = .failed("Bitte maximal acht Schnelltexte eingeben.")
+            return
+        }
+        guard options.allSatisfy({ $0.count <= 80 }) else {
+            quickMessagesSaveState = .failed("Ein Schnelltext darf höchstens 80 Zeichen haben.")
+            return
+        }
+        quickMessagesSaveState = .saving
+        isWorking = true
+        do {
+            try await api.updateMatchMessageOptions(options)
+            statusMessage = "Schnelltexte gespeichert."
+            errorMessage = nil
+            quickMessagesSaveState = .saved
+        } catch {
+            let message = "Schnelltexte konnten nicht gespeichert werden."
+            errorMessage = message
+            quickMessagesSaveState = .failed(message)
+        }
+        isWorking = false
     }
 
     @MainActor

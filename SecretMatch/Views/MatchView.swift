@@ -20,6 +20,7 @@ struct MatchView: View {
 
     // UI State
     @State private var showKeyboard = false
+    @State private var showTextKeyboard = false
 
     @State private var isLoading = false
 
@@ -104,6 +105,32 @@ struct MatchView: View {
                 .zIndex(30)
             }
 
+            if showTextKeyboard {
+                Color.black.opacity(0.72)
+                    .ignoresSafeArea()
+                    .onTapGesture {
+                        showTextKeyboard = false
+                        resetInactivityTimer()
+                    }
+                    .zIndex(20)
+
+                VStack {
+                    Spacer(minLength: 12)
+                    CustomTextKeyboard(
+                        text: $matchMessage,
+                        onActivity: resetInactivityTimer,
+                        onClose: {
+                            showTextKeyboard = false
+                            resetInactivityTimer()
+                        }
+                    )
+                    .padding(18)
+                    Spacer(minLength: 12)
+                }
+                .transition(.scale(scale: 0.96).combined(with: .opacity))
+                .zIndex(30)
+            }
+
             mainLayout(isCompact: isCompact, isShort: isShort, availableHeight: availableHeight)
                 .onAppear {
                     resetInactivityTimer()
@@ -156,6 +183,7 @@ struct MatchView: View {
         }.onTapGesture {
             withAnimation {
                 showKeyboard = false
+                showTextKeyboard = false
                 resetInactivityTimer()
             }
         }
@@ -174,6 +202,7 @@ struct MatchView: View {
                     MatchInputBox(
                         targetNumber: $targetNumber,
                         showKeyboard: $showKeyboard,
+                        showTextKeyboard: $showTextKeyboard,
                         selectedActions: $selectedActions,
                         responseMessage: $responseMessage,
                         matchMessage: $matchMessage,
@@ -196,6 +225,7 @@ struct MatchView: View {
                     MatchInputBox(
                         targetNumber: $targetNumber,
                         showKeyboard: $showKeyboard,
+                        showTextKeyboard: $showTextKeyboard,
                         selectedActions: $selectedActions,
                         responseMessage: $responseMessage,
                         matchMessage: $matchMessage,
@@ -240,6 +270,7 @@ struct MatchView: View {
                 selectedActions = []
                 resetInactivityTimer()
                 showKeyboard = false
+                showTextKeyboard = false
             }
 
             if targetNumber.normalizedEventNumber == api.number.normalizedEventNumber {

@@ -12,6 +12,7 @@ private struct ActionOption: Identifiable {
 struct MatchInputBox: View {
     @Binding var targetNumber: String
     @Binding var showKeyboard: Bool
+    @Binding var showTextKeyboard: Bool
     @Binding var selectedActions: Set<String>
     @Binding var responseMessage: String
     @Binding var matchMessage: String
@@ -89,23 +90,36 @@ struct MatchInputBox: View {
                         ScrollView(.horizontal, showsIndicators: false) {
                             HStack(spacing: 8) {
                                 ForEach(quickMessages, id: \.self) { option in
-                                    Button(option) { matchMessage = option }
+                                    Button(option) {
+                                        matchMessage = option
+                                        showTextKeyboard = false
+                                    }
                                         .buttonStyle(.bordered)
                                         .tint(SecretMatchTheme.secondary)
                                 }
                             }
                         }
                     }
-                    TextField("z. B. Lass uns an der Bar treffen", text: $matchMessage, axis: .vertical)
-                        .lineLimit(2...4)
-                        .font(.system(size: 19, weight: .medium, design: .rounded))
-                        .foregroundStyle(.white)
+                    Button {
+                        showKeyboard = false
+                        showTextKeyboard = true
+                    } label: {
+                        HStack(alignment: .top, spacing: 12) {
+                            Image(systemName: "keyboard")
+                                .foregroundStyle(SecretMatchTheme.secondary)
+                            Text(matchMessage.isEmpty ? "Eigene Nachricht schreiben …" : matchMessage)
+                                .font(.system(size: 19, weight: .medium, design: .rounded))
+                                .foregroundStyle(matchMessage.isEmpty ? SecretMatchTheme.muted : .white)
+                                .multilineTextAlignment(.leading)
+                                .frame(maxWidth: .infinity, minHeight: 30, alignment: .topLeading)
+                        }
                         .padding(14)
                         .background(SecretMatchTheme.surfaceRaised)
                         .clipShape(RoundedRectangle(cornerRadius: 14))
-                        .onChange(of: matchMessage) { _, value in
-                            if value.count > 180 { matchMessage = String(value.prefix(180)) }
-                        }
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel(matchMessage.isEmpty ? "Eigene Match-Nachricht schreiben" : "Match-Nachricht: \(matchMessage)")
+                    .accessibilityHint("Öffnet die appinterne Tastatur")
                     Text("\(matchMessage.count)/180")
                         .font(.caption.monospacedDigit())
                         .foregroundStyle(SecretMatchTheme.muted)
