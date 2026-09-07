@@ -1,7 +1,7 @@
 import SwiftUI
 
 enum AdminDashboardSection {
-    case overview, liveFeed, actions, requests, matches, feedback, controls, participants, system
+    case overview, liveFeed, eventLog, statistics, actions, requests, matches, feedback, controls, participants, system
 }
 
 private struct AdminDashboardSectionKey: EnvironmentKey {
@@ -161,7 +161,7 @@ struct AdminDashboardView: View {
             systemStatus
             deviceStatus
             resetCard
-        case .liveFeed, .actions, .requests, .matches, .feedback:
+        case .liveFeed, .eventLog, .statistics, .actions, .requests, .matches, .feedback:
             EmptyView()
         }
     }
@@ -660,6 +660,15 @@ struct AdminDashboardView: View {
                             Text(device.isOnline ? "Online" : "Offline · zuletzt \(device.lastSeenDescription)")
                                 .font(.caption.bold())
                                 .foregroundStyle(device.isOnline ? Color.green : Color.red)
+                            if let queueCount = device.queuedSendCount, queueCount > 0 {
+                                Text("\(queueCount) Sendung(en) warten · älteste seit \(device.oldestPendingSeconds ?? 0) Sek.")
+                                    .font(.caption.bold())
+                                    .foregroundStyle(.orange)
+                            } else if let lastSync = device.lastSuccessfulSyncAt, !lastSync.isEmpty {
+                                Text("Letzter Sync: \(lastSync)")
+                                    .font(.caption)
+                                    .foregroundStyle(SecretMatchTheme.muted)
+                            }
                         }
                         Spacer()
                         Image(systemName: device.batteryState == "charging" ? "battery.100percent.bolt" : "battery.100percent")
@@ -677,7 +686,11 @@ struct AdminDashboardView: View {
                             .accessibilityLabel("\(device.name ?? "iPad") umbenennen")
                         }
                     }
-                    .foregroundStyle(device.batteryLevel < 20 || !device.isOnline ? .red : .white)
+                    .foregroundStyle(
+                        device.batteryLevel < 20 || !device.isOnline || (device.queuedSendCount ?? 0) > 0
+                            ? .red
+                            : .white
+                    )
                     .padding(10)
                     .background(Color.white.opacity(0.06))
                     .clipShape(RoundedRectangle(cornerRadius: 12))
@@ -788,7 +801,7 @@ struct AdminDashboardView: View {
             Text("🚨 Neues Event vorbereiten")
                 .font(.title2.bold())
                 .foregroundStyle(.white)
-            Text("Erstellt zuerst ein Backup, leert Matches, Anfragen, Aktionen und Feedbacks, beendet Sessions und setzt das Billboard zurück. Freigegebene Nummern und Einstellungen bleiben erhalten.")
+            Text("Erstellt zuerst ein Backup und eine anonyme Abschlussstatistik, leert Matches, Anfragen, Aktionen, Feedbacks und sämtliche Logs, beendet Sessions und setzt das Billboard zurück. Freigegebene Nummern und Einstellungen bleiben erhalten.")
                 .foregroundStyle(SecretMatchTheme.muted)
             Button("Event-Reset-Assistent öffnen", role: .destructive) {
                 resetConfirmation = ""
@@ -804,7 +817,8 @@ struct AdminDashboardView: View {
             Form {
                 Section("Der Assistent führt diese Schritte aus") {
                     Label("Backup des aktuellen Events erstellen", systemImage: "archivebox")
-                    Label("Matches, Anfragen, Aktionen und Feedbacks leeren", systemImage: "trash")
+                    Label("Anonyme Abschlussstatistik sichern", systemImage: "chart.bar.xaxis")
+                    Label("Matches, Anfragen, Aktionen, Feedbacks und Logs leeren", systemImage: "trash")
                     Label("Teilnehmer- und Billboard-Sessions beenden", systemImage: "person.crop.circle.badge.xmark")
                     Label("Top-16-Testmodus zurücksetzen", systemImage: "rectangle.on.rectangle.slash")
                 }
@@ -1192,7 +1206,7 @@ struct AdminDashboardView: View {
         do {
             let result = try await api.resetEvent(confirmation: resetConfirmation)
             if let feedback = result.deleted.feedback {
-                statusMessage = "Event zurückgesetzt. Backup: \(result.backupCreatedAt) · \(result.deleted.matches) Matches, \(result.deleted.actions) Aktionen und \(feedback) Feedbacks entfernt."
+                statusMessage = "Event zurückgesetzt. Backup: \(result.backupCreatedAt) · \(result.deleted.matches) Matches, \(result.deleted.actions) Aktionen, \(feedback) Feedbacks und \(result.deleted.eventLog ?? 0) Logs entfernt. Die anonyme Statistik bleibt erhalten."
             } else {
                 statusMessage = "Event zurückgesetzt. Backup: \(result.backupCreatedAt) · \(result.deleted.matches) Matches und \(result.deleted.actions) Aktionen entfernt."
             }

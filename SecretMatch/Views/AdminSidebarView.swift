@@ -47,6 +47,22 @@ struct AdminSidebarView: View {
             .buttonStyle(SidebarButtonStyle())
 
             Button {
+                dashboardSection = .eventLog
+                dismissMenu()
+            } label: {
+                Label("Protokoll", systemImage: "list.bullet.rectangle.portrait.fill")
+            }
+            .buttonStyle(SidebarButtonStyle())
+
+            Button {
+                dashboardSection = .statistics
+                dismissMenu()
+            } label: {
+                Label("Statistik", systemImage: "chart.bar.xaxis")
+            }
+            .buttonStyle(SidebarButtonStyle())
+
+            Button {
                 dashboardSection = .controls
                 dismissMenu()
             } label: {

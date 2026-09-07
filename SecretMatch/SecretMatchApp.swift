@@ -8,48 +8,13 @@ struct SecretMatchApp: App {
     
     var body: some Scene {
         WindowGroup {
-            AccessibleInterfaceContainer {
-                ZStack {
 #if ADMIN_APP
-                    Group {
-                        if api.isAdmin {
-                            AdminMainView()
-                        } else {
-                            AdminLoginView(isPresented: .constant(true), allowsDismiss: false)
-                        }
-                    }
-                    .environmentObject(api)
-                    .preferredColorScheme(.dark)
+            applicationContent
 #else
-                    Group {
-                        if api.isAdmin {
-                            AdminMainView()
-                        } else if api.isLoggedIn {
-                            MatchView()
-                        } else {
-                            LoginView()
-                        }
-                    }
-                    .environmentObject(api)
-                    .preferredColorScheme(.dark)
-#endif
-                }
-                .safeAreaInset(edge: .top, spacing: 0) {
-                    ConnectionStatusBanner(
-                        state: api.connectionState,
-                        isChecking: api.isCheckingConnection,
-                        retry: {
-                            Task {
-                                await api.checkConnection()
-                            }
-                        }
-                    )
-                    .animation(.easeInOut(duration: 0.2), value: api.connectionState)
-                }
-                .task {
-                    api.applicationDidBecomeActive()
-                }
+            AccessibleInterfaceContainer {
+                applicationContent
             }
+#endif
         }
         .onChange(of: scenePhase) { _, phase in
             switch phase {
@@ -61,6 +26,47 @@ struct SecretMatchApp: App {
             default:
                 break
             }
+        }
+    }
+
+    private var applicationContent: some View {
+        ZStack {
+#if ADMIN_APP
+            Group {
+                if api.isAdmin {
+                    AdminMainView()
+                } else {
+                    AdminLoginView(isPresented: .constant(true), allowsDismiss: false)
+                }
+            }
+#else
+            Group {
+                if api.isAdmin {
+                    AdminMainView()
+                } else if api.isLoggedIn {
+                    MatchView()
+                } else {
+                    LoginView()
+                }
+            }
+#endif
+        }
+        .environmentObject(api)
+        .preferredColorScheme(.dark)
+        .safeAreaInset(edge: .top, spacing: 0) {
+            ConnectionStatusBanner(
+                state: api.connectionState,
+                isChecking: api.isCheckingConnection,
+                retry: {
+                    Task {
+                        await api.checkConnection()
+                    }
+                }
+            )
+            .animation(.easeInOut(duration: 0.2), value: api.connectionState)
+        }
+        .task {
+            api.applicationDidBecomeActive()
         }
     }
 }

@@ -28,11 +28,13 @@ struct ParticipantLoginResponse: Decodable {
     let number: String?
     let needsPin: Bool
     let needsGender: Bool
+    let eventID: String?
 
     private enum CodingKeys: String, CodingKey {
         case number
         case needsPin = "needs_pin"
         case needsGender = "needs_gender"
+        case eventID = "event_id"
     }
 
     init(from decoder: Decoder) throws {
@@ -40,6 +42,7 @@ struct ParticipantLoginResponse: Decodable {
         number = try container.decodeIfPresent(String.self, forKey: .number)
         needsPin = try container.decodeIfPresent(Bool.self, forKey: .needsPin) ?? false
         needsGender = try container.decode(Bool.self, forKey: .needsGender)
+        eventID = try container.decodeIfPresent(String.self, forKey: .eventID)
     }
 }
 

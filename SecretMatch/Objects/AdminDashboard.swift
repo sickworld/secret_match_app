@@ -118,6 +118,10 @@ struct AdminDeviceStatus: Decodable, Identifiable {
     let appVersion: String
     let lastSeen: Int
     let online: Bool?
+    let queuedSendCount: Int?
+    let oldestPendingSeconds: Int?
+    let lastSuccessfulSyncAt: String?
+    let connectionState: String?
 
     var id: String { deviceID ?? "\(number)-\(appVersion)" }
 
@@ -141,6 +145,10 @@ struct AdminDeviceStatus: Decodable, Identifiable {
         case appVersion = "app_version"
         case lastSeen = "last_seen"
         case online
+        case queuedSendCount = "queued_send_count"
+        case oldestPendingSeconds = "oldest_pending_seconds"
+        case lastSuccessfulSyncAt = "last_successful_sync_at"
+        case connectionState = "connection_state"
     }
 }
 
@@ -205,6 +213,12 @@ struct EventResetResponse: Decodable {
         let requests: Int
         let actions: Int
         let feedback: Int?
+        let eventLog: Int?
+
+        private enum CodingKeys: String, CodingKey {
+            case matches, requests, actions, feedback
+            case eventLog = "event_log"
+        }
     }
 
     private enum CodingKeys: String, CodingKey {

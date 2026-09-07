@@ -9,12 +9,19 @@ class APIService: ObservableObject {
     static let shared = APIService()
     private static let pendingInteractionsKey = "secretmatch.pending-interactions.v1"
     private static let pendingInteractionLifetime: TimeInterval = 24 * 60 * 60
+    private static let pendingTelemetryKey = "secretmatch.pending-telemetry.v1"
+    private static let telemetryLifetime: TimeInterval = 7 * 24 * 60 * 60
+    private static let lastSuccessfulSyncKey = "secretmatch.last-successful-sync"
+    private static let installationIDKey = "secretmatch.installation-id"
+    private static let eventIDKey = "secretmatch.event-id"
     private static let adminPushTokenKey = "secretmatch.admin-push-device-token"
     private static let adminPushEnvironmentKey = "secretmatch.admin-push-environment"
 
     private init() {
         pendingInteractions = Self.loadPendingInteractions()
+        pendingTelemetryEvents = Self.loadPendingTelemetryEvents()
         removeExpiredPendingInteractions()
+        removeExpiredTelemetryEvents()
 
         if let savedAdminToken = AdminSessionStore.loadToken(), !savedAdminToken.isEmpty {
             adminToken = savedAdminToken
@@ -34,6 +41,8 @@ class APIService: ObservableObject {
     @Published var adminMatches: [AdminMatch] = []
     @Published var adminMatchRequests: [AdminMatchRequest] = []
     @Published var adminFeedback: [AdminFeedback] = []
+    @Published var adminEventLog: [AdminEventLogEntry] = []
+    @Published var adminStatistics: AdminStatisticsResponse?
     @Published var adminDashboard: AdminDashboard?
     @Published var adminParticipants = AdminParticipants(allowed: [], active: [])
     @Published private(set) var queuedSendCount = 0
@@ -44,8 +53,10 @@ class APIService: ObservableObject {
     private var adminToken: String?
     private let baseURL = URL(string: "https://secret-match.de/wp-json/secretmatch/v1")!
     private var pendingInteractions: [PendingInteraction]
+    private var pendingTelemetryEvents: [PendingTelemetryEvent]
     private var isNetworkAvailable = true
     private var isProcessingSendQueue = false
+    private var isFlushingTelemetry = false
     private var isApplicationActive = false
     private var retryTask: Task<Void, Never>?
     private var connectionPollingTask: Task<Void, Never>?
@@ -57,6 +68,7 @@ class APIService: ObservableObject {
         if isAdmin { return ParticipantLoginRequirements(needsPin: false, needsGender: false) }
         await waitForSendQueueToFinish()
         await retryPendingSendsForPreviousSession()
+        await flushTelemetryEvents(allowsLoggedOutSession: true)
 
         let normalizedNumber = number.normalizedEventNumber
         let url = baseURL.appendingPathComponent("login")
@@ -80,6 +92,7 @@ class APIService: ObservableObject {
         }
 
         let result = try JSONDecoder().decode(ParticipantLoginResponse.self, from: data)
+        handleEventBoundary(result.eventID)
         self.number = result.number ?? normalizedNumber
         updateQueuedSendCount()
         return ParticipantLoginRequirements(needsPin: result.needsPin, needsGender: result.needsGender)
@@ -145,7 +158,10 @@ class APIService: ObservableObject {
         isLoggedIn = true
         triggerQueueProcessing(for: number)
         startDeviceHeartbeat()
-        Task { try? await loadMatchMessageOptions() }
+        Task {
+            await flushTelemetryEvents()
+            try? await loadMatchMessageOptions()
+        }
     }
 
     func submitInteractions(targetNumber: String, types: [String], message: String = "") async throws -> InteractionSubmissionResult {
@@ -181,6 +197,20 @@ class APIService: ObservableObject {
         pendingInteractions.append(contentsOf: interactions)
         persistPendingInteractions()
         updateQueuedSendCount()
+        for interaction in interactions {
+            recordTelemetry(
+                severity: "info",
+                category: "queue",
+                eventType: "interaction_queued",
+                interaction: interaction,
+                status: "queued",
+                context: [
+                    "kind": interaction.kind.rawValue,
+                    "interaction_type": interaction.type,
+                    "queue_count": String(queuedSendCount),
+                ]
+            )
+        }
 
         let messages = await processSendQueue(for: senderNumber, collecting: Set(interactions.map(\.id)))
         let queuedCount = pendingInteractions.filter { $0.batchID == batchID }.count
@@ -228,7 +258,7 @@ class APIService: ObservableObject {
         guard isApplicationActive else { return }
         guard !isCheckingConnection else { return }
         guard isNetworkAvailable else {
-            connectionState = .offline
+            setConnectionState(.offline)
             return
         }
 
@@ -240,21 +270,28 @@ class APIService: ObservableObject {
         request.timeoutInterval = 6
 
         do {
-            let (_, response) = try await URLSession.shared.data(for: request)
+            let (data, response) = try await URLSession.shared.data(for: request)
             guard let http = response as? HTTPURLResponse,
                   (200...299).contains(http.statusCode) else {
-                connectionState = .serverUnavailable
+                setConnectionState(.serverUnavailable)
                 return
             }
+            if let status = try? JSONDecoder().decode(ParticipantStatusResponse.self, from: data) {
+                handleEventBoundary(status.eventID)
+                if isLoggedIn, !isAdmin, !status.loggedIn {
+                    expireLocalParticipantSession()
+                }
+            }
 
-            connectionState = .online
+            setConnectionState(.online)
             if isLoggedIn, !number.isEmpty {
                 triggerQueueProcessing(for: number)
+                await flushTelemetryEvents()
             }
         } catch let error as URLError where error.code == .notConnectedToInternet {
-            connectionState = .offline
+            setConnectionState(.offline)
         } catch {
-            connectionState = .serverUnavailable
+            setConnectionState(.serverUnavailable)
         }
     }
 
@@ -564,6 +601,45 @@ class APIService: ObservableObject {
         adminDashboard = try JSONDecoder().decode(AdminDashboard.self, from: data)
     }
 
+    func loadAdminEventLog(
+        severity: String? = nil,
+        category: String? = nil,
+        search: String = "",
+        beforeID: String? = nil
+    ) async throws -> Int {
+        var components = URLComponents(
+            url: baseURL.appendingPathComponent("admin/event-log"),
+            resolvingAgainstBaseURL: false
+        )
+        var items = [URLQueryItem(name: "limit", value: "100")]
+        if let severity, !severity.isEmpty { items.append(URLQueryItem(name: "severity", value: severity)) }
+        if let category, !category.isEmpty { items.append(URLQueryItem(name: "category", value: category)) }
+        if !search.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            items.append(URLQueryItem(name: "search", value: search.trimmingCharacters(in: .whitespacesAndNewlines)))
+        }
+        if let beforeID, !beforeID.isEmpty { items.append(URLQueryItem(name: "before_id", value: beforeID)) }
+        components?.queryItems = items
+        guard let url = components?.url else { throw URLError(.badURL) }
+
+        let (data, response) = try await URLSession.shared.data(for: adminRequest(url: url))
+        try validateAdminResponse(response)
+        let entries = try JSONDecoder().decode([AdminEventLogEntry].self, from: data)
+        if beforeID == nil {
+            adminEventLog = entries
+        } else {
+            let existing = Set(adminEventLog.map(\.id))
+            adminEventLog.append(contentsOf: entries.filter { !existing.contains($0.id) })
+        }
+        return entries.count
+    }
+
+    func loadAdminStatistics() async throws {
+        let url = baseURL.appendingPathComponent("admin/statistics")
+        let (data, response) = try await URLSession.shared.data(for: adminRequest(url: url))
+        try validateAdminResponse(response)
+        adminStatistics = try JSONDecoder().decode(AdminStatisticsResponse.self, from: data)
+    }
+
     func loadAdminParticipants() async throws {
         let url = baseURL.appendingPathComponent("admin/participants")
         let (data, response) = try await URLSession.shared.data(for: adminRequest(url: url))
@@ -822,7 +898,9 @@ class APIService: ObservableObject {
         adminMatches = []
         adminMatchRequests = []
         adminFeedback = []
+        adminEventLog = []
         try await refreshAdminControlData()
+        try? await loadAdminStatistics()
         return result
     }
 
@@ -860,6 +938,8 @@ class APIService: ObservableObject {
         hasSavedAdminSession = false
         self.isLoggedIn = false
         self.number = ""
+        adminEventLog = []
+        adminStatistics = nil
         retryTask?.cancel()
         heartbeatTask?.cancel()
         heartbeatTask = nil
@@ -949,13 +1029,32 @@ class APIService: ObservableObject {
                 guard let self else { return }
                 isNetworkAvailable = path.status == .satisfied
                 if !isNetworkAvailable {
-                    connectionState = .offline
+                    setConnectionState(.offline)
                 } else if isApplicationActive {
                     await checkConnection()
                 }
             }
         }
         networkMonitor.start(queue: networkMonitorQueue)
+    }
+
+    private func setConnectionState(_ newState: ConnectionState) {
+        let previous = connectionState
+        guard previous != newState else { return }
+        connectionState = newState
+        guard isLoggedIn else { return }
+
+        let value = telemetryValue(for: newState)
+        recordTelemetry(
+            severity: newState == .online ? "info" : "warning",
+            category: "connectivity",
+            eventType: newState == .online ? "connection_recovered" : "connection_lost",
+            status: value,
+            context: [
+                "connection_state": value,
+                "result": "from_\(telemetryValue(for: previous))",
+            ]
+        )
     }
 
     private func startConnectionPolling() {
@@ -987,11 +1086,7 @@ class APIService: ObservableObject {
 
     private func sendDeviceHeartbeat() async {
         guard isLoggedIn else { return }
-        let key = "secretmatch.installation-id"
-        let defaults = UserDefaults.standard
-        let deviceID: String
-        if let saved = defaults.string(forKey: key) { deviceID = saved }
-        else { deviceID = UUID().uuidString.lowercased(); defaults.set(deviceID, forKey: key) }
+        let deviceID = installationID
         let rawLevel = UIDevice.current.batteryLevel
         let level = rawLevel < 0 ? 0 : Int((rawLevel * 100).rounded())
         let state: String
@@ -1002,14 +1097,33 @@ class APIService: ObservableObject {
         default: state = "unknown"
         }
         let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? ""
+        let ownPending = pendingInteractions.filter { $0.senderNumber == number.normalizedEventNumber }
+        let oldestPendingSeconds = ownPending.map {
+            max(0, Int(Date().timeIntervalSince($0.createdAt)))
+        }.max() ?? 0
+        let lastSync = UserDefaults.standard.object(forKey: Self.lastSuccessfulSyncKey) as? Date
         var request = URLRequest(url: baseURL.appendingPathComponent("heartbeat"))
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.httpBody = try? JSONSerialization.data(withJSONObject: [
-            "device_id": deviceID, "battery_level": level, "battery_state": state, "app_version": version
+            "device_id": deviceID,
+            "battery_level": level,
+            "battery_state": state,
+            "app_version": version,
+            "queued_send_count": ownPending.count,
+            "oldest_pending_seconds": oldestPendingSeconds,
+            "last_successful_sync_at": lastSync.map(Self.iso8601String) ?? "",
+            "connection_state": telemetryValue(for: connectionState),
         ])
         request.timeoutInterval = 8
-        _ = try? await URLSession.shared.data(for: request)
+        do {
+            let (_, response) = try await URLSession.shared.data(for: request)
+            guard let http = response as? HTTPURLResponse, (200...299).contains(http.statusCode) else { return }
+            markSuccessfulSync()
+            await flushTelemetryEvents()
+        } catch {
+            return
+        }
     }
 
     private func triggerQueueProcessing(for senderNumber: String) {
@@ -1045,6 +1159,18 @@ class APIService: ObservableObject {
         while (allowsLoggedOutSession || (isLoggedIn && number.normalizedEventNumber == senderNumber)),
               let index = nextPendingInteractionIndex(for: senderNumber) {
             let interaction = pendingInteractions[index]
+            recordTelemetry(
+                severity: "info",
+                category: "queue",
+                eventType: "interaction_send_started",
+                interaction: interaction,
+                status: "sending",
+                context: [
+                    "kind": interaction.kind.rawValue,
+                    "interaction_type": interaction.type,
+                    "retry_count": String(interaction.retryCount),
+                ]
+            )
             do {
                 let message: String
                 switch interaction.kind {
@@ -1056,21 +1182,63 @@ class APIService: ObservableObject {
 
                 pendingInteractions.remove(at: index)
                 persistPendingInteractions()
+                markSuccessfulSync()
+                recordTelemetry(
+                    severity: "info",
+                    category: "queue",
+                    eventType: "interaction_delivered",
+                    interaction: interaction,
+                    status: "delivered",
+                    context: [
+                        "kind": interaction.kind.rawValue,
+                        "interaction_type": interaction.type,
+                        "retry_count": String(interaction.retryCount),
+                    ]
+                )
                 if requestedIDs.contains(interaction.id) {
                     messages.append(message)
                 }
             } catch {
                 if shouldRetry(error) {
                     markPendingInteractionForRetry(at: index)
+                    let retryCount = pendingInteractions[index].retryCount
+                    recordTelemetry(
+                        severity: "warning",
+                        category: "queue",
+                        eventType: "interaction_retry_scheduled",
+                        interaction: interaction,
+                        status: "retrying",
+                        context: [
+                            "kind": interaction.kind.rawValue,
+                            "interaction_type": interaction.type,
+                            "retry_count": String(retryCount),
+                            "error_code": telemetryErrorCode(error),
+                            "queue_count": String(pendingInteractions.filter { $0.senderNumber == senderNumber }.count),
+                        ]
+                    )
                     break
                 }
 
                 pendingInteractions.remove(at: index)
                 persistPendingInteractions()
+                recordTelemetry(
+                    severity: "error",
+                    category: "queue",
+                    eventType: "interaction_rejected",
+                    interaction: interaction,
+                    status: "rejected",
+                    context: [
+                        "kind": interaction.kind.rawValue,
+                        "interaction_type": interaction.type,
+                        "retry_count": String(interaction.retryCount),
+                        "error_code": telemetryErrorCode(error),
+                    ]
+                )
                 throwAwayInvalidBatchIfNeeded(batchID: interaction.batchID, senderNumber: senderNumber)
             }
         }
 
+        await flushTelemetryEvents()
         return messages
     }
 
@@ -1188,6 +1356,7 @@ class APIService: ObservableObject {
             throw InteractionSendError.invalidResponse
         }
         let status = try JSONDecoder().decode(ParticipantStatusResponse.self, from: data)
+        handleEventBoundary(status.eventID)
         return status.loggedIn ? status.number?.normalizedEventNumber ?? "" : ""
     }
 
@@ -1221,6 +1390,159 @@ class APIService: ObservableObject {
         }
     }
 
+    private var installationID: String {
+        let defaults = UserDefaults.standard
+        if let saved = defaults.string(forKey: Self.installationIDKey), !saved.isEmpty {
+            return saved
+        }
+        let created = UUID().uuidString.lowercased()
+        defaults.set(created, forKey: Self.installationIDKey)
+        return created
+    }
+
+    private func recordTelemetry(
+        severity: String,
+        category: String,
+        eventType: String,
+        interaction: PendingInteraction? = nil,
+        status: String? = nil,
+        context: [String: String] = [:]
+    ) {
+        let event = PendingTelemetryEvent(
+            id: UUID(),
+            occurredAt: Self.iso8601String(Date()),
+            severity: severity,
+            category: category,
+            eventType: eventType,
+            deviceID: installationID,
+            targetNumber: interaction?.targetNumber,
+            requestID: interaction?.id.uuidString.lowercased(),
+            status: status,
+            context: context
+        )
+        pendingTelemetryEvents.append(event)
+        removeExpiredTelemetryEvents()
+        if pendingTelemetryEvents.count > 500 {
+            pendingTelemetryEvents.removeFirst(pendingTelemetryEvents.count - 500)
+        }
+        persistPendingTelemetryEvents()
+    }
+
+    private func flushTelemetryEvents(allowsLoggedOutSession: Bool = false) async {
+        guard !isFlushingTelemetry,
+              isNetworkAvailable,
+              isLoggedIn || allowsLoggedOutSession,
+              !pendingTelemetryEvents.isEmpty else { return }
+
+        isFlushingTelemetry = true
+        defer { isFlushingTelemetry = false }
+
+        while !pendingTelemetryEvents.isEmpty {
+            let batch = Array(pendingTelemetryEvents.prefix(50))
+            var request = URLRequest(url: baseURL.appendingPathComponent("telemetry/events"))
+            request.httpMethod = "POST"
+            request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+            request.timeoutInterval = 10
+            request.httpBody = try? JSONEncoder().encode(TelemetryEnvelope(events: batch))
+
+            do {
+                let (_, response) = try await URLSession.shared.data(for: request)
+                guard let http = response as? HTTPURLResponse, (200...299).contains(http.statusCode) else {
+                    return
+                }
+                let sentIDs = Set(batch.map(\.id))
+                pendingTelemetryEvents.removeAll { sentIDs.contains($0.id) }
+                persistPendingTelemetryEvents()
+            } catch {
+                return
+            }
+        }
+    }
+
+    private func persistPendingTelemetryEvents() {
+        guard let data = try? JSONEncoder().encode(pendingTelemetryEvents) else { return }
+        UserDefaults.standard.set(data, forKey: Self.pendingTelemetryKey)
+    }
+
+    private static func loadPendingTelemetryEvents() -> [PendingTelemetryEvent] {
+        guard let data = UserDefaults.standard.data(forKey: pendingTelemetryKey),
+              let events = try? JSONDecoder().decode([PendingTelemetryEvent].self, from: data) else {
+            return []
+        }
+        return events
+    }
+
+    private func removeExpiredTelemetryEvents() {
+        let cutoff = Date().addingTimeInterval(-Self.telemetryLifetime)
+        pendingTelemetryEvents.removeAll {
+            guard let date = ISO8601DateFormatter().date(from: $0.occurredAt) else { return true }
+            return date < cutoff
+        }
+    }
+
+    private func markSuccessfulSync() {
+        UserDefaults.standard.set(Date(), forKey: Self.lastSuccessfulSyncKey)
+    }
+
+    private func handleEventBoundary(_ serverEventID: String?) {
+        guard let serverEventID, !serverEventID.isEmpty else { return }
+        let defaults = UserDefaults.standard
+        guard let previous = defaults.string(forKey: Self.eventIDKey), !previous.isEmpty else {
+            defaults.set(serverEventID, forKey: Self.eventIDKey)
+            return
+        }
+        guard previous != serverEventID else { return }
+
+        pendingInteractions.removeAll()
+        pendingTelemetryEvents.removeAll()
+        persistPendingInteractions()
+        persistPendingTelemetryEvents()
+        defaults.removeObject(forKey: Self.lastSuccessfulSyncKey)
+        defaults.set(serverEventID, forKey: Self.eventIDKey)
+    }
+
+    private func expireLocalParticipantSession() {
+        guard !isAdmin else { return }
+        isLoggedIn = false
+        number = ""
+        heartbeatTask?.cancel()
+        heartbeatTask = nil
+        retryTask?.cancel()
+        matches = []
+        actions = []
+        updateQueuedSendCount()
+    }
+
+    private func telemetryValue(for state: ConnectionState) -> String {
+        switch state {
+        case .checking: return "checking"
+        case .online: return "online"
+        case .offline: return "offline"
+        case .serverUnavailable: return "server_unavailable"
+        }
+    }
+
+    private func telemetryErrorCode(_ error: Error) -> String {
+        if let sendError = error as? InteractionSendError {
+            switch sendError {
+            case .invalidResponse: return "invalid_response"
+            case .httpStatus(let status): return "http_\(status)"
+            case .rejected: return "rejected"
+            }
+        }
+        if let urlError = error as? URLError {
+            return "url_\(urlError.code.rawValue)"
+        }
+        if error is DecodingError {
+            return "decoding"
+        }
+        return "unknown"
+    }
+
+    private static func iso8601String(_ date: Date) -> String {
+        ISO8601DateFormatter().string(from: date)
+    }
+
     private func handleExpiredAdminToken(_ response: URLResponse) {
         guard let statusCode = (response as? HTTPURLResponse)?.statusCode,
               statusCode == 401 || statusCode == 403 else {
@@ -1232,6 +1554,10 @@ class APIService: ObservableObject {
         hasSavedAdminSession = false
         isAdmin = false
     }
+}
+
+private struct TelemetryEnvelope: Encodable {
+    let events: [PendingTelemetryEvent]
 }
 
 private enum InteractionSendError: Error {
@@ -1263,10 +1589,12 @@ private struct AdminMutationError: LocalizedError {
 private struct ParticipantStatusResponse: Decodable {
     let loggedIn: Bool
     let number: String?
+    let eventID: String?
 
     private enum CodingKeys: String, CodingKey {
         case loggedIn = "logged_in"
         case number
+        case eventID = "event_id"
     }
 }
 

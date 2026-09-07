@@ -137,6 +137,12 @@ struct AdminMainView: View {
         case .liveFeed:
             AdminLiveFeedView(isPresented: .constant(true), isEmbedded: true)
                 .environmentObject(api)
+        case .eventLog:
+            AdminEventLogView()
+                .environmentObject(api)
+        case .statistics:
+            AdminStatisticsView()
+                .environmentObject(api)
         case .actions:
             AdminActionListView(isPresented: .constant(true), isEmbedded: true)
                 .environmentObject(api)
