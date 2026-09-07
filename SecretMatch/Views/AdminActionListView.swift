@@ -8,6 +8,20 @@ struct AdminActionListView: View {
     @State private var selectedType = "all"
     @State private var pendingDelete: AdminAction?
     @State private var loadErrorMessage: String?
+    @State private var operationErrorMessage: String?
+    @State private var editor: Editor?
+
+    private enum Editor: Identifiable {
+        case create
+        case edit(AdminAction)
+
+        var id: String {
+            switch self {
+            case .create: return "create"
+            case .edit(let action): return "edit-\(action.id)"
+            }
+        }
+    }
 
     var body: some View {
         ZStack {
@@ -29,6 +43,12 @@ struct AdminActionListView: View {
                             .foregroundStyle(.white)
                     }
                     Spacer()
+                    Button {
+                        editor = .create
+                    } label: {
+                        Label("Aktion anlegen", systemImage: "plus")
+                    }
+                    .buttonStyle(SecretPrimaryButtonStyle(fullWidth: false))
                     if !isEmbedded {
                         Button {
                             isPresented = false
@@ -41,6 +61,13 @@ struct AdminActionListView: View {
                                 .clipShape(Circle())
                         }
                     }
+                }
+
+                if let operationErrorMessage {
+                    Label(operationErrorMessage, systemImage: "exclamationmark.triangle.fill")
+                        .font(.callout.weight(.semibold))
+                        .foregroundStyle(.red)
+                        .frame(maxWidth: .infinity, alignment: .leading)
                 }
 
                 HStack(spacing: 12) {
@@ -104,10 +131,14 @@ struct AdminActionListView: View {
             Button("Löschen", role: .destructive) {
                 guard let action = pendingDelete else { return }
                 pendingDelete = nil
-                Task { try? await api.deleteAdminAction(id: action.id) }
+                Task { await delete(action) }
             }
         } message: {
             Text("Dieser Eintrag wird dauerhaft entfernt.")
+        }
+        .sheet(item: $editor) { editor in
+            actionEditor(editor)
+                .presentationDetents([.medium, .large])
         }
     }
 
@@ -158,12 +189,18 @@ struct AdminActionListView: View {
                     .foregroundStyle(SecretMatchTheme.muted)
                     .font(.system(size: 16, weight: .semibold, design: .rounded))
 
-                Text(action.created_at)
-                    .font(.caption.monospacedDigit())
-                    .foregroundStyle(.white.opacity(0.48))
             }
 
             Spacer()
+
+            Button {
+                editor = .edit(action)
+            } label: {
+                Image(systemName: "pencil")
+                    .font(.title3.bold())
+                    .foregroundStyle(SecretMatchTheme.secondary)
+                    .padding(10)
+            }
 
             Button(role: .destructive) {
                 pendingDelete = action
@@ -222,6 +259,58 @@ struct AdminActionListView: View {
         case "hjob": return Color(hex: "#E6923E")
         case "ljob": return Color(hex: "#D65C8D")
         default: return SecretMatchTheme.primary
+        }
+    }
+
+    @ViewBuilder
+    private func actionEditor(_ editor: Editor) -> some View {
+        switch editor {
+        case .create:
+            AdminRecordEditorView(
+                title: "Aktion anlegen",
+                firstNumberLabel: "Absender",
+                secondNumberLabel: "Empfänger",
+                typeOptions: actionTypeOptions
+            ) { sender, receiver, type in
+                try await api.createAdminAction(senderNumber: sender, receiverNumber: receiver, type: type)
+            }
+        case .edit(let action):
+            AdminRecordEditorView(
+                title: "Aktion bearbeiten",
+                firstNumberLabel: "Absender",
+                secondNumberLabel: "Empfänger",
+                typeOptions: actionTypeOptions,
+                initialFirstNumber: action.sender_number,
+                initialSecondNumber: action.receiver_number,
+                initialType: action.action_type
+            ) { sender, receiver, type in
+                try await api.updateAdminAction(
+                    id: action.id,
+                    senderNumber: sender,
+                    receiverNumber: receiver,
+                    type: type
+                )
+            }
+        }
+    }
+
+    private var actionTypeOptions: [AdminRecordTypeOption] {
+        [
+            .init(value: "normal", title: "❤️ Hot Match"),
+            .init(value: "hot", title: "🍆 Fuck Match"),
+            .init(value: "bjob", title: "👄 Blow-Job"),
+            .init(value: "hjob", title: "✋ Hand-Job"),
+            .init(value: "ljob", title: "👅 Lick-Job")
+        ]
+    }
+
+    @MainActor
+    private func delete(_ action: AdminAction) async {
+        operationErrorMessage = nil
+        do {
+            try await api.deleteAdminAction(id: action.id)
+        } catch {
+            operationErrorMessage = "Aktion konnte nicht gelöscht werden: \(error.localizedDescription)"
         }
     }
 }

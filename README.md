@@ -1,5 +1,11 @@
 # secret_match_app
 
+## Admin-CRUD
+
+Die iPhone-Admin-App kann Aktionen und Matches anlegen, bearbeiten und löschen. In der Teilnehmerverwaltung lassen sich Nummern freigeben und sperren sowie Gender-Angaben setzen oder zurücksetzen. Jede Gender-Änderung und jeder Reset widerruft die aktive Sitzung der betroffenen Nummer; nach einem Reset erscheint die Gender-Auswahl beim nächsten Login erneut. Feedback bleibt als anonymer, unveränderlicher Datensatz bewusst auf Lesen und Löschen begrenzt.
+
+Diese Funktionen benötigen das WordPress-Modul ab Version `2026.09.07.3`; das Modul muss vor oder zusammen mit diesem App-Build veröffentlicht werden.
+
 ## Eingehende Interessen
 
 Die Teilnehmeransicht **Matches & Interessen** trennt gegenseitige Matches von noch offenen, eingehenden Match-Wünschen. `GET /wp-json/secretmatch/v1/interests` liefert ausschließlich Wünsche an die aktuell angemeldete Eventnummer, für die noch kein gegenseitiges Match besteht. Mehrere Wünsche derselben Nummer werden zu einem Eintrag zusammengefasst; ein Fuck-Wunsch hat dabei Vorrang. Das aktualisierte WordPress-Modul muss vor oder zusammen mit diesem App-Build veröffentlicht werden.

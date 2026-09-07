@@ -109,7 +109,6 @@ struct AdminLiveFeedView: View {
             VStack(alignment: .leading, spacing: 4) {
                 Text(entry.title).font(.headline).foregroundStyle(.white)
                 Text(entry.detail).font(.subheadline.weight(.semibold)).foregroundStyle(SecretMatchTheme.muted)
-                Text(entry.createdAt).font(.caption2.monospacedDigit()).foregroundStyle(.white.opacity(0.48))
             }
             Spacer(minLength: 0)
         }

@@ -449,6 +449,80 @@ class APIService: ObservableObject {
         adminParticipants = try JSONDecoder().decode(AdminParticipants.self, from: data)
     }
 
+    func createAdminAction(senderNumber: String, receiverNumber: String, type: String) async throws {
+        try await mutateAdminResource(
+            path: ["admin", "actions"],
+            method: "POST",
+            body: [
+                "sender_number": senderNumber.normalizedEventNumber,
+                "receiver_number": receiverNumber.normalizedEventNumber,
+                "action_type": type
+            ]
+        )
+        try? await loadAdminActions()
+        try? await loadAdminDashboard()
+    }
+
+    func updateAdminAction(id: String, senderNumber: String, receiverNumber: String, type: String) async throws {
+        try await mutateAdminResource(
+            path: ["admin", "actions", id],
+            method: "PATCH",
+            body: [
+                "sender_number": senderNumber.normalizedEventNumber,
+                "receiver_number": receiverNumber.normalizedEventNumber,
+                "action_type": type
+            ]
+        )
+        try? await loadAdminActions()
+    }
+
+    func createAdminMatch(numberA: String, numberB: String, type: String) async throws {
+        try await mutateAdminResource(
+            path: ["admin", "matches"],
+            method: "POST",
+            body: [
+                "number_a": numberA.normalizedEventNumber,
+                "number_b": numberB.normalizedEventNumber,
+                "type": type
+            ]
+        )
+        try? await loadAdminMatches()
+        try? await loadAdminDashboard()
+    }
+
+    func updateAdminMatch(id: String, numberA: String, numberB: String, type: String) async throws {
+        try await mutateAdminResource(
+            path: ["admin", "matches", id],
+            method: "PATCH",
+            body: [
+                "number_a": numberA.normalizedEventNumber,
+                "number_b": numberB.normalizedEventNumber,
+                "type": type
+            ]
+        )
+        try? await loadAdminMatches()
+    }
+
+    func createAdminParticipant(number: String) async throws {
+        try await mutateAdminResource(
+            path: ["admin", "participants"],
+            method: "POST",
+            body: ["number": number.normalizedEventNumber]
+        )
+        try? await loadAdminParticipants()
+        try? await loadAdminDashboard()
+    }
+
+    func updateParticipantGender(number: String, gender: ParticipantGender?) async throws {
+        try await mutateAdminResource(
+            path: ["admin", "participants", number.normalizedEventNumber],
+            method: "PATCH",
+            body: ["gender": gender?.rawValue ?? NSNull()]
+        )
+        try? await loadAdminParticipants()
+        try? await loadAdminDashboard()
+    }
+
     func controlBillboard(action: String, seconds: Int? = nil) async throws {
         let url = baseURL.appendingPathComponent("admin/billboard-control")
         var request = try adminRequest(url: url)
@@ -484,7 +558,7 @@ class APIService: ObservableObject {
         let (_, response) = try await URLSession.shared.data(for: request)
         try validateAdminResponse(response)
         adminActions.removeAll { $0.id == id }
-        try await loadAdminDashboard()
+        try? await loadAdminDashboard()
     }
 
     func deleteAdminMatch(id: String) async throws {
@@ -496,7 +570,7 @@ class APIService: ObservableObject {
         let (_, response) = try await URLSession.shared.data(for: request)
         try validateAdminResponse(response)
         adminMatches.removeAll { $0.id == id }
-        try await loadAdminDashboard()
+        try? await loadAdminDashboard()
     }
 
     func deleteAdminFeedback(id: String) async throws {
@@ -583,11 +657,32 @@ class APIService: ObservableObject {
         request.httpMethod = method
         let (_, response) = try await URLSession.shared.data(for: request)
         try validateAdminResponse(response)
-        try await refreshAdminControlData()
+        try? await loadAdminParticipants()
+        try? await loadAdminDashboard()
+    }
+
+    private func mutateAdminResource(path: [String], method: String, body: [String: Any]) async throws {
+        let url = path.reduce(baseURL) { partialURL, component in
+            partialURL.appendingPathComponent(component)
+        }
+        var request = try adminRequest(url: url)
+        request.httpMethod = method
+        request.httpBody = try JSONSerialization.data(withJSONObject: body)
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+
+        let (data, response) = try await URLSession.shared.data(for: request)
+        guard let http = response as? HTTPURLResponse else {
+            throw AdminMutationError(message: "Ungültige Serverantwort.")
+        }
+        guard (200...299).contains(http.statusCode) else {
+            handleExpiredAdminToken(response)
+            let responseError = try? JSONDecoder().decode(AdminMutationResponseError.self, from: data)
+            throw AdminMutationError(message: responseError?.message ?? "Serverfehler (HTTP \(http.statusCode)).")
+        }
     }
 
     private func validateAdminResponse(_ response: URLResponse) throws {
-        guard let http = response as? HTTPURLResponse, http.statusCode == 200 else {
+        guard let http = response as? HTTPURLResponse, (200...299).contains(http.statusCode) else {
             handleExpiredAdminToken(response)
             throw URLError(.badServerResponse)
         }
@@ -857,6 +952,16 @@ private enum InteractionSendError: Error {
     case invalidResponse
     case httpStatus(Int)
     case rejected
+}
+
+private struct AdminMutationResponseError: Decodable {
+    let message: String
+}
+
+private struct AdminMutationError: LocalizedError {
+    let message: String
+
+    var errorDescription: String? { message }
 }
 
 private struct ParticipantStatusResponse: Decodable {

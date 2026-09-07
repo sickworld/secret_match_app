@@ -1,6 +1,6 @@
 import Foundation
 
-enum ParticipantGender: String, CaseIterable, Identifiable {
+enum ParticipantGender: String, CaseIterable, Identifiable, Codable {
     case female
     case male
     case skip

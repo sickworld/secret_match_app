@@ -147,7 +147,7 @@ struct AdminFeedbackView: View {
     private func feedbackCard(_ feedback: AdminFeedback) -> some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
-                Text("Feedback #\(feedback.id)")
+                Text("Anonymes Feedback")
                     .font(.headline)
                     .foregroundStyle(.white)
                 Spacer()
@@ -158,17 +158,13 @@ struct AdminFeedbackView: View {
                         .frame(width: 44, height: 44)
                         .foregroundStyle(SecretMatchTheme.danger)
                 }
-                .accessibilityLabel("Feedback \(feedback.id) löschen")
+                .accessibilityLabel("Anonymes Feedback löschen")
             }
 
             ratingRow("Match&Play gesamt", value: feedback.rating)
             ratingRow("App-Funktion", value: feedback.functionalityRating)
             ratingRow("Bedienung", value: feedback.easeOfUseRating)
             ratingRow("Design", value: feedback.designRating)
-
-            Label(feedback.createdAt, systemImage: "clock")
-                .font(.caption.monospacedDigit())
-                .foregroundStyle(SecretMatchTheme.muted)
         }
         .padding(16)
         .background(SecretMatchTheme.surface.opacity(0.96))

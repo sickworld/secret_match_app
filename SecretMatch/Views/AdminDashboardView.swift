@@ -21,6 +21,7 @@ struct AdminDashboardView: View {
     @Binding var showBillboard: Bool
 
     @State private var participantSearch = ""
+    @State private var newParticipantNumber = ""
     @State private var rotationSeconds = 6
     @State private var isWorking = false
     @State private var statusMessage: String?
@@ -29,9 +30,22 @@ struct AdminDashboardView: View {
     @State private var showResetAssistant = false
     @State private var resetConfirmation = ""
 
-    private enum Confirmation: String, Identifiable {
-        case createDummy, deleteDummy, revokeBillboard
-        var id: String { rawValue }
+    private enum Confirmation: Identifiable {
+        case createDummy
+        case deleteDummy
+        case revokeBillboard
+        case resetGender(String)
+        case blockParticipant(String)
+
+        var id: String {
+            switch self {
+            case .createDummy: return "create-dummy"
+            case .deleteDummy: return "delete-dummy"
+            case .revokeBillboard: return "revoke-billboard"
+            case .resetGender(let number): return "reset-gender-\(number)"
+            case .blockParticipant(let number): return "block-participant-\(number)"
+            }
+        }
     }
 
     var body: some View {
@@ -94,7 +108,7 @@ struct AdminDashboardView: View {
             controls
             topPreview
         case .participants:
-            sectionHeading("Teilnehmer", subtitle: "Nummern suchen, abmelden oder sperren")
+            sectionHeading("Teilnehmer", subtitle: "Nummern freigeben, Gender verwalten, abmelden oder sperren")
             participants
         case .system:
             sectionHeading("System & Reset", subtitle: "Systemzustand prüfen und Events vorbereiten")
@@ -214,9 +228,6 @@ struct AdminDashboardView: View {
                             Text(entry.detail)
                                 .font(.subheadline.weight(.semibold))
                                 .foregroundStyle(SecretMatchTheme.muted)
-                            Text(entry.createdAt)
-                                .font(.caption2.monospacedDigit())
-                                .foregroundStyle(.white.opacity(0.48))
                         }
                         Spacer(minLength: 0)
                     }
@@ -331,6 +342,20 @@ struct AdminDashboardView: View {
             Text("👤 Teilnehmerverwaltung")
                 .font(.title2.bold())
                 .foregroundStyle(.white)
+
+            HStack(spacing: 10) {
+                TextField("Neue Nummer", text: $newParticipantNumber)
+                    .textFieldStyle(.roundedBorder)
+                    .keyboardType(.numberPad)
+                Button {
+                    Task { await addParticipant() }
+                } label: {
+                    Label("Freigeben", systemImage: "person.badge.plus")
+                }
+                .buttonStyle(SecretPrimaryButtonStyle(fullWidth: false))
+                .disabled(!isValidNewParticipantNumber || isWorking)
+            }
+
             TextField("Nummer suchen", text: $participantSearch)
                 .textFieldStyle(.roundedBorder)
 
@@ -339,24 +364,37 @@ struct AdminDashboardView: View {
                     .foregroundStyle(SecretMatchTheme.muted)
             } else {
                 ForEach(filteredParticipants.prefix(24), id: \.self) { number in
-                    HStack {
-                        Text(number.displayEventNumber)
-                            .font(.headline.monospacedDigit())
-                            .foregroundStyle(.white)
-                        if activeNumbers.contains(number) {
-                            Text("LIVE")
-                                .font(.caption2.bold())
-                                .padding(.horizontal, 8)
-                                .padding(.vertical, 4)
-                                .background(Color.green.opacity(0.2))
-                                .foregroundStyle(.green)
-                                .clipShape(Capsule())
+                    VStack(alignment: .leading, spacing: 10) {
+                        HStack {
+                            Text(number.displayEventNumber)
+                                .font(.title3.bold().monospacedDigit())
+                                .foregroundStyle(.white)
+                            if activeNumbers.contains(number) {
+                                Text("LIVE")
+                                    .font(.caption2.bold())
+                                    .padding(.horizontal, 8)
+                                    .padding(.vertical, 4)
+                                    .background(Color.green.opacity(0.2))
+                                    .foregroundStyle(.green)
+                                    .clipShape(Capsule())
+                            }
+                            Spacer()
+                            genderBadge(for: number)
                         }
-                        Spacer()
-                        if activeNumbers.contains(number) {
-                            Button("Abmelden") { Task { await logout(number) } }
+
+                        HStack(spacing: 14) {
+                            if activeNumbers.contains(number) {
+                                Button("Abmelden") { Task { await logout(number) } }
+                            }
+
+                            genderMenu(for: number)
+
+                            Spacer()
+
+                            Button("Sperren", role: .destructive) {
+                                confirmation = .blockParticipant(number)
+                            }
                         }
-                        Button("Sperren", role: .destructive) { Task { await block(number) } }
                     }
                     .padding(12)
                     .background(Color.white.opacity(0.06))
@@ -493,11 +531,28 @@ struct AdminDashboardView: View {
         Set(api.adminParticipants.active.map(\.number))
     }
 
+    private var profilesByNumber: [String: AdminParticipantProfile] {
+        Dictionary(uniqueKeysWithValues: api.adminParticipants.profiles.map { ($0.number, $0) })
+    }
+
+    private var isValidNewParticipantNumber: Bool {
+        let cleaned = newParticipantNumber.trimmingCharacters(in: .whitespacesAndNewlines)
+            .replacingOccurrences(of: "#", with: "")
+        return !cleaned.isEmpty
+            && cleaned.count <= 10
+            && cleaned.allSatisfy(\.isNumber)
+            && cleaned.normalizedEventNumber != "0"
+    }
+
     private var confirmationText: String {
         switch confirmation {
         case .createDummy: return "Die Testnummern 901–916 samt Beispieldaten anlegen?"
         case .deleteDummy: return "Alle erzeugten Testdaten wieder löschen?"
         case .revokeBillboard: return "Alle aktuell geöffneten Billboard-Zugänge ungültig machen?"
+        case .resetGender(let number):
+            return "Das Gender von \(number.displayEventNumber) zurücksetzen und alle Sitzungen dieser Nummer abmelden? Beim nächsten Login wird die Auswahl erneut angezeigt."
+        case .blockParticipant(let number):
+            return "\(number.displayEventNumber) sperren, das Profil löschen und alle Sitzungen dieser Nummer abmelden?"
         case nil: return ""
         }
     }
@@ -588,6 +643,24 @@ struct AdminDashboardView: View {
     }
 
     @MainActor
+    private func addParticipant() async {
+        let number = newParticipantNumber.normalizedEventNumber
+        await operation("\(number.displayEventNumber) wurde freigegeben.") {
+            try await api.createAdminParticipant(number: number)
+        }
+        if errorMessage == nil {
+            newParticipantNumber = ""
+        }
+    }
+
+    @MainActor
+    private func setGender(_ gender: ParticipantGender, for number: String) async {
+        await operation("Gender für \(number.displayEventNumber) wurde auf \(gender.title) gesetzt. Die Nummer wurde abgemeldet.") {
+            try await api.updateParticipantGender(number: number, gender: gender)
+        }
+    }
+
+    @MainActor
     private func runConfirmation(_ selected: Confirmation?) async {
         switch selected {
         case .createDummy:
@@ -598,6 +671,12 @@ struct AdminDashboardView: View {
             await operation("Billboard-Zugänge wurden abgemeldet.") {
                 try await api.controlBillboard(action: "revoke_access")
             }
+        case .resetGender(let number):
+            await operation("Gender für \(number.displayEventNumber) wurde zurückgesetzt. Die Nummer wurde abgemeldet.") {
+                try await api.updateParticipantGender(number: number, gender: nil)
+            }
+        case .blockParticipant(let number):
+            await block(number)
         case nil:
             break
         }
@@ -632,6 +711,46 @@ struct AdminDashboardView: View {
             errorMessage = "Event-Reset fehlgeschlagen: \(error.localizedDescription)"
         }
         isWorking = false
+    }
+
+    @ViewBuilder
+    private func genderBadge(for number: String) -> some View {
+        if let gender = profilesByNumber[number]?.gender {
+            Text("\(gender.symbol) \(gender.title)")
+                .font(.caption.bold())
+                .padding(.horizontal, 9)
+                .padding(.vertical, 5)
+                .background(SecretMatchTheme.secondary.opacity(0.18))
+                .foregroundStyle(SecretMatchTheme.secondary)
+                .clipShape(Capsule())
+        } else {
+            Text("Gender offen")
+                .font(.caption.bold())
+                .padding(.horizontal, 9)
+                .padding(.vertical, 5)
+                .background(Color.white.opacity(0.08))
+                .foregroundStyle(SecretMatchTheme.muted)
+                .clipShape(Capsule())
+        }
+    }
+
+    private func genderMenu(for number: String) -> some View {
+        Menu {
+            ForEach(ParticipantGender.allCases) { gender in
+                Button("\(gender.symbol) \(gender.title)") {
+                    Task { await setGender(gender, for: number) }
+                }
+            }
+            if profilesByNumber[number] != nil {
+                Divider()
+                Button("Gender zurücksetzen", role: .destructive) {
+                    confirmation = .resetGender(number)
+                }
+            }
+        } label: {
+            Label("Gender", systemImage: "person.2")
+        }
+        .disabled(isWorking)
     }
 }
 

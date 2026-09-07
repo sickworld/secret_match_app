@@ -8,6 +8,20 @@ struct AdminMatchListView: View {
     @State private var selectedType = "all"
     @State private var pendingDelete: AdminMatch?
     @State private var loadErrorMessage: String?
+    @State private var operationErrorMessage: String?
+    @State private var editor: Editor?
+
+    private enum Editor: Identifiable {
+        case create
+        case edit(AdminMatch)
+
+        var id: String {
+            switch self {
+            case .create: return "create"
+            case .edit(let match): return "edit-\(match.id)"
+            }
+        }
+    }
 
     var body: some View {
         ZStack {
@@ -29,6 +43,12 @@ struct AdminMatchListView: View {
                             .foregroundStyle(.white)
                     }
                     Spacer()
+                    Button {
+                        editor = .create
+                    } label: {
+                        Label("Match anlegen", systemImage: "plus")
+                    }
+                    .buttonStyle(SecretPrimaryButtonStyle(fullWidth: false))
                     if !isEmbedded {
                         Button {
                             isPresented = false
@@ -41,6 +61,13 @@ struct AdminMatchListView: View {
                                 .clipShape(Circle())
                         }
                     }
+                }
+
+                if let operationErrorMessage {
+                    Label(operationErrorMessage, systemImage: "exclamationmark.triangle.fill")
+                        .font(.callout.weight(.semibold))
+                        .foregroundStyle(.red)
+                        .frame(maxWidth: .infinity, alignment: .leading)
                 }
 
                 HStack(spacing: 12) {
@@ -98,10 +125,14 @@ struct AdminMatchListView: View {
             Button("Löschen", role: .destructive) {
                 guard let match = pendingDelete else { return }
                 pendingDelete = nil
-                Task { try? await api.deleteAdminMatch(id: match.id) }
+                Task { await delete(match) }
             }
         } message: {
             Text("Dieser Match-Eintrag wird dauerhaft entfernt.")
+        }
+        .sheet(item: $editor) { editor in
+            matchEditor(editor)
+                .presentationDetents([.medium, .large])
         }
     }
 
@@ -151,12 +182,18 @@ struct AdminMatchListView: View {
                 Text("\(match.number_a.displayEventNumber) ↔ \(match.number_b.displayEventNumber)")
                     .foregroundStyle(SecretMatchTheme.muted)
                     .font(.system(size: 16, weight: .semibold, design: .rounded))
-                Text(match.created_at)
-                    .font(.caption.monospacedDigit())
-                    .foregroundStyle(.white.opacity(0.48))
             }
 
             Spacer()
+
+            Button {
+                editor = .edit(match)
+            } label: {
+                Image(systemName: "pencil")
+                    .font(.title3.bold())
+                    .foregroundStyle(SecretMatchTheme.secondary)
+                    .padding(10)
+            }
 
             Button(role: .destructive) {
                 pendingDelete = match
@@ -212,6 +249,50 @@ struct AdminMatchListView: View {
         case "hot", "F-": return Color(hex: "#8E63D2")
         case "normal": return Color(hex: "#E83E8C")
         default: return SecretMatchTheme.secondary
+        }
+    }
+
+    @ViewBuilder
+    private func matchEditor(_ editor: Editor) -> some View {
+        switch editor {
+        case .create:
+            AdminRecordEditorView(
+                title: "Match anlegen",
+                firstNumberLabel: "Erste Nummer",
+                secondNumberLabel: "Zweite Nummer",
+                typeOptions: matchTypeOptions
+            ) { numberA, numberB, type in
+                try await api.createAdminMatch(numberA: numberA, numberB: numberB, type: type)
+            }
+        case .edit(let match):
+            AdminRecordEditorView(
+                title: "Match bearbeiten",
+                firstNumberLabel: "Erste Nummer",
+                secondNumberLabel: "Zweite Nummer",
+                typeOptions: matchTypeOptions,
+                initialFirstNumber: match.number_a,
+                initialSecondNumber: match.number_b,
+                initialType: match.type == "F-" ? "hot" : match.type
+            ) { numberA, numberB, type in
+                try await api.updateAdminMatch(id: match.id, numberA: numberA, numberB: numberB, type: type)
+            }
+        }
+    }
+
+    private var matchTypeOptions: [AdminRecordTypeOption] {
+        [
+            .init(value: "normal", title: "❤️ Hot Match"),
+            .init(value: "hot", title: "🍆 Fuck Match")
+        ]
+    }
+
+    @MainActor
+    private func delete(_ match: AdminMatch) async {
+        operationErrorMessage = nil
+        do {
+            try await api.deleteAdminMatch(id: match.id)
+        } catch {
+            operationErrorMessage = "Match konnte nicht gelöscht werden: \(error.localizedDescription)"
         }
     }
 }

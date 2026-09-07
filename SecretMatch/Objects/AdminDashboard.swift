@@ -79,6 +79,31 @@ struct EventResetResponse: Decodable {
 struct AdminParticipants: Decodable {
     let allowed: [String]
     let active: [AdminActiveParticipant]
+    let profiles: [AdminParticipantProfile]
+
+    init(allowed: [String], active: [AdminActiveParticipant], profiles: [AdminParticipantProfile] = []) {
+        self.allowed = allowed
+        self.active = active
+        self.profiles = profiles
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case allowed, active, profiles
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        allowed = try container.decode([String].self, forKey: .allowed)
+        active = try container.decode([AdminActiveParticipant].self, forKey: .active)
+        profiles = try container.decodeIfPresent([AdminParticipantProfile].self, forKey: .profiles) ?? []
+    }
+}
+
+struct AdminParticipantProfile: Identifiable, Decodable {
+    let number: String
+    let gender: ParticipantGender
+
+    var id: String { number }
 }
 
 struct AdminActiveParticipant: Identifiable, Decodable {
