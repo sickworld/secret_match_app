@@ -128,16 +128,16 @@ struct SidebarView: View {
                 section: .actions
             )
 
-            Spacer()
-                .frame(height: isCompact ? 8 : metric(8, 7))
-
-            utilityLinks
-
             if !isCompact {
                 Spacer(minLength: metric(28, 12))
             } else {
                 Spacer(minLength: 18)
             }
+
+            utilityLinks
+
+            Spacer()
+                .frame(height: isCompact ? 8 : metric(8, 7))
 
             Button {
                 logout()
