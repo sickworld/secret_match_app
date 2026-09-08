@@ -141,7 +141,7 @@ struct MatchView: View {
             if showOverviewOverlay {
                 ParticipantOverviewView(
                     isPresented: $showOverviewOverlay,
-                    selectedSection: $selectedOverviewSection
+                    selectedSection: selectedOverviewSection
                 )
                     .environmentObject(api)
                     .zIndex(5)

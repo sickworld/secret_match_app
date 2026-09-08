@@ -18,7 +18,7 @@ struct ParticipantOverviewView: View {
     @Environment(\.secretMatchHighContrast) private var highContrast
     @Environment(\.accessibilityDifferentiateWithoutColor) private var differentiateWithoutColor
     @Binding var isPresented: Bool
-    @Binding var selectedSection: ParticipantOverviewSection
+    let selectedSection: ParticipantOverviewSection
     @State private var matches: [Match] = []
     @State private var interests: [IncomingInterest] = []
     @State private var actions: [SecretAction] = []
@@ -39,7 +39,6 @@ struct ParticipantOverviewView: View {
 
             VStack(spacing: 18) {
                 header
-                sectionPicker
                 filterBar
                 content
             }
@@ -49,7 +48,7 @@ struct ParticipantOverviewView: View {
         }
         .task(id: isPresented) {
             guard isPresented else { return }
-            await loadAllSections()
+            await loadSelectedSection()
         }
     }
 
@@ -81,104 +80,6 @@ struct ParticipantOverviewView: View {
             }
             .accessibilityLabel("Übersicht schließen")
         }
-    }
-
-    private var sectionPicker: some View {
-        HStack(spacing: 10) {
-            sectionButton(
-                title: "Matches",
-                explanation: "Gegenseitig",
-                count: matches.count,
-                systemImage: "sparkles",
-                section: .matches,
-                color: SecretMatchTheme.primary
-            )
-            sectionButton(
-                title: "Interesse",
-                explanation: "Wartet auf dich",
-                count: interests.count,
-                systemImage: "heart.text.square.fill",
-                section: .interests,
-                color: SecretMatchTheme.secondary,
-                selectedForegroundColor: .black
-            )
-            sectionButton(
-                title: "Aktionen",
-                explanation: "An dich gesendet",
-                count: actions.count,
-                systemImage: "paperplane.fill",
-                section: .actions,
-                color: Color(hex: "#3E9ED6"),
-                selectedForegroundColor: .black
-            )
-        }
-        .accessibilityElement(children: .contain)
-        .accessibilityLabel("Bereich auswählen")
-    }
-
-    private func sectionButton(
-        title: String,
-        explanation: String,
-        count: Int,
-        systemImage: String,
-        section: ParticipantOverviewSection,
-        color: Color,
-        selectedForegroundColor: Color = .white
-    ) -> some View {
-        let isSelected = selectedSection == section
-        let usesColorIndependentSelection = highContrast || differentiateWithoutColor
-
-        return Button {
-            withAnimation(.easeOut(duration: 0.18)) {
-                selectedSection = section
-                selectedType = "all"
-                numberQuery = ""
-            }
-        } label: {
-            HStack(spacing: 12) {
-                Image(systemName: systemImage)
-                    .font(.system(size: 22, weight: .bold))
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("\(title) · \(count)")
-                        .font(.system(size: 18, weight: .bold, design: .rounded))
-                    Text(explanation)
-                        .font(.caption.weight(.semibold))
-                        .foregroundStyle(
-                            isSelected && usesColorIndependentSelection
-                                ? Color.black.opacity(0.76)
-                                : (isSelected ? selectedForegroundColor.opacity(0.82) : SecretMatchTheme.muted)
-                        )
-                }
-                Spacer(minLength: 0)
-                Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
-                    .font(.system(size: 20, weight: .bold))
-                    .frame(width: 22, height: 22)
-                    .accessibilityHidden(true)
-            }
-            .foregroundStyle(
-                isSelected
-                    ? (usesColorIndependentSelection ? Color.black : selectedForegroundColor)
-                    : Color.white
-            )
-            .padding(.horizontal, 15)
-            .frame(maxWidth: .infinity, minHeight: 66)
-            .background(
-                usesColorIndependentSelection
-                    ? (isSelected ? Color.white : Color.black)
-                    : (isSelected ? color.opacity(0.9) : color.opacity(0.14))
-            )
-            .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
-            .overlay(
-                RoundedRectangle(cornerRadius: 16, style: .continuous)
-                    .stroke(
-                        usesColorIndependentSelection ? Color.white : color.opacity(isSelected ? 1 : 0.5),
-                        lineWidth: isSelected ? 2 : 1
-                    )
-            )
-        }
-        .buttonStyle(.plain)
-        .accessibilityLabel("\(title), \(explanation), \(count) Einträge")
-        .accessibilityAddTraits(isSelected ? .isSelected : [])
     }
 
     private var filterBar: some View {
@@ -502,13 +403,6 @@ struct ParticipantOverviewView: View {
         case "ljob": return Color(hex: "#D65C8D")
         default: return SecretMatchTheme.secondary
         }
-    }
-
-    @MainActor
-    private func loadAllSections() async {
-        await loadMatches()
-        await loadInterests()
-        await loadActions()
     }
 
     @MainActor
