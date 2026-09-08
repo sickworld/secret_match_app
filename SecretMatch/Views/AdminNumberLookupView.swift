@@ -98,12 +98,16 @@ struct AdminNumberLookupView: View {
             Image(systemName: "magnifyingglass")
                 .font(.title2.bold())
                 .foregroundStyle(SecretMatchTheme.secondary)
-            TextField("Eventnummer", text: $query)
+            AdminKeyboardTextField(
+                title: "Eventnummer",
+                text: $query,
+                keyboard: .number(maxDigits: 10),
+                keyboardTitle: "Eventnummer suchen",
+                onSubmit: { Task { await search() } }
+            )
                 .font(.title2.bold().monospacedDigit())
-                .keyboardType(.numberPad)
                 .textContentType(.none)
                 .foregroundStyle(.white)
-                .onSubmit { Task { await search() } }
             Button("Suchen") { Task { await search() } }
                 .buttonStyle(.borderedProminent)
                 .tint(SecretMatchTheme.primary)

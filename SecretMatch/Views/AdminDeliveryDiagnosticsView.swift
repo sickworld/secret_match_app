@@ -93,9 +93,13 @@ struct AdminDeliveryDiagnosticsView: View {
             Text(title.uppercased())
                 .font(.caption.bold())
                 .foregroundStyle(SecretMatchTheme.secondary)
-            TextField(title, text: text)
+            AdminKeyboardTextField(
+                title: title,
+                text: text,
+                keyboard: .number(maxDigits: 10),
+                keyboardTitle: title
+            )
                 .font(.title3.bold().monospacedDigit())
-                .keyboardType(.numberPad)
                 .padding(12)
                 .background(SecretMatchTheme.surfaceRaised)
                 .clipShape(RoundedRectangle(cornerRadius: SecretMatchTheme.cornerRadius))

@@ -74,7 +74,12 @@ struct AdminMatchListView: View {
                     HStack {
                         Image(systemName: "magnifyingglass")
                             .foregroundStyle(SecretMatchTheme.muted)
-                        TextField("Teilnehmernummer suchen", text: $searchText)
+                        AdminKeyboardTextField(
+                            title: "Teilnehmernummer suchen",
+                            text: $searchText,
+                            keyboard: .number(maxDigits: 10),
+                            keyboardTitle: "Matches durchsuchen"
+                        )
                             .foregroundStyle(.white)
                     }
                     .padding(.horizontal, 16)

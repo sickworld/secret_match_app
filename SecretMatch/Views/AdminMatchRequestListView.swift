@@ -131,7 +131,12 @@ struct AdminMatchRequestListView: View {
         HStack {
             Image(systemName: "magnifyingglass")
                 .foregroundStyle(SecretMatchTheme.muted)
-            TextField("Absender oder Empfänger suchen", text: $searchText)
+            AdminKeyboardTextField(
+                title: "Absender oder Empfänger suchen",
+                text: $searchText,
+                keyboard: .number(maxDigits: 10),
+                keyboardTitle: "Match-Requests durchsuchen"
+            )
                 .foregroundStyle(.white)
         }
         .padding(.horizontal, 16)
@@ -313,10 +318,16 @@ private struct AdminMatchRequestEditorView: View {
         NavigationStack {
             Form {
                 Section("Teilnehmernummern") {
-                    TextField("Absender", text: $participantA)
-                        .keyboardType(.numberPad)
-                    TextField("Empfänger", text: $participantB)
-                        .keyboardType(.numberPad)
+                    AdminKeyboardTextField(
+                        title: "Absender",
+                        text: $participantA,
+                        keyboard: .number(maxDigits: 10)
+                    )
+                    AdminKeyboardTextField(
+                        title: "Empfänger",
+                        text: $participantB,
+                        keyboard: .number(maxDigits: 10)
+                    )
                     if sameNumber {
                         Label("Absender und Empfänger müssen unterschiedlich sein.", systemImage: "exclamationmark.triangle")
                             .foregroundStyle(.red)
@@ -332,7 +343,11 @@ private struct AdminMatchRequestEditorView: View {
                 }
 
                 Section("Freitext") {
-                    TextEditor(text: $message)
+                    AdminKeyboardTextEditor(
+                        title: "Freitext zum Match",
+                        text: $message,
+                        maxCharacters: 180
+                    )
                         .frame(minHeight: 90)
                         .onChange(of: message) { _, value in
                             if value.count > 180 {

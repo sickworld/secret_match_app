@@ -46,10 +46,16 @@ struct AdminRecordEditorView: View {
         NavigationStack {
             Form {
                 Section("Teilnehmernummern") {
-                    TextField(firstNumberLabel, text: $firstNumber)
-                        .keyboardType(.numberPad)
-                    TextField(secondNumberLabel, text: $secondNumber)
-                        .keyboardType(.numberPad)
+                    AdminKeyboardTextField(
+                        title: firstNumberLabel,
+                        text: $firstNumber,
+                        keyboard: .number(maxDigits: 10)
+                    )
+                    AdminKeyboardTextField(
+                        title: secondNumberLabel,
+                        text: $secondNumber,
+                        keyboard: .number(maxDigits: 10)
+                    )
                     if sameNumber {
                         Label("Die beiden Nummern müssen unterschiedlich sein.", systemImage: "exclamationmark.triangle")
                             .foregroundStyle(.red)

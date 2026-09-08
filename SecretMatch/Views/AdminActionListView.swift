@@ -74,7 +74,12 @@ struct AdminActionListView: View {
                     HStack {
                         Image(systemName: "magnifyingglass")
                             .foregroundStyle(SecretMatchTheme.muted)
-                        TextField("Sender- oder Zielnummer suchen", text: $searchText)
+                        AdminKeyboardTextField(
+                            title: "Sender- oder Zielnummer suchen",
+                            text: $searchText,
+                            keyboard: .number(maxDigits: 10),
+                            keyboardTitle: "Aktionen durchsuchen"
+                        )
                             .foregroundStyle(.white)
                     }
                     .padding(.horizontal, 16)

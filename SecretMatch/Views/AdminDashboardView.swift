@@ -516,7 +516,12 @@ struct AdminDashboardView: View {
             }
 
             controlCard(title: "💬 Match-Schnelltexte", subtitle: "Bis zu 8 Texte, je eine Zeile") {
-                TextEditor(text: $quickMessagesText)
+                AdminKeyboardTextEditor(
+                    title: "Match-Schnelltexte",
+                    text: $quickMessagesText,
+                    maxCharacters: 647,
+                    allowsNewlines: true
+                )
                     .frame(minHeight: 150)
                     .foregroundStyle(.primary)
                     .clipShape(RoundedRectangle(cornerRadius: SecretMatchTheme.cornerRadius))
@@ -590,10 +595,14 @@ struct AdminDashboardView: View {
                 }
 
                 HStack(spacing: 10) {
-                    TextField("Höchste Nummer", text: $participantRangeMax)
+                    AdminKeyboardTextField(
+                        title: "Höchste Nummer",
+                        text: $participantRangeMax,
+                        keyboard: .number(maxDigits: 5),
+                        keyboardTitle: "Nummernbereich festlegen"
+                    )
                         .textFieldStyle(.plain)
                         .secretAdminInput()
-                        .keyboardType(.numberPad)
                         .onChange(of: participantRangeMax) { _, value in
                             participantRangeMax = String(value.filter(\.isNumber).prefix(5))
                             participantRangeConfirmation = ""
@@ -614,7 +623,13 @@ struct AdminDashboardView: View {
                     Text("Zum Entfernen exakt NUMMERN ANPASSEN eingeben.")
                         .font(.caption.bold())
                         .foregroundStyle(.orange)
-                    TextField("NUMMERN ANPASSEN", text: $participantRangeConfirmation)
+                    AdminKeyboardTextField(
+                        title: "NUMMERN ANPASSEN",
+                        text: $participantRangeConfirmation,
+                        keyboard: .text(maxCharacters: 16),
+                        keyboardTitle: "Änderung bestätigen",
+                        forcesUppercase: true
+                    )
                         .textFieldStyle(.plain)
                         .secretAdminInput()
                         .textInputAutocapitalization(.characters)
@@ -628,10 +643,14 @@ struct AdminDashboardView: View {
             .clipShape(RoundedRectangle(cornerRadius: SecretMatchTheme.cornerRadius))
 
             HStack(spacing: 10) {
-                TextField("Neue Nummer", text: $newParticipantNumber)
+                AdminKeyboardTextField(
+                    title: "Neue Nummer",
+                    text: $newParticipantNumber,
+                    keyboard: .number(maxDigits: 10),
+                    keyboardTitle: "Teilnehmernummer freigeben"
+                )
                     .textFieldStyle(.plain)
                     .secretAdminInput()
-                    .keyboardType(.numberPad)
                 Button {
                     Task { await addParticipant() }
                 } label: {
@@ -641,7 +660,12 @@ struct AdminDashboardView: View {
                 .disabled(!isValidNewParticipantNumber || isWorking)
             }
 
-            TextField("Nummer suchen", text: $participantSearch)
+            AdminKeyboardTextField(
+                title: "Nummer suchen",
+                text: $participantSearch,
+                keyboard: .number(maxDigits: 10),
+                keyboardTitle: "Teilnehmer suchen"
+            )
                 .textFieldStyle(.plain)
                 .secretAdminInput(highlighted: !participantSearch.isEmpty)
 
@@ -901,8 +925,13 @@ struct AdminDashboardView: View {
         NavigationStack {
             Form {
                 Section("Neue zweistellige PIN") {
-                    TextField("00", text: $pinDraft)
-                        .keyboardType(.numberPad)
+                    AdminKeyboardTextField(
+                        title: "00",
+                        text: $pinDraft,
+                        keyboard: .number(maxDigits: 2),
+                        keyboardTitle: "Neue zweistellige PIN",
+                        isSecure: true
+                    )
                         .onChange(of: pinDraft) { _, value in pinDraft = String(value.filter(\.isNumber).prefix(2)) }
                     Text("Die Nummer wird beim Speichern auf allen Geräten abgemeldet.")
                 }
@@ -923,7 +952,12 @@ struct AdminDashboardView: View {
         NavigationStack {
             Form {
                 Section("Fester Anzeigename") {
-                    TextField("z. B. Eingang links", text: $equipmentNameDraft)
+                    AdminKeyboardTextField(
+                        title: "z. B. Eingang links",
+                        text: $equipmentNameDraft,
+                        keyboard: .text(maxCharacters: 40),
+                        keyboardTitle: "Anzeigename"
+                    )
                         .onChange(of: equipmentNameDraft) { _, value in
                             equipmentNameDraft = String(value.prefix(40))
                         }
@@ -949,7 +983,12 @@ struct AdminDashboardView: View {
         NavigationStack {
             Form {
                 Section("Neues Billboard") {
-                    TextField("Name, z. B. Hauptsaal", text: $billboardNameDraft)
+                    AdminKeyboardTextField(
+                        title: "Name, z. B. Hauptsaal",
+                        text: $billboardNameDraft,
+                        keyboard: .text(maxCharacters: 40),
+                        keyboardTitle: "Billboard benennen"
+                    )
                         .onChange(of: billboardNameDraft) { _, value in
                             billboardNameDraft = String(value.prefix(40))
                             generatedBillboardURL = nil
@@ -1024,7 +1063,13 @@ struct AdminDashboardView: View {
                 }
                 Section("Sicherheitsbestätigung") {
                     Text("Zum Ausführen exakt EVENT RESET eingeben.")
-                    TextField("EVENT RESET", text: $resetConfirmation)
+                    AdminKeyboardTextField(
+                        title: "EVENT RESET",
+                        text: $resetConfirmation,
+                        keyboard: .text(maxCharacters: 11),
+                        keyboardTitle: "Event-Reset bestätigen",
+                        forcesUppercase: true
+                    )
                         .textInputAutocapitalization(.characters)
                     Button("Backup erstellen und Event zurücksetzen", role: .destructive) {
                         Task { await performReset() }

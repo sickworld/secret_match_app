@@ -173,14 +173,19 @@ struct AdminEventLogView: View {
     private var filters: some View {
         VStack(spacing: 12) {
             HStack(spacing: 12) {
-                TextField("Nummer, Request-ID oder Ereignis suchen", text: $search)
+                AdminKeyboardTextField(
+                    title: "Nummer, Request-ID oder Ereignis suchen",
+                    text: $search,
+                    keyboard: .text(maxCharacters: 100),
+                    keyboardTitle: "Eventprotokoll durchsuchen",
+                    onSubmit: { Task { await load(reset: true) } }
+                )
                     .textFieldStyle(.plain)
                     .padding(.horizontal, 14)
                     .frame(minHeight: 50)
                     .background(SecretMatchTheme.surfaceRaised)
                     .clipShape(RoundedRectangle(cornerRadius: SecretMatchTheme.cornerRadius))
                     .foregroundStyle(.white)
-                    .onSubmit { Task { await load(reset: true) } }
 
                 Button {
                     Task { await load(reset: true) }
