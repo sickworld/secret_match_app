@@ -33,20 +33,39 @@ struct SidebarView: View {
             Image("logo")
                 .resizable()
                 .scaledToFit()
-                .frame(maxWidth: isCompact ? 126 : metric(150, 164))
-                .frame(height: isCompact ? 82 : metric(104, 112))
+                .frame(maxWidth: isCompact ? 150 : metric(188, 202))
+                .frame(height: isCompact ? 98 : metric(126, 136))
                 .frame(maxWidth: .infinity, alignment: .center)
                 .shadow(color: SecretMatchTheme.primary.opacity(0.16), radius: 18)
 
             Spacer()
-                .frame(height: isCompact ? 8 : metric(8, 6))
-
-            sidebarDivider
+                .frame(height: isCompact ? 4 : metric(4, 3))
 
             eventPass
 
-            sidebarDivider
+            Spacer()
+                .frame(height: isCompact ? 7 : metric(7, 5))
 
+            sidebarMenu
+
+            Spacer(minLength: isCompact ? 8 : metric(10, 6))
+
+            partnerLogos
+        }
+        .padding(.horizontal, isCompact ? 16 : metric(16, 12))
+        .padding(.vertical, isCompact ? 12 : metric(16, 12))
+        .frame(width: isCompact ? nil : metric(304, 336))
+        .frame(maxWidth: isCompact ? .infinity : nil)
+        .background(SecretMatchTheme.surface.opacity(0.97))
+        .overlay(alignment: isCompact ? .bottom : .trailing) {
+            Rectangle()
+                .fill(SecretMatchTheme.border)
+                .frame(width: isCompact ? nil : 1, height: isCompact ? 1 : nil)
+        }
+    }
+
+    private var sidebarMenu: some View {
+        VStack(spacing: 0) {
             overviewButton(
                 "Matches",
                 systemImage: "sparkles",
@@ -102,12 +121,6 @@ struct SidebarView: View {
 
             sidebarDivider
 
-            Spacer(minLength: isCompact ? 8 : metric(14, 8))
-
-            logoutStatus
-
-            sidebarDivider
-
             Button {
                 logout()
             } label: {
@@ -124,19 +137,12 @@ struct SidebarView: View {
             }
             .buttonStyle(flatRowStyle(tint: SecretMatchTheme.danger))
 
-            sidebarDivider
-
-            partnerLogos
+            logoutStatus
         }
-        .padding(.horizontal, isCompact ? 16 : metric(16, 12))
-        .padding(.vertical, isCompact ? 12 : metric(16, 12))
-        .frame(width: isCompact ? nil : metric(304, 336))
-        .frame(maxWidth: isCompact ? .infinity : nil)
-        .background(SecretMatchTheme.surface.opacity(0.97))
-        .overlay(alignment: isCompact ? .bottom : .trailing) {
+        .background(SecretMatchTheme.surfaceRaised.opacity(0.42))
+        .overlay {
             Rectangle()
-                .fill(SecretMatchTheme.border)
-                .frame(width: isCompact ? nil : 1, height: isCompact ? 1 : nil)
+                .stroke(SecretMatchTheme.border.opacity(0.9), lineWidth: 1)
         }
     }
 
@@ -165,7 +171,8 @@ struct SidebarView: View {
             Spacer(minLength: 0)
         }
         .padding(.horizontal, isCompact ? 12 : metric(12, 13))
-        .frame(minHeight: isCompact ? 46 : metric(46, 46))
+        .frame(minHeight: isCompact ? 42 : metric(42, 42))
+        .background(SecretMatchTheme.surface.opacity(0.38))
         .accessibilityLabel("Automatischer Logout in \(secondsRemaining) Sekunden")
     }
 
