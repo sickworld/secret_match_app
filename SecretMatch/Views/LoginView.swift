@@ -234,6 +234,10 @@ struct LoginView: View {
         .animation(.easeInOut(duration: 0.24), value: showKeyboard)
         .animation(.easeInOut(duration: 0.7), value: showScreensaver)
         .preference(key: SecretMatchScaleControlsHiddenPreferenceKey.self, value: showScreensaver)
+        .preference(
+            key: SecretMatchAccessibilityControlsHiddenPreferenceKey.self,
+            value: showKeyboard || showInfoSupport || showGenderChoice || showPINSetup || showAdminLogin
+        )
         .simultaneousGesture(
             TapGesture().onEnded {
                 guard !showScreensaver else { return }

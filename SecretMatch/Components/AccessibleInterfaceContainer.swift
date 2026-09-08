@@ -29,6 +29,14 @@ struct SecretMatchScaleControlsHiddenPreferenceKey: PreferenceKey {
     }
 }
 
+struct SecretMatchAccessibilityControlsHiddenPreferenceKey: PreferenceKey {
+    static let defaultValue = false
+
+    static func reduce(value: inout Bool, nextValue: () -> Bool) {
+        value = value || nextValue()
+    }
+}
+
 private enum InterfaceScaleLevel: Int, CaseIterable {
     case standard
     case large
@@ -54,7 +62,8 @@ struct AccessibleInterfaceContainer<Content: View>: View {
     @State private var systemHighContrastEnabled = UIAccessibility.isDarkerSystemColorsEnabled
     @State private var contentOpacity = 1.0
     @State private var isChangingScale = false
-    @State private var hidesScaleControls = false
+    @State private var hidesControlsForScreensaver = false
+    @State private var hidesControlsForOverlay = false
     @State private var scaleChangeTask: Task<Void, Never>?
     private let content: Content
 
@@ -90,13 +99,16 @@ struct AccessibleInterfaceContainer<Content: View>: View {
                     )
                     .opacity(contentOpacity)
                     .onPreferenceChange(SecretMatchScaleControlsHiddenPreferenceKey.self) { hidden in
-                        hidesScaleControls = hidden
+                        hidesControlsForScreensaver = hidden
                         if hidden {
                             resetAccessibilityToDefaults()
                         }
                     }
+                    .onPreferenceChange(SecretMatchAccessibilityControlsHiddenPreferenceKey.self) { hidden in
+                        hidesControlsForOverlay = hidden
+                    }
 
-                if !hidesScaleControls {
+                if !hidesControlsForScreensaver && !hidesControlsForOverlay {
                     InterfaceAccessibilityControls(
                         level: level,
                         highContrastEnabled: usesHighContrast,
@@ -109,8 +121,8 @@ struct AccessibleInterfaceContainer<Content: View>: View {
                         }
                     )
                     .allowsHitTesting(!isChangingScale)
-                    .padding(.top, 8)
-                    .padding(.trailing, 12)
+                    .padding(.top, 14)
+                    .padding(.trailing, 18)
                     .zIndex(10_000)
                 }
             }
@@ -122,7 +134,8 @@ struct AccessibleInterfaceContainer<Content: View>: View {
             scaleChangeTask?.cancel()
             contentOpacity = 1
             isChangingScale = false
-            hidesScaleControls = false
+            hidesControlsForScreensaver = false
+            hidesControlsForOverlay = false
         }
     }
 
@@ -238,7 +251,16 @@ private struct InterfaceAccessibilityControls: View {
     let toggleHighContrast: () -> Void
 
     var body: some View {
-        HStack(spacing: 4) {
+        HStack(spacing: 8) {
+            zoomControls
+            contrastButton
+        }
+        .shadow(color: .black.opacity(0.5), radius: 10, y: 4)
+        .accessibilityElement(children: .contain)
+    }
+
+    private var zoomControls: some View {
+        HStack(spacing: 3) {
             scaleButton(
                 title: "A−",
                 accessibilityLabel: "Darstellung verkleinern",
@@ -262,51 +284,49 @@ private struct InterfaceAccessibilityControls: View {
                 guard let larger = InterfaceScaleLevel(rawValue: level.rawValue + 1) else { return }
                 selectLevel(larger)
             }
-
-            Rectangle()
-                .fill(Color.white.opacity(0.34))
-                .frame(width: 1, height: 28)
-                .padding(.horizontal, 2)
-
-            Button(action: toggleHighContrast) {
-                VStack(spacing: 1) {
-                    Image(systemName: "circle.lefthalf.filled")
-                        .font(.system(size: 17, weight: .bold))
-                    Text("Kontrast")
-                        .font(.system(size: 9, weight: .heavy, design: .rounded))
-                }
-                .foregroundStyle(highContrastEnabled ? Color.black : Color.white)
-                .frame(width: 58, height: 44)
-                .background(highContrastEnabled ? Color.white : SecretMatchTheme.surfaceRaised)
-                .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
-                .overlay(
-                    RoundedRectangle(cornerRadius: 18, style: .continuous)
-                        .stroke(
-                            highContrastEnabled ? SecretMatchTheme.secondary : Color.white.opacity(0.42),
-                            lineWidth: highContrastEnabled ? 2 : 1
-                        )
-                )
-            }
-            .buttonStyle(.plain)
-            .disabled(isHighContrastForcedBySystem)
-            .accessibilityLabel(
-                isHighContrastForcedBySystem
-                    ? "Hoher Kontrast durch die iPad-Einstellung aktiviert"
-                    : "Hohen Kontrast verwenden"
-            )
-            .accessibilityValue(highContrastEnabled ? "Ein" : "Aus")
-            .accessibilityHint(
-                isHighContrastForcedBySystem
-                    ? "Kann in den Bedienungshilfen des iPads geändert werden"
-                    : "Erhöht Farbkontraste und hebt Begrenzungen deutlicher hervor"
-            )
         }
         .padding(5)
-        .background(.black.opacity(0.9))
+        .background(.black.opacity(0.94))
         .clipShape(Capsule())
-        .overlay(Capsule().stroke(Color.white.opacity(0.4), lineWidth: 1.2))
-        .shadow(color: .black.opacity(0.5), radius: 10, y: 4)
-        .accessibilityElement(children: .contain)
+        .overlay(Capsule().stroke(Color.white.opacity(0.42), lineWidth: 1.2))
+    }
+
+    private var contrastButton: some View {
+        Button(action: toggleHighContrast) {
+            HStack(spacing: 6) {
+                Image(systemName: "circle.lefthalf.filled")
+                    .font(.system(size: 17, weight: .bold))
+                Text("Kontrast")
+                    .font(.system(size: 11, weight: .heavy, design: .rounded))
+                Image(systemName: highContrastEnabled ? "checkmark.circle.fill" : "circle")
+                    .font(.system(size: 14, weight: .bold))
+                    .frame(width: 15, height: 15)
+            }
+            .foregroundStyle(highContrastEnabled ? Color.black : Color.white)
+            .padding(.horizontal, 12)
+            .frame(height: 54)
+            .background(highContrastEnabled ? Color.white : Color.black.opacity(0.94))
+            .clipShape(Capsule())
+            .overlay(
+                Capsule().stroke(
+                    highContrastEnabled ? SecretMatchTheme.secondary : Color.white.opacity(0.42),
+                    lineWidth: highContrastEnabled ? 2 : 1.2
+                )
+            )
+        }
+        .buttonStyle(.plain)
+        .disabled(isHighContrastForcedBySystem)
+        .accessibilityLabel(
+            isHighContrastForcedBySystem
+                ? "Hoher Kontrast durch die iPad-Einstellung aktiviert"
+                : "Hohen Kontrast verwenden"
+        )
+        .accessibilityValue(highContrastEnabled ? "Ein" : "Aus")
+        .accessibilityHint(
+            isHighContrastForcedBySystem
+                ? "Kann in den Bedienungshilfen des iPads geändert werden"
+                : "Erhöht Farbkontraste und hebt Begrenzungen deutlicher hervor"
+        )
     }
 
     private func scaleButton(

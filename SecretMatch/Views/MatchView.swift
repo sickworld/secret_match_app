@@ -191,6 +191,15 @@ struct MatchView: View {
         .onDisappear {
             autoLogoutTask?.cancel()
         }
+        .preference(
+            key: SecretMatchAccessibilityControlsHiddenPreferenceKey.self,
+            value: showKeyboard
+                || showTextKeyboard
+                || showOverviewOverlay
+                || showGuideOverlay
+                || showRulesOverlay
+                || showInfoOverlay
+        )
     }
 
     @ViewBuilder

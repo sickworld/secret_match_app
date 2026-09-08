@@ -42,9 +42,11 @@ Die PIN-Erstanlage kann jederzeit über **Abbrechen** verlassen werden. Dabei ve
 
 ## Barrierearme Darstellung
 
-Die dauerhaft eingeblendeten Schaltflächen **A−** und **A+** wechseln zwischen 100 %, 115 % und 130 % Darstellungsgröße. Direkt daneben aktiviert **Kontrast** einen dauerhaft gespeicherten High-Contrast-Modus mit schwarzem Hintergrund, helleren Sekundärtexten, kräftigeren Farben und klareren Begrenzungen. Die App respektiert zusätzlich die iPad-Systemeinstellung für erhöhten Kontrast. Beim Start des Bildschirmschoners wird die gesamte Bedienleiste verborgen und die manuelle Darstellung auf 100 % ohne High Contrast zurückgesetzt. Ein durch die iPad-Systemeinstellung erzwungener erhöhter Kontrast bleibt aktiv.
+Die dauerhaft oben rechts eingeblendete Zoomgruppe **A− · Prozentwert · A+** wechselt zwischen 100 %, 115 % und 130 % Darstellungsgröße. Die gleich hohe, optisch getrennte Schaltfläche **Kontrast** zeigt ihren Zustand zusätzlich mit Kreis oder Häkchen und aktiviert einen dauerhaft gespeicherten High-Contrast-Modus mit schwarzem Hintergrund, helleren Sekundärtexten, kräftigeren Farben und klareren Begrenzungen. Die App respektiert zusätzlich die iPad-Systemeinstellung für erhöhten Kontrast. Beim Start des Bildschirmschoners wird die gesamte Bedienleiste verborgen und die manuelle Darstellung auf 100 % ohne High Contrast zurückgesetzt. Ein durch die iPad-Systemeinstellung erzwungener erhöhter Kontrast bleibt aktiv.
 
 Beim Zoomen werden Texte, Bedienelemente und Abstände gemeinsam skaliert; responsive Ansichten brechen bei Bedarf um oder werden scrollbar. Zoom und Kontrast werden unabhängig voneinander pro App und Gerät gespeichert, bis der Bildschirmschoner beide manuellen Einstellungen zurücksetzt.
+
+Während modale Ansichten oder die appinternen Tastaturen geöffnet sind, wird die globale Bedienleiste vorübergehend ausgeblendet. Dadurch bleiben Schließen- und Tastaturtasten auf allen Zoomstufen frei erreichbar; die gewählte Darstellungsgröße und der Kontrastmodus bleiben dabei erhalten.
 
 Auswahlzustände werden nicht nur über Farbe, sondern zusätzlich mit Kreis- und Häkchensymbolen dargestellt. Aktiviert das iPad **Ohne Farben differenzieren**, verwendet die App für wichtige Auswahlen automatisch eine kontrastreiche Schwarz-Weiß-Darstellung. Geräte- und Billboard-Zustände unterscheiden Online und Offline zusätzlich durch Häkchen beziehungsweise ein achteckiges X-Symbol.
 

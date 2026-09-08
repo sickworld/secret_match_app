@@ -46,6 +46,10 @@ struct AdminMainView: View {
         .task {
             await AdminPushNotifications.requestAuthorizationAndRegister()
         }
+        .preference(
+            key: SecretMatchAccessibilityControlsHiddenPreferenceKey.self,
+            value: showAdminActions || showAdminRequests || showAdminMatches || showBillboard
+        )
     }
 
     private func content(isCompact: Bool) -> some View {
