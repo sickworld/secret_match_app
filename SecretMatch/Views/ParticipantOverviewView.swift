@@ -321,9 +321,11 @@ struct ParticipantOverviewView: View {
                         .lineLimit(1)
                         .minimumScaleFactor(0.75)
                         .foregroundStyle(.white)
-                    Text(entryExplanation)
-                        .font(.system(size: 15, weight: .semibold, design: .rounded))
-                        .foregroundStyle(SecretMatchTheme.muted)
+                    if let entryExplanation {
+                        Text(entryExplanation)
+                            .font(.system(size: 15, weight: .semibold, design: .rounded))
+                            .foregroundStyle(SecretMatchTheme.muted)
+                    }
                 }
 
                 Spacer()
@@ -431,9 +433,9 @@ struct ParticipantOverviewView: View {
         }
     }
 
-    private var entryExplanation: String {
+    private var entryExplanation: String? {
         switch selectedSection {
-        case .matches: return "Gegenseitig bestätigt"
+        case .matches: return nil
         case .interests: return "Wartet auf deine Antwort"
         case .actions: return "Direkt an dich gesendet"
         }
