@@ -43,18 +43,19 @@ struct AdminLoginView: View {
                     }
 
                     HStack {
-                        Group {
-                            if showPassword {
-                                TextField("Admin-Passwort", text: $password)
-                            } else {
-                                SecureField("Admin-Passwort", text: $password)
-                            }
-                        }
+                        AdminKeyboardTextField(
+                            title: "Admin-Passwort",
+                            text: $password,
+                            keyboard: .text(maxCharacters: 128),
+                            keyboardTitle: "Admin-Passwort eingeben",
+                            isSecure: !showPassword,
+                            showsExtendedSymbols: true,
+                            onSubmit: performLogin
+                        )
                         .font(.system(size: 20, weight: .semibold, design: .rounded))
                         .foregroundStyle(.white)
                         .textContentType(.password)
                         .submitLabel(.go)
-                        .onSubmit(performLogin)
 
                         Button {
                             showPassword.toggle()

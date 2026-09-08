@@ -10,6 +10,7 @@ struct CustomTextKeyboard: View {
     var allowsNewlines = false
     var obscuresText = false
     var forcesUppercase = false
+    var showsExtendedSymbols = false
     var onActivity: () -> Void = {}
     var onClose: () -> Void = {}
 
@@ -47,6 +48,10 @@ struct CustomTextKeyboard: View {
             }
 
             keyboardRow(symbolRow)
+            if showsExtendedSymbols {
+                keyboardRow(["@", "#", "_", "+", "=", "/", "\\", "&", "%", "$", "*", "(", ")"])
+                keyboardRow(["[", "]", "{", "}", "<", ">", "|", "~", "^", ";", "'", "\"", "`"])
+            }
             ForEach(letterRows, id: \.self) { row in
                 keyboardRow(row)
             }
@@ -174,6 +179,7 @@ struct AdminKeyboardTextField: View {
     var keyboardTitle: String? = nil
     var isSecure = false
     var forcesUppercase = false
+    var showsExtendedSymbols = false
     var onSubmit: () -> Void = {}
 
     @State private var showsKeyboard = false
@@ -191,6 +197,7 @@ struct AdminKeyboardTextField: View {
                     keyboard: keyboard,
                     isSecure: isSecure,
                     forcesUppercase: forcesUppercase,
+                    showsExtendedSymbols: showsExtendedSymbols,
                     onSubmit: onSubmit
                 )
             }
@@ -295,6 +302,7 @@ private struct AdminKeyboardEntryView: View {
     let keyboard: AdminKeyboardKind
     var isSecure = false
     var forcesUppercase = false
+    var showsExtendedSymbols = false
     var onSubmit: () -> Void = {}
 
     var body: some View {
@@ -354,6 +362,7 @@ private struct AdminKeyboardEntryView: View {
                         allowsNewlines: allowsNewlines,
                         obscuresText: isSecure,
                         forcesUppercase: forcesUppercase,
+                        showsExtendedSymbols: showsExtendedSymbols,
                         onClose: {
                             onSubmit()
                             dismiss()
