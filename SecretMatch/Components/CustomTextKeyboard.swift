@@ -15,6 +15,7 @@ struct CustomTextKeyboard: View {
 
     @State private var usesUppercase = true
     @State private var page: KeyboardPage = .letters
+    @State private var emojiPage: EmojiPage = .general
 
     private let letterRows = [
         ["Q", "W", "E", "R", "T", "Z", "U", "I", "O", "P", "Ü"],
@@ -28,10 +29,15 @@ struct CustomTextKeyboard: View {
         ["[", "]", "{", "}", "#", "%", "^", "*", "+", "="],
         ["_", "\\", "|", "~", "<", ">", "$", "£", "¥", "•"]
     ]
-    private let emojiRows = [
+    private let generalEmojiRows = [
         ["😀", "😂", "😍", "🥰", "😘", "😉", "😊", "😎", "🥳", "🤩"],
         ["❤️", "🔥", "✨", "🎉", "👍", "👏", "🙌", "🤝", "💃", "🕺"],
         ["🍻", "🥂", "🍹", "☕️", "🎵", "📍", "⏰", "🚀", "💬", "✅"]
+    ]
+    private let spicyEmojiRows = [
+        ["😈", "😏", "🥵", "🤤", "🫦", "👄", "👅", "💋", "😘", "😉"],
+        ["🍆", "🍑", "🍒", "🍌", "🥒", "🌶️", "💦", "🔥", "🫧", "🍯"],
+        ["👉", "👈", "👌", "✌️", "🤏", "🫶", "👐", "🫴", "🛏️", "🚿"]
     ]
 
     var body: some View {
@@ -69,6 +75,7 @@ struct CustomTextKeyboard: View {
         .onAppear {
             usesUppercase = forcesUppercase || text.isEmpty
             page = .letters
+            emojiPage = .general
         }
     }
 
@@ -120,7 +127,7 @@ struct CustomTextKeyboard: View {
                 deleteButton
             }
         case .emoji:
-            ForEach(emojiRows, id: \.self) { row in
+            ForEach(activeEmojiRows, id: \.self) { row in
                 keyboardRow(row)
             }
         }
@@ -138,6 +145,17 @@ struct CustomTextKeyboard: View {
             }
             .frame(width: 68)
             .accessibilityLabel(page == .emoji ? "Sonderzeichen anzeigen" : "Emojis anzeigen")
+
+            if page == .emoji {
+                keyboardButton(emojiPage == .general ? "😈" : "😀", color: SecretMatchTheme.surfaceRaised) {
+                    onActivity()
+                    emojiPage = emojiPage == .general ? .spicy : .general
+                }
+                .frame(width: 68)
+                .accessibilityLabel(
+                    emojiPage == .general ? "Freche Emojis anzeigen" : "Allgemeine Emojis anzeigen"
+                )
+            }
 
             keyboardButton("Leerzeichen", color: SecretMatchTheme.surfaceRaised) {
                 insert(" ")
@@ -161,6 +179,10 @@ struct CustomTextKeyboard: View {
     private var displayText: String {
         guard !text.isEmpty else { return placeholder }
         return obscuresText ? String(repeating: "•", count: text.count) : text
+    }
+
+    private var activeEmojiRows: [[String]] {
+        emojiPage == .general ? generalEmojiRows : spicyEmojiRows
     }
 
     private func keyboardRow(_ keys: [String], horizontalInset: CGFloat = 0) -> some View {
@@ -251,6 +273,11 @@ struct CustomTextKeyboard: View {
         case numbers
         case symbols
         case emoji
+    }
+
+    private enum EmojiPage {
+        case general
+        case spicy
     }
 }
 
