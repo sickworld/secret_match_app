@@ -64,15 +64,23 @@ struct MatchInputBox: View {
         return deliveryStatus
     }
 
-    private var inlineDeliveryStatus: InteractionDeliveryStatus? {
+    private var floatingDeliveryStatus: InteractionDeliveryStatus? {
         guard let status = visibleDeliveryStatus else { return nil }
-        if case .failed = status { return nil }
+
+        if queuedSendCount > 0 {
+            switch status {
+            case .queued, .partiallyDelivered:
+                return nil
+            default:
+                break
+            }
+        }
+
         return status
     }
 
-    private var floatingErrorStatus: InteractionDeliveryStatus? {
-        guard let status = visibleDeliveryStatus, case .failed = status else { return nil }
-        return status
+    private var floatingFeedbackBottomInset: CGFloat {
+        pinsSendButton ? metric(112, 122) : 124
     }
 
     private var content: some View {
@@ -237,38 +245,6 @@ struct MatchInputBox: View {
                 sendButton
             }
 
-            if queuedSendCount > 0 {
-                Spacer(minLength: 16)
-
-                HStack(spacing: 12) {
-                    Image(systemName: isRetryingQueuedSends ? "arrow.trianglehead.2.clockwise.rotate.90" : "wifi.exclamationmark")
-                        .foregroundStyle(SecretMatchTheme.secondary)
-
-                    Text(queuedSendCount == 1 ? "1 Aktion wartet aufs Senden" : "\(queuedSendCount) Aktionen warten aufs Senden")
-                        .font(.subheadline.weight(.semibold))
-                        .foregroundStyle(.white)
-
-                    Spacer()
-
-                    Button(isRetryingQueuedSends ? "Wird versucht…" : "Jetzt versuchen") {
-                        onRetryQueuedSends()
-                    }
-                    .font(.subheadline.bold())
-                    .foregroundStyle(SecretMatchTheme.secondary)
-                    .disabled(isRetryingQueuedSends)
-                }
-                .padding(14)
-                .background(SecretMatchTheme.secondary.opacity(0.1))
-                .clipShape(RoundedRectangle(cornerRadius: 14))
-                .overlay(RoundedRectangle(cornerRadius: 14).stroke(SecretMatchTheme.secondary.opacity(0.35)))
-            }
-
-            if let deliveryStatus = inlineDeliveryStatus {
-                Spacer(minLength: 20)
-                    .transition(.opacity)
-                deliveryFeedback(deliveryStatus)
-                    .transition(.opacity.combined(with: .scale(scale: 0.98)))
-            }
         }
         .frame(
             maxWidth: fillsAvailableSpace ? .infinity : 780,
@@ -313,17 +289,25 @@ struct MatchInputBox: View {
                     .secretCard(cornerRadius: 24, padding: 30)
             }
         }
-        .overlay(alignment: .top) {
-            if let errorStatus = floatingErrorStatus {
-                deliveryFeedback(errorStatus)
-                    .padding(.horizontal, fillsAvailableSpace ? metric(30, 30) : 24)
-                    .padding(.top, metric(18, 18))
-                    .shadow(color: .black.opacity(0.55), radius: 18, y: 8)
-                    .allowsHitTesting(false)
-                    .transition(.move(edge: .top).combined(with: .opacity))
+        .overlay(alignment: .bottom) {
+            VStack(spacing: 10) {
+                if let status = floatingDeliveryStatus {
+                    deliveryFeedback(status)
+                        .allowsHitTesting(false)
+                        .transition(.move(edge: .bottom).combined(with: .opacity))
+                }
+
+                if queuedSendCount > 0 {
+                    queueFeedback
+                        .transition(.move(edge: .bottom).combined(with: .opacity))
+                }
             }
+            .padding(.horizontal, fillsAvailableSpace ? metric(30, 30) : 24)
+            .padding(.bottom, floatingFeedbackBottomInset)
+            .shadow(color: .black.opacity(0.68), radius: 20, y: 9)
         }
-        .animation(.easeOut(duration: 0.22), value: floatingErrorStatus != nil)
+        .animation(.easeOut(duration: 0.22), value: floatingDeliveryStatus)
+        .animation(.easeOut(duration: 0.22), value: queuedSendCount)
         .task(id: deliveryStatus) {
             hidesDeliveredFeedback = false
 
@@ -358,6 +342,41 @@ struct MatchInputBox: View {
         .opacity(selectedActions.isEmpty || targetNumber.isEmpty ? 0.5 : 1)
     }
 
+    private var queueFeedback: some View {
+        HStack(spacing: 12) {
+            Image(systemName: isRetryingQueuedSends ? "arrow.trianglehead.2.clockwise.rotate.90" : "wifi.exclamationmark")
+                .font(.title2.bold())
+                .foregroundStyle(SecretMatchTheme.secondary)
+
+            VStack(alignment: .leading, spacing: 3) {
+                Text(queuedSendCount == 1 ? "1 Wunsch wartet sicher" : "\(queuedSendCount) Wünsche warten sicher")
+                    .font(.headline.bold())
+                    .foregroundStyle(.white)
+                Text("Geht automatisch raus, sobald die Verbindung wieder da ist.")
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(SecretMatchTheme.muted)
+            }
+
+            Spacer(minLength: 8)
+
+            Button(isRetryingQueuedSends ? "Wird versucht…" : "Jetzt versuchen") {
+                onRetryQueuedSends()
+            }
+            .font(.subheadline.bold())
+            .foregroundStyle(SecretMatchTheme.secondary)
+            .disabled(isRetryingQueuedSends)
+        }
+        .padding(14)
+        .frame(maxWidth: .infinity)
+        .background(SecretMatchTheme.surfaceRaised)
+        .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                .stroke(SecretMatchTheme.secondary.opacity(0.9), lineWidth: 2)
+        )
+        .accessibilityElement(children: .contain)
+    }
+
     private func deliveryFeedback(_ status: InteractionDeliveryStatus) -> some View {
         let presentation: (title: String, detail: String, icon: String, color: Color) = switch status {
         case .delivered(let count):
@@ -387,9 +406,12 @@ struct MatchInputBox: View {
         }
         .padding(14)
         .frame(maxWidth: .infinity)
-        .background(presentation.color.opacity(0.12))
-        .clipShape(RoundedRectangle(cornerRadius: 14))
-        .overlay(RoundedRectangle(cornerRadius: 14).stroke(presentation.color.opacity(0.4)))
+        .background(SecretMatchTheme.surfaceRaised)
+        .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                .stroke(presentation.color.opacity(0.9), lineWidth: 2)
+        )
         .accessibilityElement(children: .combine)
     }
 
