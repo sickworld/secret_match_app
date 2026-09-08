@@ -91,7 +91,7 @@ struct SidebarView: View {
                         .foregroundStyle(.white)
                 }
                 .padding(.horizontal, isCompact ? 14 : metric(19, 20))
-                .frame(maxWidth: .infinity, minHeight: isCompact ? 52 : metric(66, 70), alignment: .leading)
+                .frame(maxWidth: .infinity, minHeight: isCompact ? 58 : metric(58, 62), alignment: .leading)
                 .background(SecretMatchTheme.surfaceRaised)
                 .clipShape(RoundedRectangle(cornerRadius: isCompact ? 16 : metric(16, 18), style: .continuous))
                 .overlay(
@@ -172,11 +172,8 @@ struct SidebarView: View {
             ))
             .accessibilityHint("Öffnet Feedback, Datenschutz und Impressum")
 
-            if !isCompact {
-                Spacer(minLength: metric(28, 12))
-            } else {
-                Spacer(minLength: 18)
-            }
+            Spacer()
+                .frame(height: isCompact ? 18 : metric(18, 14))
 
             Button {
                 logout()
@@ -188,8 +185,12 @@ struct SidebarView: View {
                 stabilizedScale: isCompact ? nil : normalizedScale
             ))
 
-            Spacer()
-                .frame(height: isCompact ? 14 : metric(10, 10))
+            if !isCompact {
+                Spacer(minLength: metric(10, 10))
+            } else {
+                Spacer()
+                    .frame(height: 14)
+            }
 
             HStack {
                 if isCompact {
