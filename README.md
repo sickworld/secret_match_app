@@ -4,7 +4,9 @@
 
 Die iPhone-Admin-App kann Aktionen und Matches anlegen, bearbeiten und löschen sowie Match-Requests einsehen und verwalten. In der Teilnehmerverwaltung lassen sich Nummern freigeben und sperren sowie Gender-Angaben setzen oder zurücksetzen. Jede Gender-Änderung und jeder Reset widerruft die aktive Sitzung der betroffenen Nummer; nach einem Reset erscheint die Gender-Auswahl beim nächsten Login erneut. Feedback bleibt als anonymer, unveränderlicher Datensatz bewusst auf Lesen und Löschen begrenzt.
 
-Diese Funktionen benötigen das WordPress-Modul ab Version `2026.09.07.9`; das Modul muss vor oder zusammen mit diesem App-Build veröffentlicht werden.
+iPads und Billboards besitzen ebenfalls eine vollständige Verwaltung für ihre technisch sinnvollen Lebenszyklen: iPads registrieren sich automatisch per Heartbeat und können danach umbenannt oder einzeln aus der Liste entfernt werden. Billboards lassen sich mit einem benannten Einmal-Link anlegen, direkt öffnen, umbenennen und einzeln widerrufen. Das zentrale manuelle Billboard-Passwort gilt für alle, während jeder geöffnete Zugang eine eigene löschbare Sitzung erhält.
+
+Diese Funktionen benötigen das WordPress-Modul ab Version `2026.09.08.1`; das Modul muss vor oder zusammen mit diesem App-Build veröffentlicht werden.
 
 ## Eingehende Interessen
 

@@ -570,7 +570,9 @@ class APIService: ObservableObject {
         }
 
         let access = try JSONDecoder().decode(BillboardAccessResponse.self, from: data)
-        guard let accessURL = URL(string: access.url) else {
+        guard let accessURL = URL(string: access.url),
+              let scheme = accessURL.scheme?.lowercased(),
+              scheme == "https" || scheme == "http" else {
             throw URLError(.badURL)
         }
         return accessURL
@@ -585,11 +587,29 @@ class APIService: ObservableObject {
         try? await loadAdminDashboard()
     }
 
+    func deleteAdminDevice(id: String) async throws {
+        try await mutateAdminResource(
+            path: ["admin", "devices", id],
+            method: "DELETE",
+            body: [:]
+        )
+        try? await loadAdminDashboard()
+    }
+
     func updateAdminBillboardName(id: String, name: String) async throws {
         try await mutateAdminResource(
             path: ["admin", "billboards", id],
             method: "PATCH",
             body: ["name": name]
+        )
+        try? await loadAdminDashboard()
+    }
+
+    func deleteAdminBillboard(id: String) async throws {
+        try await mutateAdminResource(
+            path: ["admin", "billboards", id],
+            method: "DELETE",
+            body: [:]
         )
         try? await loadAdminDashboard()
     }

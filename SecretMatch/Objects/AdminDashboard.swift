@@ -23,6 +23,7 @@ struct AdminDashboard: Decodable {
     let billboardWidth: Int?
     let billboardHeight: Int?
     let billboardMode: String?
+    let billboardURL: String?
     let billboards: [AdminBillboardStatus]?
     let topPeople: [TopPerson]?
     let matchMessageOptions: [String]?
@@ -51,6 +52,7 @@ struct AdminDashboard: Decodable {
         case billboardWidth = "billboard_width"
         case billboardHeight = "billboard_height"
         case billboardMode = "billboard_mode"
+        case billboardURL = "billboard_url"
         case billboards
         case topPeople = "top_people"
         case matchMessageOptions = "match_message_options"

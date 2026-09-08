@@ -37,6 +37,7 @@ struct AdminDashboardView: View {
     @State private var equipmentNameDraft = ""
     @State private var billboardNameDraft = ""
     @State private var generatedBillboardURL: URL?
+    @State private var showBillboardCreator = false
     @State private var participantRangeMax = ""
     @State private var participantRangeConfirmation = ""
 
@@ -73,6 +74,8 @@ struct AdminDashboardView: View {
         case resetGender(String)
         case resetPIN(String)
         case blockParticipant(String)
+        case deleteDevice(id: String, name: String)
+        case deleteBillboard(id: String, name: String)
 
         var id: String {
             switch self {
@@ -82,6 +85,8 @@ struct AdminDashboardView: View {
             case .resetGender(let number): return "reset-gender-\(number)"
             case .resetPIN(let number): return "reset-pin-\(number)"
             case .blockParticipant(let number): return "block-participant-\(number)"
+            case .deleteDevice(let id, _): return "delete-device-\(id)"
+            case .deleteBillboard(let id, _): return "delete-billboard-\(id)"
             }
         }
     }
@@ -90,6 +95,7 @@ struct AdminDashboardView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 22) {
 #if ADMIN_APP
+                operationFeedback
                 adminAppContent
 #else
                 header
@@ -136,6 +142,9 @@ struct AdminDashboardView: View {
         }
         .sheet(item: $equipmentEditor) { editor in
             equipmentNameEditor(editor)
+        }
+        .sheet(isPresented: $showBillboardCreator) {
+            billboardCreator
         }
     }
 
@@ -184,13 +193,23 @@ struct AdminDashboardView: View {
     private var liveStatus: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
-                Text("📺 Billboards")
+                Text("📺 Billboards verwalten")
                     .font(.title2.bold())
                     .foregroundStyle(.white)
                 Spacer()
                 Text("\(billboardStatuses.count)")
                     .font(.title3.bold().monospacedDigit())
                     .foregroundStyle(SecretMatchTheme.secondary)
+                Button {
+                    billboardNameDraft = ""
+                    generatedBillboardURL = nil
+                    showBillboardCreator = true
+                } label: {
+                    Label("Neu", systemImage: "plus")
+                }
+                .buttonStyle(.bordered)
+                .tint(SecretMatchTheme.secondary)
+                .disabled(isWorking)
             }
 
             if billboardStatuses.isEmpty {
@@ -201,6 +220,10 @@ struct AdminDashboardView: View {
                     billboardStatusRow(billboard)
                 }
             }
+
+            Text("Das zentrale Passwort gilt beim manuellen Login für alle Billboards. Ein Einmal-Link meldet das gewählte Billboard stattdessen mit einer eigenen, separat löschbaren Sitzung an.")
+                .font(.caption)
+                .foregroundStyle(SecretMatchTheme.muted)
         }
         .secretCard(cornerRadius: 20, padding: 20)
     }
@@ -350,34 +373,11 @@ struct AdminDashboardView: View {
 
     private var controls: some View {
         LazyVGrid(columns: [GridItem(.adaptive(minimum: 330), spacing: 16)], spacing: 16) {
-            controlCard(title: "📺 Billboard", subtitle: "TV-Ansicht und Top-16-Modus") {
+            controlCard(title: "📺 Billboard-Steuerung", subtitle: "Darstellung und globale Steuerung aller Bildschirme") {
 #if !ADMIN_APP
                 Button("Vollbild öffnen") { showBillboard = true }
                     .buttonStyle(SecretPrimaryButtonStyle())
 #endif
-
-                TextField("Name, z. B. Hauptsaal", text: $billboardNameDraft)
-                    .textFieldStyle(.roundedBorder)
-                    .onChange(of: billboardNameDraft) { _, value in
-                        billboardNameDraft = String(value.prefix(40))
-                        generatedBillboardURL = nil
-                    }
-                Button {
-                    Task { await createBillboardAccess() }
-                } label: {
-                    Label("Benannten Zugang erstellen", systemImage: "link.badge.plus")
-                }
-                .buttonStyle(SecretPrimaryButtonStyle())
-                .disabled(billboardNameDraft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || isWorking)
-                if let generatedBillboardURL {
-                    ShareLink(item: generatedBillboardURL) {
-                        Label("Zugangslink teilen", systemImage: "square.and.arrow.up")
-                    }
-                    .buttonStyle(SecretSecondaryButtonStyle())
-                    Text("Der Einmal-Link muss innerhalb einer Minute am Zielgerät geöffnet werden.")
-                        .font(.caption)
-                        .foregroundStyle(SecretMatchTheme.muted)
-                }
 
                 HStack {
                     Button("Top 16 testen") { Task { await billboard("start_top_test") } }
@@ -639,7 +639,7 @@ struct AdminDashboardView: View {
 
     private var deviceStatus: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("🔋 iPads")
+            Text("🔋 iPads verwalten")
                 .font(.title2.bold())
                 .foregroundStyle(.white)
             if (api.adminDashboard?.devices ?? []).isEmpty {
@@ -675,15 +675,25 @@ struct AdminDashboardView: View {
                         Text("\(device.batteryLevel) %").font(.title3.bold().monospacedDigit())
                         Text("v\(device.appVersion)").foregroundStyle(SecretMatchTheme.muted)
                         if let id = device.deviceID {
-                            Button {
-                                equipmentNameDraft = device.name ?? ""
-                                equipmentEditor = .device(id: id, currentName: device.name ?? "")
+                            Menu {
+                                Button {
+                                    equipmentNameDraft = device.name ?? ""
+                                    equipmentEditor = .device(id: id, currentName: device.name ?? "")
+                                } label: {
+                                    Label("Umbenennen", systemImage: "pencil")
+                                }
+                                Button(role: .destructive) {
+                                    confirmation = .deleteDevice(id: id, name: device.name ?? "iPad")
+                                } label: {
+                                    Label("Aus Liste entfernen", systemImage: "trash")
+                                }
                             } label: {
-                                Image(systemName: "pencil")
+                                Image(systemName: "ellipsis.circle")
                                     .frame(width: 36, height: 36)
                             }
                             .buttonStyle(.borderless)
-                            .accessibilityLabel("\(device.name ?? "iPad") umbenennen")
+                            .accessibilityLabel("\(device.name ?? "iPad") verwalten")
+                            .disabled(isWorking)
                         }
                     }
                     .foregroundStyle(
@@ -696,6 +706,9 @@ struct AdminDashboardView: View {
                     .clipShape(RoundedRectangle(cornerRadius: 12))
                 }
             }
+            Text("iPads registrieren sich automatisch mit ihrem ersten Heartbeat. Ein aktives iPad erscheint nach dem Entfernen wieder, sobald es erneut sendet.")
+                .font(.caption)
+                .foregroundStyle(SecretMatchTheme.muted)
         }
         .secretCard(cornerRadius: 20, padding: 20)
     }
@@ -734,16 +747,33 @@ struct AdminDashboardView: View {
                     .foregroundStyle(color)
             }
             Spacer()
+            if let url = billboardPublicURL {
+                Link(destination: url) {
+                    Label("Öffnen", systemImage: "arrow.up.forward.app")
+                }
+                .buttonStyle(.bordered)
+                .tint(SecretMatchTheme.secondary)
+            }
             if billboard.billboardID != "legacy" {
-                Button {
-                    equipmentNameDraft = billboard.name
-                    equipmentEditor = .billboard(id: billboard.billboardID, currentName: billboard.name)
+                Menu {
+                    Button {
+                        equipmentNameDraft = billboard.name
+                        equipmentEditor = .billboard(id: billboard.billboardID, currentName: billboard.name)
+                    } label: {
+                        Label("Umbenennen", systemImage: "pencil")
+                    }
+                    Button(role: .destructive) {
+                        confirmation = .deleteBillboard(id: billboard.billboardID, name: billboard.name)
+                    } label: {
+                        Label("Zugang löschen", systemImage: "trash")
+                    }
                 } label: {
-                    Image(systemName: "pencil")
+                    Image(systemName: "ellipsis.circle")
                         .frame(width: 36, height: 36)
                 }
                 .buttonStyle(.borderless)
-                .accessibilityLabel("\(billboard.name) umbenennen")
+                .accessibilityLabel("\(billboard.name) verwalten")
+                .disabled(isWorking)
             }
         }
         .padding(12)
@@ -791,6 +821,55 @@ struct AdminDashboardView: View {
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Speichern") { Task { await saveEquipmentName(editor) } }
                         .disabled(equipmentNameDraft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || isWorking)
+                }
+            }
+        }
+    }
+
+    private var billboardCreator: some View {
+        NavigationStack {
+            Form {
+                Section("Neues Billboard") {
+                    TextField("Name, z. B. Hauptsaal", text: $billboardNameDraft)
+                        .onChange(of: billboardNameDraft) { _, value in
+                            billboardNameDraft = String(value.prefix(40))
+                            generatedBillboardURL = nil
+                        }
+                    Text("Der Name erscheint in Status, Warnungen und der Billboard-Verwaltung.")
+                }
+
+                Section("Zugang") {
+                    Button {
+                        Task { await createBillboardAccess() }
+                    } label: {
+                        Label("Einmal-Link erstellen", systemImage: "link.badge.plus")
+                    }
+                    .disabled(billboardNameDraft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || isWorking)
+
+                    if let generatedBillboardURL {
+                        Link(destination: generatedBillboardURL) {
+                            Label("Billboard jetzt öffnen", systemImage: "arrow.up.forward.app")
+                        }
+                        ShareLink(item: generatedBillboardURL) {
+                            Label("Zugangslink teilen", systemImage: "square.and.arrow.up")
+                        }
+                        Text("Der Link meldet genau dieses Billboard ohne Passworteingabe an und muss innerhalb einer Minute einmalig geöffnet werden.")
+                    } else {
+                        Text("Alternativ kann am Billboard der normale Link geöffnet und das gemeinsame Billboard-Passwort eingegeben werden.")
+                    }
+                }
+
+                if let errorMessage {
+                    Section {
+                        Label(errorMessage, systemImage: "exclamationmark.triangle.fill")
+                            .foregroundStyle(.red)
+                    }
+                }
+            }
+            .navigationTitle("Billboard anlegen")
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Schließen") { showBillboardCreator = false }
                 }
             }
         }
@@ -962,7 +1041,36 @@ struct AdminDashboardView: View {
             return "Die PIN von \(number.displayEventNumber) zurücksetzen? Die bisherige PIN wird sofort ungültig, alle Sitzungen werden beendet und beim nächsten Login legt der Teilnehmer selbst eine neue PIN fest."
         case .blockParticipant(let number):
             return "\(number.displayEventNumber) sperren, das Profil löschen und alle Sitzungen dieser Nummer abmelden?"
+        case .deleteDevice(_, let name):
+            return "\(name) aus der iPad-Liste entfernen? Ist die App dort noch aktiv, registriert sich das iPad mit dem nächsten Heartbeat erneut."
+        case .deleteBillboard(_, let name):
+            return "Den Zugang für \(name) löschen? Die laufende Sitzung wird sofort ungültig und das Billboard muss danach neu angemeldet werden."
         case nil: return ""
+        }
+    }
+
+    private var billboardPublicURL: URL? {
+        guard let value = api.adminDashboard?.billboardURL,
+              let url = URL(string: value),
+              let scheme = url.scheme?.lowercased(),
+              scheme == "https" || scheme == "http" else { return nil }
+        return url
+    }
+
+    @ViewBuilder
+    private var operationFeedback: some View {
+        if let statusMessage {
+            Label(statusMessage, systemImage: "checkmark.circle.fill")
+                .font(.callout.bold())
+                .foregroundStyle(.green)
+                .textSelection(.enabled)
+                .frame(maxWidth: .infinity, alignment: .leading)
+        }
+        if let errorMessage {
+            Label(errorMessage, systemImage: "exclamationmark.triangle.fill")
+                .font(.callout.bold())
+                .foregroundStyle(.red)
+                .frame(maxWidth: .infinity, alignment: .leading)
         }
     }
 
@@ -1169,6 +1277,14 @@ struct AdminDashboardView: View {
             await resetPIN(for: number)
         case .blockParticipant(let number):
             await block(number)
+        case .deleteDevice(let id, let name):
+            await operation("\(name) wurde aus der iPad-Liste entfernt.") {
+                try await api.deleteAdminDevice(id: id)
+            }
+        case .deleteBillboard(let id, let name):
+            await operation("Der Zugang für \(name) wurde gelöscht.") {
+                try await api.deleteAdminBillboard(id: id)
+            }
         case nil:
             break
         }
