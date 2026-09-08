@@ -8,6 +8,31 @@ struct AdminNumberLookupView: View {
     @State private var overview: AdminNumberOverview?
     @State private var isLoading = false
     @State private var errorMessage: String?
+    @State private var isMutating = false
+    @State private var operationMessage: String?
+    @State private var operationError: String?
+    @State private var pendingReset: ResetAction?
+
+    private enum ResetAction: Identifiable {
+        case pin(String)
+        case gender(String)
+
+        var id: String {
+            switch self {
+            case .pin(let number): return "pin-\(number)"
+            case .gender(let number): return "gender-\(number)"
+            }
+        }
+
+        var confirmationText: String {
+            switch self {
+            case .pin(let number):
+                return "Die bisherige PIN von \(number.displayEventNumber) wird sofort ungültig. Alle Sitzungen werden beendet und beim nächsten Login legt die Person selbst eine neue PIN fest."
+            case .gender(let number):
+                return "Das Gender von \(number.displayEventNumber) wird gelöscht. Alle Sitzungen werden beendet und beim nächsten Login erscheint die Auswahl erneut."
+            }
+        }
+    }
 
     var body: some View {
         NavigationStack {
@@ -54,6 +79,18 @@ struct AdminNumberLookupView: View {
                 }
             }
         }
+        .alert("Zurücksetzen bestätigen", isPresented: Binding(
+            get: { pendingReset != nil },
+            set: { if !$0 { pendingReset = nil } }
+        )) {
+            Button("Abbrechen", role: .cancel) {}
+            Button("Zurücksetzen", role: .destructive) {
+                let selected = pendingReset
+                Task { await performReset(selected) }
+            }
+        } message: {
+            Text(pendingReset?.confirmationText ?? "")
+        }
     }
 
     private var searchCard: some View {
@@ -70,7 +107,7 @@ struct AdminNumberLookupView: View {
             Button("Suchen") { Task { await search() } }
                 .buttonStyle(.borderedProminent)
                 .tint(SecretMatchTheme.primary)
-                .disabled(query.normalizedEventNumber.isEmpty || isLoading)
+                .disabled(query.normalizedEventNumber.isEmpty || isLoading || isMutating)
         }
         .padding(16)
         .secretCard(cornerRadius: 18, padding: 0)
@@ -94,6 +131,8 @@ struct AdminNumberLookupView: View {
             statusCard("Gender", value: genderLabel(overview.gender), icon: "person.crop.circle", color: overview.gender == nil ? .orange : SecretMatchTheme.secondary)
             statusCard("Geräte", value: "\(overview.devices.count)", icon: "ipad", color: overview.devices.isEmpty ? SecretMatchTheme.muted : .green)
         }
+
+        participantManagement(overview)
 
         section("Aktivität", icon: "chart.bar.fill") {
             LazyVGrid(columns: [GridItem(.adaptive(minimum: 145), spacing: 10)], spacing: 10) {
@@ -183,6 +222,58 @@ struct AdminNumberLookupView: View {
         }
     }
 
+    private func participantManagement(_ overview: AdminNumberOverview) -> some View {
+        section("Nummer verwalten", icon: "person.badge.key.fill") {
+            VStack(alignment: .leading, spacing: 12) {
+                if let operationMessage {
+                    Label(operationMessage, systemImage: "checkmark.circle.fill")
+                        .font(.callout.bold())
+                        .foregroundStyle(.green)
+                }
+                if let operationError {
+                    Label(operationError, systemImage: "exclamationmark.triangle.fill")
+                        .font(.callout.bold())
+                        .foregroundStyle(.red)
+                }
+
+                LazyVGrid(columns: [GridItem(.adaptive(minimum: 210), spacing: 12)], spacing: 12) {
+                    Button {
+                        pendingReset = .pin(overview.number)
+                    } label: {
+                        Label("PIN zurücksetzen", systemImage: "key.slash.fill")
+                            .frame(maxWidth: .infinity)
+                    }
+                    .buttonStyle(.bordered)
+                    .tint(.orange)
+                    .disabled(isMutating || !overview.pinConfigured)
+
+                    Button {
+                        pendingReset = .gender(overview.number)
+                    } label: {
+                        Label("Gender zurücksetzen", systemImage: "person.crop.circle.badge.xmark")
+                            .frame(maxWidth: .infinity)
+                    }
+                    .buttonStyle(.bordered)
+                    .tint(.orange)
+                    .disabled(isMutating || overview.gender == nil)
+                }
+
+                if isMutating {
+                    HStack(spacing: 9) {
+                        ProgressView().tint(SecretMatchTheme.secondary)
+                        Text("Änderung wird gespeichert …")
+                    }
+                    .font(.caption.bold())
+                    .foregroundStyle(SecretMatchTheme.muted)
+                } else {
+                    Text("Ein Reset meldet die Nummer auf allen Geräten ab. Fehlende Angaben werden beim nächsten Login neu eingerichtet.")
+                        .font(.caption.weight(.medium))
+                        .foregroundStyle(SecretMatchTheme.muted)
+                }
+            }
+        }
+    }
+
     private func section<Content: View>(_ title: String, icon: String, @ViewBuilder content: () -> Content) -> some View {
         VStack(alignment: .leading, spacing: 12) {
             Label(title, systemImage: icon).font(.title3.bold()).foregroundStyle(.white)
@@ -243,9 +334,11 @@ struct AdminNumberLookupView: View {
     }
 
     private func search() async {
-        guard !query.normalizedEventNumber.isEmpty, !isLoading else { return }
+        guard !query.normalizedEventNumber.isEmpty, !isLoading, !isMutating else { return }
         isLoading = true
         errorMessage = nil
+        operationMessage = nil
+        operationError = nil
         do {
             overview = try await api.loadAdminNumberOverview(number: query)
         } catch {
@@ -253,5 +346,33 @@ struct AdminNumberLookupView: View {
             errorMessage = "Die Nummer konnte nicht geladen werden. Bitte Verbindung und Eingabe prüfen."
         }
         isLoading = false
+    }
+
+    @MainActor
+    private func performReset(_ action: ResetAction?) async {
+        guard let action, !isMutating else { return }
+        isMutating = true
+        operationMessage = nil
+        operationError = nil
+
+        let number: String
+        do {
+            switch action {
+            case .pin(let selectedNumber):
+                number = selectedNumber
+                try await api.resetParticipantPIN(number: selectedNumber)
+                operationMessage = "PIN zurückgesetzt. Beim nächsten Login wird eine neue PIN festgelegt."
+            case .gender(let selectedNumber):
+                number = selectedNumber
+                try await api.updateParticipantGender(number: selectedNumber, gender: nil)
+                operationMessage = "Gender zurückgesetzt. Beim nächsten Login erscheint die Auswahl erneut."
+            }
+            if let refreshed = try? await api.loadAdminNumberOverview(number: number) {
+                overview = refreshed
+            }
+        } catch {
+            operationError = "Die Angabe konnte nicht zurückgesetzt werden. Bitte Verbindung prüfen und erneut versuchen."
+        }
+        isMutating = false
     }
 }
