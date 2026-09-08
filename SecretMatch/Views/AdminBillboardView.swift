@@ -46,7 +46,7 @@ struct AdminBillboardView: View {
                     .foregroundStyle(.white)
                     .frame(width: 54, height: 54)
                     .background(.black.opacity(0.72))
-                    .clipShape(Circle())
+                    .clipShape(RoundedRectangle(cornerRadius: SecretMatchTheme.cornerRadius))
                     .overlay(Circle().stroke(.white.opacity(0.28), lineWidth: 1))
                     .shadow(color: .black.opacity(0.5), radius: 12)
             }

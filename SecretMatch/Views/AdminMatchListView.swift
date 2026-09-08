@@ -58,7 +58,7 @@ struct AdminMatchListView: View {
                                 .frame(width: 50, height: 50)
                                 .foregroundStyle(.white)
                                 .background(SecretMatchTheme.surfaceRaised)
-                                .clipShape(Circle())
+                                .clipShape(RoundedRectangle(cornerRadius: SecretMatchTheme.cornerRadius))
                         }
                     }
                 }
@@ -80,7 +80,7 @@ struct AdminMatchListView: View {
                     .padding(.horizontal, 16)
                     .frame(minHeight: 54)
                     .background(Color.black.opacity(0.25))
-                    .clipShape(RoundedRectangle(cornerRadius: 14))
+                    .clipShape(RoundedRectangle(cornerRadius: SecretMatchTheme.cornerRadius))
 
                     Picker("Typ", selection: $selectedType) {
                         Text("Alle").tag("all")
@@ -111,7 +111,7 @@ struct AdminMatchListView: View {
                 }
             }
             .frame(maxWidth: 1040, maxHeight: isEmbedded ? .infinity : 780)
-            .secretCard(cornerRadius: 26, padding: 26)
+            .secretCard(padding: 26)
             .padding(24)
         }
         .task {
@@ -172,7 +172,7 @@ struct AdminMatchListView: View {
                 .font(.system(size: 30))
                 .frame(width: 54, height: 54)
                 .background(color.opacity(0.2))
-                .clipShape(RoundedRectangle(cornerRadius: 12))
+                .clipShape(RoundedRectangle(cornerRadius: SecretMatchTheme.cornerRadius))
 
             VStack(alignment: .leading, spacing: 6) {
                 Text(prettyMatchType(match.type))
@@ -206,8 +206,8 @@ struct AdminMatchListView: View {
         }
         .padding()
         .background(color.opacity(0.14))
-        .clipShape(RoundedRectangle(cornerRadius: 14))
-        .overlay(RoundedRectangle(cornerRadius: 14).stroke(color.opacity(0.65), lineWidth: 1.2))
+        .clipShape(RoundedRectangle(cornerRadius: SecretMatchTheme.cornerRadius))
+        .overlay(RoundedRectangle(cornerRadius: SecretMatchTheme.cornerRadius).stroke(color.opacity(0.65), lineWidth: 1.2))
     }
 
     private var filteredMatches: [AdminMatch] {

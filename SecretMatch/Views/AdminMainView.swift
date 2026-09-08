@@ -3,28 +3,25 @@ import SwiftUI
 struct AdminMainView: View {
     @EnvironmentObject var api: APIService
 
-    @State private var showAdminActions = false
-    @State private var showAdminRequests = false
-    @State private var showAdminMatches = false
     @State private var showBillboard = false
     @State private var showAdminMenu = false
-    @State private var showLiveFeed = false
     @State private var showNumberLookup = false
     @State private var dashboardSection: AdminDashboardSection = .overview
 
     var body: some View {
         GeometryReader { proxy in
-            let isCompact = proxy.size.width < proxy.size.height
+#if ADMIN_APP
+            let isCompact = true
+#else
+            let isCompact = proxy.size.width < 760
+#endif
 
             content(isCompact: isCompact)
         }
-#if !ADMIN_APP
         .fullScreenCover(isPresented: $showBillboard) {
             AdminBillboardView(isPresented: $showBillboard)
                 .environmentObject(api)
         }
-#endif
-#if ADMIN_APP
         .sheet(isPresented: $showAdminMenu) {
             ScrollView {
                 sidebar(isCompact: true)
@@ -42,14 +39,15 @@ struct AdminMainView: View {
         .onChange(of: dashboardSection) { _, _ in
             showAdminMenu = false
         }
-#endif
         .task {
             await AdminPushNotifications.requestAuthorizationAndRegister()
         }
         .preference(
             key: SecretMatchAccessibilityControlsHiddenPreferenceKey.self,
-            value: showAdminActions || showAdminRequests || showAdminMatches || showBillboard
+            value: showAdminMenu || showNumberLookup || showBillboard
         )
+        .buttonBorderShape(.roundedRectangle(radius: SecretMatchTheme.cornerRadius))
+        .tint(SecretMatchTheme.primary)
     }
 
     private func content(isCompact: Bool) -> some View {
@@ -57,88 +55,17 @@ struct AdminMainView: View {
             BrandBackground()
 
             mainLayout(isCompact: isCompact)
-            
-#if !ADMIN_APP
-            if showAdminActions {
-                AdminActionListView(isPresented: $showAdminActions)
-                    .environmentObject(api)
-            }
-
-            if showAdminMatches {
-                AdminMatchListView(isPresented: $showAdminMatches)
-                    .environmentObject(api)
-            }
-
-            if showAdminRequests {
-                AdminMatchRequestListView(isPresented: $showAdminRequests)
-                    .environmentObject(api)
-            }
-#endif
         }
     }
 
     @ViewBuilder
     private func mainLayout(isCompact: Bool) -> some View {
-#if ADMIN_APP
-        VStack(spacing: 0) {
-            HStack(spacing: 14) {
-                Button {
-                    showAdminMenu = true
-                } label: {
-                    Image(systemName: "line.3.horizontal")
-                        .font(.title2.bold())
-                        .foregroundStyle(.white)
-                        .frame(width: 48, height: 48)
-                        .background(SecretMatchTheme.surfaceRaised)
-                        .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
-                }
-                .accessibilityLabel("Admin-Menü öffnen")
-
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("MATCH&PLAY")
-                        .font(.caption2.bold())
-                        .tracking(1.5)
-                        .foregroundStyle(SecretMatchTheme.secondary)
-                    Text("Event Control")
-                        .font(.headline.bold())
-                        .foregroundStyle(.white)
-                }
-
-                Spacer()
-
-                Button {
-                    showNumberLookup = true
-                } label: {
-                    Label("Nummer suchen", systemImage: "magnifyingglass")
-                        .font(.headline.bold())
-                        .foregroundStyle(.white)
-                        .padding(.horizontal, 15)
-                        .frame(height: 48)
-                        .background(SecretMatchTheme.primary)
-                        .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
-                }
-                .accessibilityHint("Öffnet die globale Suche nach einer Eventnummer")
-            }
-            .padding(.horizontal, 18)
-            .padding(.vertical, 10)
-            .background(SecretMatchTheme.surface.opacity(0.97))
-            .overlay(alignment: .bottom) {
-                Rectangle()
-                    .fill(SecretMatchTheme.border)
-                    .frame(height: 1)
-            }
-
-            adminPage
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-        }
-#else
         if isCompact {
-            ScrollView {
-                VStack(spacing: 0) {
-                    sidebar(isCompact: true)
-                    AdminDashboardView(showBillboard: $showBillboard)
-                        .environmentObject(api)
-                }
+            VStack(spacing: 0) {
+                adminToolbar(showsMenu: true)
+
+                adminPage
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
         } else {
             HStack(spacing: 0) {
@@ -146,15 +73,16 @@ struct AdminMainView: View {
 
                 Divider().background(Color.white.opacity(0.3))
 
-                AdminDashboardView(showBillboard: $showBillboard)
-                    .environmentObject(api)
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                VStack(spacing: 0) {
+                    adminToolbar(showsMenu: false)
+
+                    adminPage
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                }
             }
         }
-#endif
     }
 
-#if ADMIN_APP
     @ViewBuilder
     private var adminPage: some View {
         switch dashboardSection {
@@ -186,20 +114,83 @@ struct AdminMainView: View {
             AdminFeedbackView()
                 .environmentObject(api)
         default:
-            AdminDashboardView(showBillboard: $showBillboard)
+            AdminDashboardView(showBillboard: $showBillboard, selectedSection: $dashboardSection)
                 .environment(\.adminDashboardSection, dashboardSection)
                 .environmentObject(api)
         }
     }
-#endif
+
+    private func adminToolbar(showsMenu: Bool) -> some View {
+        HStack(spacing: 14) {
+            if showsMenu {
+                Button {
+                    showAdminMenu = true
+                } label: {
+                    Image(systemName: "line.3.horizontal")
+                        .font(.title2.bold())
+                        .foregroundStyle(.white)
+                        .frame(width: 48, height: 48)
+                        .background(SecretMatchTheme.surfaceRaised)
+                        .clipShape(RoundedRectangle(cornerRadius: SecretMatchTheme.cornerRadius, style: .continuous))
+                }
+                .accessibilityLabel("Admin-Menü öffnen")
+            } else if dashboardSection != .overview {
+                Button {
+                    dashboardSection = .overview
+                } label: {
+                    Label("Aktionen", systemImage: "chevron.left")
+                        .font(.headline.bold())
+                        .foregroundStyle(.white)
+                        .padding(.horizontal, 14)
+                        .frame(height: 48)
+                        .background(SecretMatchTheme.surfaceRaised)
+                        .clipShape(RoundedRectangle(cornerRadius: SecretMatchTheme.cornerRadius, style: .continuous))
+                }
+                .accessibilityHint("Kehrt zur Übersicht der Admin-Aktionen zurück")
+            }
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text("MATCH&PLAY")
+                    .font(.caption2.bold())
+                    .tracking(1.5)
+                    .foregroundStyle(SecretMatchTheme.secondary)
+                Text(dashboardSection.title)
+                    .font(.headline.bold())
+                    .foregroundStyle(.white)
+            }
+
+            Spacer()
+
+            Button {
+                showNumberLookup = true
+            } label: {
+                ViewThatFits(in: .horizontal) {
+                    Label("Nummer suchen", systemImage: "magnifyingglass")
+                    Image(systemName: "magnifyingglass")
+                }
+                .font(.headline.bold())
+                .foregroundStyle(.white)
+                .padding(.horizontal, 15)
+                .frame(minWidth: 48, minHeight: 48)
+                .background(SecretMatchTheme.primary)
+                .clipShape(RoundedRectangle(cornerRadius: SecretMatchTheme.cornerRadius, style: .continuous))
+            }
+            .accessibilityLabel("Nummer suchen")
+            .accessibilityHint("Öffnet die globale Suche nach einer Eventnummer")
+        }
+        .padding(.horizontal, 18)
+        .padding(.vertical, 10)
+        .background(SecretMatchTheme.surface.opacity(0.97))
+        .overlay(alignment: .bottom) {
+            Rectangle()
+                .fill(SecretMatchTheme.border)
+                .frame(height: 1)
+        }
+    }
 
     private func sidebar(isCompact: Bool) -> some View {
         AdminSidebarView(
-            showActions: $showAdminActions,
-            showRequests: $showAdminRequests,
-            showMatches: $showAdminMatches,
             showBillboard: $showBillboard,
-            showLiveFeed: $showLiveFeed,
             dashboardSection: $dashboardSection,
             dismissMenu: { showAdminMenu = false },
             logout: { api.logout() },

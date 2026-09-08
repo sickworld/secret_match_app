@@ -4,13 +4,23 @@ In allen sichtbaren App-Texten, Exporten und Benachrichtigungen lautet der Produ
 
 ## Admin-CRUD
 
-Die iPhone-Admin-App kann Aktionen und Matches anlegen, bearbeiten und löschen sowie Match-Requests einsehen und verwalten. In der Teilnehmerverwaltung lassen sich Nummern freigeben und sperren sowie Gender-Angaben setzen oder zurücksetzen. Jede Gender-Änderung und jeder Reset widerruft die aktive Sitzung der betroffenen Nummer; nach einem Reset erscheint die Gender-Auswahl beim nächsten Login erneut. Feedback bleibt als anonymer, unveränderlicher Datensatz bewusst auf Lesen und Löschen begrenzt.
+Die Admin-Bereiche auf iPhone und iPad können Aktionen und Matches anlegen, bearbeiten und löschen sowie Match-Requests einsehen und verwalten. In der Teilnehmerverwaltung lassen sich Nummern freigeben und sperren sowie Gender-Angaben setzen oder zurücksetzen. Jede Gender-Änderung und jeder Reset widerruft die aktive Sitzung der betroffenen Nummer; nach einem Reset erscheint die Gender-Auswahl beim nächsten Login erneut. Feedback bleibt als anonymer, unveränderlicher Datensatz bewusst auf Lesen und Löschen begrenzt.
 
 iPads und Billboards besitzen ebenfalls eine vollständige Verwaltung für ihre technisch sinnvollen Lebenszyklen: iPads registrieren sich automatisch per Heartbeat und können danach umbenannt oder einzeln aus der Liste entfernt werden. Billboards lassen sich mit einem benannten Einmal-Link anlegen, direkt öffnen, umbenennen und einzeln widerrufen. Das zentrale manuelle Billboard-Passwort gilt für alle, während jeder geöffnete Zugang eine eigene löschbare Sitzung erhält.
 
 Das zentrale Protokoll benennt jede schreibende Admin-Aktion verständlich, einschließlich Änderungen an Aktionen, Matches, Requests, Teilnehmern, PIN/Gender, Geräten, Billboards, Schnelltexten und Testdaten. Auch Änderungen aus dem WordPress-Backend erscheinen in der Admin-App; Passwörter, PINs, Tokens und Nachrichteninhalte werden nicht protokolliert. Ein erfolgreicher Event-Reset erzeugt absichtlich keinen neuen Eintrag, da er weiterhin sämtliche Logs vollständig entfernt.
 
 Die Admin-App bietet zusätzlich eine globale Nummernakte mit bestätigtem PIN- und Gender-Reset, einen Event-Startcheck und eine Request-ID-basierte Sendungsdiagnose. Die Statistik lässt sich ohne Eventnummern, Nachrichten, PINs oder Gerätekennungen als PDF beziehungsweise CSV teilen. Auf dem iPad unterscheidet die Versandbestätigung sichtbar zwischen zugestellt, sicher vorgemerkt, teilweise zugestellt und fehlgeschlagen. Die grüne Bestätigung spricht bewusst in kurzer Event-Sprache und blendet sich nach vier Sekunden weich aus. Versand- und Queue-Hinweise erscheinen auf vollständig deckenden Karten direkt oberhalb des Senden-Buttons; sie blockieren den Button nicht und verändern das Layout nicht. Die Queue-Karte bleibt bis zur Zustellung sichtbar und bietet einen manuellen Retry.
+
+## Gemeinsame Admin-Architektur
+
+Der iPhone-Admin-Target und der im Event-iPad integrierte Admin-Modus verwenden dieselben SwiftUI-Views, Models und Methoden aus `APIService`. `AdminDashboardSection` ist die zentrale Quelle für Titel, Icons, Farben, Reihenfolge und Ziele aller Admin-Werkzeuge. Neue Admin-Funktionen werden dort einmal registriert und anschließend über `AdminMainView` auf beiden Gerätegrößen geöffnet; eigene API- oder View-Model-Implementierungen pro Target sind zu vermeiden.
+
+Auf dem iPhone öffnet die Kopfleiste das kompakte Admin-Menü. Auf dem iPad bleibt die permanente Admin-Navigation bewusst auf den Eintrag **Aktionen** beschränkt. Dahinter liegt eine adaptive Werkzeugübersicht mit Livefeed, Aktionen-, Request- und Match-CRUD, Teilnehmerverwaltung, Eventsteuerung, Event-Check, Sendungsdiagnose, Protokoll, Statistik, Feedback sowie System und Reset. Detailseiten erhalten auf dem iPad einen direkten Rückweg zu **Aktionen**. Die Inhalte nutzen adaptive Grids, statt das iPhone-Layout lediglich zu verbreitern.
+
+## UI-Konventionen
+
+Die bestehende dunkle Match&Play-Gestaltung verwendet für Karten, Buttons, Eingaben, Navigationselemente und Admin-Controls zentral `SecretMatchTheme.cornerRadius` mit **8 pt**. Neue Komponenten sollen `secretCard`, `secretInput`, `secretAdminInput`, `SecretPrimaryButtonStyle`, `SecretSecondaryButtonStyle` oder `SecretAdminFeatureButtonStyle` wiederverwenden. Pillenformen sind ausschließlich für kurze Status- und Auswahl-Chips vorgesehen; normale Aktionen und Schließen-Buttons bleiben kompakte, abgerundete Rechtecke. Systembuttons im Admin-Bereich erben dieselbe rechteckige Buttonform und den Produktfarbton.
 
 Diese Funktionen benötigen das WordPress-Modul ab Version `2026.09.08.6`; das Modul muss vor oder zusammen mit diesem App-Build veröffentlicht werden.
 

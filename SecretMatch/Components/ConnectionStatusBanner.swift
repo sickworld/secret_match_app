@@ -40,9 +40,9 @@ struct ConnectionStatusBanner: View {
             .padding(.horizontal, 18)
             .frame(minHeight: 54)
             .background(.black.opacity(0.92))
-            .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+            .clipShape(RoundedRectangle(cornerRadius: SecretMatchTheme.cornerRadius, style: .continuous))
             .overlay(
-                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                RoundedRectangle(cornerRadius: SecretMatchTheme.cornerRadius, style: .continuous)
                     .stroke(statusColor.opacity(0.55), lineWidth: 1)
             )
             .shadow(color: .black.opacity(0.4), radius: 14, y: 6)

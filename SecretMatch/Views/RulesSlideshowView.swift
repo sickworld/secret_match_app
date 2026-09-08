@@ -141,7 +141,7 @@ struct RulesSlideshowView: View {
             }
         }
         .frame(maxWidth: isCompact ? 720 : 640)
-        .secretCard(cornerRadius: 24, padding: isCompact ? 22 : 28)
+        .secretCard(padding: isCompact ? 22 : 28)
         .padding(.horizontal, isCompact ? 24 : 0)
         .animation(.easeOut(duration: 0.24), value: selectedIndex)
     }
@@ -195,8 +195,8 @@ struct RulesSlideshowView: View {
                 .padding(.horizontal, 14)
                 .frame(maxWidth: .infinity, minHeight: isCompact ? 44 : 50)
                 .background(SecretMatchTheme.surfaceRaised)
-                .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
-                .overlay(RoundedRectangle(cornerRadius: 14).stroke(SecretMatchTheme.border))
+                .clipShape(RoundedRectangle(cornerRadius: SecretMatchTheme.cornerRadius, style: .continuous))
+                .overlay(RoundedRectangle(cornerRadius: SecretMatchTheme.cornerRadius).stroke(SecretMatchTheme.border))
             }
         }
     }
@@ -324,9 +324,9 @@ private struct RuleIconButtonStyle: ButtonStyle {
             .frame(width: 54, height: 56)
             .foregroundStyle(.white)
             .background(configuration.isPressed ? SecretMatchTheme.primary.opacity(0.8) : SecretMatchTheme.surfaceRaised)
-            .clipShape(RoundedRectangle(cornerRadius: 15, style: .continuous))
+            .clipShape(RoundedRectangle(cornerRadius: SecretMatchTheme.cornerRadius, style: .continuous))
             .overlay(
-                RoundedRectangle(cornerRadius: 15, style: .continuous)
+                RoundedRectangle(cornerRadius: SecretMatchTheme.cornerRadius, style: .continuous)
                     .stroke(SecretMatchTheme.border, lineWidth: 1)
             )
             .scaleEffect(configuration.isPressed ? 0.96 : 1)

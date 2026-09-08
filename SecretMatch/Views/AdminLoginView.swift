@@ -74,7 +74,7 @@ struct AdminLoginView: View {
                             .padding(14)
                             .frame(maxWidth: .infinity)
                             .background(SecretMatchTheme.danger.opacity(0.14))
-                            .clipShape(RoundedRectangle(cornerRadius: 12))
+                            .clipShape(RoundedRectangle(cornerRadius: SecretMatchTheme.cornerRadius))
                     }
 
                     if api.hasSavedAdminSession && biometricType != .none {
@@ -124,7 +124,7 @@ struct AdminLoginView: View {
                                 .foregroundStyle(.white)
                                 .frame(width: 54, height: 54)
                                 .background(SecretMatchTheme.surfaceRaised)
-                                .clipShape(Circle())
+                                .clipShape(RoundedRectangle(cornerRadius: SecretMatchTheme.cornerRadius))
                         }
                         .accessibilityLabel("Admin Login schließen")
                         .padding(28)
@@ -138,6 +138,8 @@ struct AdminLoginView: View {
             didRequestBiometrics = true
             performBiometricLogin()
         }
+        .buttonBorderShape(.roundedRectangle(radius: SecretMatchTheme.cornerRadius))
+        .tint(SecretMatchTheme.primary)
     }
 
     private func performLogin() {

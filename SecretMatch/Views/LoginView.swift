@@ -136,8 +136,8 @@ struct LoginView: View {
                             .padding(.vertical, 10)
                             .frame(maxWidth: .infinity)
                             .background(SecretMatchTheme.danger.opacity(0.16))
-                            .clipShape(RoundedRectangle(cornerRadius: 12))
-                            .overlay(RoundedRectangle(cornerRadius: 12).stroke(SecretMatchTheme.danger.opacity(0.4)))
+                            .clipShape(RoundedRectangle(cornerRadius: SecretMatchTheme.cornerRadius))
+                            .overlay(RoundedRectangle(cornerRadius: SecretMatchTheme.cornerRadius).stroke(SecretMatchTheme.danger.opacity(0.4)))
                     }
 
                     Button(action: submitLogin) {
@@ -615,7 +615,7 @@ private struct ParticipantPINSetupView: View {
                     .foregroundStyle(.white)
                     .frame(width: 38, height: 38)
                     .background(SecretMatchTheme.secondary)
-                    .clipShape(Circle())
+                    .clipShape(RoundedRectangle(cornerRadius: SecretMatchTheme.cornerRadius))
                 VStack(alignment: .leading, spacing: 2) {
                     Text(activeField == .pin ? "SCHRITT 1 VON 2" : "SCHRITT 2 VON 2")
                         .font(.caption.bold())

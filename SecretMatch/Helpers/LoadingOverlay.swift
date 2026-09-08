@@ -17,7 +17,7 @@ struct LoadingOverlay: View {
                     .foregroundStyle(.white)
                     .font(.headline.weight(.semibold))
             }
-            .secretCard(cornerRadius: 18, padding: 24)
+            .secretCard(padding: 24)
         }
         .transition(.opacity)
         .zIndex(100)

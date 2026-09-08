@@ -23,7 +23,7 @@ struct AdminFeedbackView: View {
                         .padding(12)
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .background(SecretMatchTheme.danger.opacity(0.12))
-                        .clipShape(RoundedRectangle(cornerRadius: 12))
+                        .clipShape(RoundedRectangle(cornerRadius: SecretMatchTheme.cornerRadius))
                 }
 
                 if isLoading && api.adminFeedback.isEmpty {
@@ -93,7 +93,7 @@ struct AdminFeedbackView: View {
                     .frame(width: 48, height: 48)
                     .foregroundStyle(.white)
                     .background(SecretMatchTheme.surfaceRaised)
-                    .clipShape(RoundedRectangle(cornerRadius: 14))
+                    .clipShape(RoundedRectangle(cornerRadius: SecretMatchTheme.cornerRadius))
             }
             .disabled(isLoading)
             .accessibilityLabel("Feedback aktualisieren")
@@ -140,8 +140,8 @@ struct AdminFeedbackView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(14)
         .background(SecretMatchTheme.surfaceRaised)
-        .clipShape(RoundedRectangle(cornerRadius: 16))
-        .overlay(RoundedRectangle(cornerRadius: 16).stroke(SecretMatchTheme.border))
+        .clipShape(RoundedRectangle(cornerRadius: SecretMatchTheme.cornerRadius))
+        .overlay(RoundedRectangle(cornerRadius: SecretMatchTheme.cornerRadius).stroke(SecretMatchTheme.border))
     }
 
     private func feedbackCard(_ feedback: AdminFeedback) -> some View {
@@ -168,8 +168,8 @@ struct AdminFeedbackView: View {
         }
         .padding(16)
         .background(SecretMatchTheme.surface.opacity(0.96))
-        .clipShape(RoundedRectangle(cornerRadius: 18))
-        .overlay(RoundedRectangle(cornerRadius: 18).stroke(SecretMatchTheme.border))
+        .clipShape(RoundedRectangle(cornerRadius: SecretMatchTheme.cornerRadius))
+        .overlay(RoundedRectangle(cornerRadius: SecretMatchTheme.cornerRadius).stroke(SecretMatchTheme.border))
     }
 
     private func ratingRow(_ title: String, value: Int?) -> some View {

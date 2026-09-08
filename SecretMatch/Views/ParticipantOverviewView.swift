@@ -43,7 +43,7 @@ struct ParticipantOverviewView: View {
                 content
             }
             .frame(maxWidth: 1_020, maxHeight: 780)
-            .secretCard(cornerRadius: 26, padding: 28)
+            .secretCard(padding: 28)
             .padding(24)
         }
         .task(id: isPresented) {
@@ -76,7 +76,7 @@ struct ParticipantOverviewView: View {
                     .foregroundStyle(.white)
                     .frame(width: 50, height: 50)
                     .background(SecretMatchTheme.surfaceRaised)
-                    .clipShape(Circle())
+                    .clipShape(RoundedRectangle(cornerRadius: SecretMatchTheme.cornerRadius))
             }
             .accessibilityLabel("Übersicht schließen")
         }
@@ -123,8 +123,8 @@ struct ParticipantOverviewView: View {
             .padding(.horizontal, 15)
             .frame(minHeight: 52)
             .background(SecretMatchTheme.surfaceRaised)
-            .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
-            .overlay(RoundedRectangle(cornerRadius: 14).stroke(SecretMatchTheme.border))
+            .clipShape(RoundedRectangle(cornerRadius: SecretMatchTheme.cornerRadius, style: .continuous))
+            .overlay(RoundedRectangle(cornerRadius: SecretMatchTheme.cornerRadius).stroke(SecretMatchTheme.border))
         }
     }
 
@@ -214,7 +214,7 @@ struct ParticipantOverviewView: View {
                     .font(.system(size: 32))
                     .frame(width: 58, height: 58)
                     .background(color.opacity(0.2))
-                    .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+                    .clipShape(RoundedRectangle(cornerRadius: SecretMatchTheme.cornerRadius, style: .continuous))
 
                 VStack(alignment: .leading, spacing: 2) {
                     Text(entry.other.displayEventNumber)
@@ -252,13 +252,13 @@ struct ParticipantOverviewView: View {
                 .padding(13)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .background(Color.black.opacity(0.2))
-                .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                .clipShape(RoundedRectangle(cornerRadius: SecretMatchTheme.cornerRadius, style: .continuous))
             }
         }
         .padding(18)
         .background(color.opacity(0.13))
-        .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
-        .overlay(RoundedRectangle(cornerRadius: 18).stroke(color.opacity(0.62), lineWidth: 1.2))
+        .clipShape(RoundedRectangle(cornerRadius: SecretMatchTheme.cornerRadius, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: SecretMatchTheme.cornerRadius).stroke(color.opacity(0.62), lineWidth: 1.2))
         .accessibilityElement(children: .combine)
     }
 

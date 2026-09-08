@@ -66,9 +66,9 @@ struct CustomNumberKeyboard: View {
                                     .background(key == "✓" ? SecretMatchTheme.primary : SecretMatchTheme.surfaceRaised)
                                     .foregroundStyle(.white)
                                     .font(.system(size: isZoomed ? 34 : 40, weight: .bold, design: .rounded))
-                                    .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+                                    .clipShape(RoundedRectangle(cornerRadius: SecretMatchTheme.cornerRadius, style: .continuous))
                                     .overlay(
-                                        RoundedRectangle(cornerRadius: 8)
+                                        RoundedRectangle(cornerRadius: SecretMatchTheme.cornerRadius)
                                             .stroke(key == "✓" ? SecretMatchTheme.primaryHover : SecretMatchTheme.border, lineWidth: highContrast ? 2 : 1)
                                     )
                                     .shadow(color: key == "✓" ? SecretMatchTheme.primary.opacity(0.25) : .clear, radius: 12)

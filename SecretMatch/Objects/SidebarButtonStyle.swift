@@ -4,6 +4,7 @@ struct SidebarButtonStyle: ButtonStyle {
     var compact = false
     var veryCompact = false
     var stabilizedScale: CGFloat?
+    var isSelected = false
 
     private var normalizedScale: CGFloat {
         max(stabilizedScale ?? 1, 1)
@@ -39,24 +40,24 @@ struct SidebarButtonStyle: ButtonStyle {
         return metric(19, 20)
     }
 
-    private var cornerRadius: CGFloat {
-        guard stabilizedScale != nil else {
-            return veryCompact ? 12 : (compact ? 14 : 17)
-        }
-        return metric(17, 18)
-    }
-
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .font(.system(size: fontSize, weight: .bold, design: .rounded))
             .frame(maxWidth: .infinity, minHeight: minHeight, alignment: .leading)
             .padding(.horizontal, horizontalPadding)
-            .background(configuration.isPressed ? SecretMatchTheme.primary.opacity(0.20) : SecretMatchTheme.surfaceRaised)
+            .background(
+                isSelected
+                    ? SecretMatchTheme.primary.opacity(configuration.isPressed ? 0.30 : 0.20)
+                    : (configuration.isPressed ? SecretMatchTheme.primary.opacity(0.20) : SecretMatchTheme.surfaceRaised)
+            )
             .foregroundStyle(.white)
-            .clipShape(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
+            .clipShape(RoundedRectangle(cornerRadius: SecretMatchTheme.cornerRadius, style: .continuous))
             .overlay(
-                RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-                    .stroke(configuration.isPressed ? SecretMatchTheme.primary.opacity(0.7) : SecretMatchTheme.border, lineWidth: 1.2)
+                RoundedRectangle(cornerRadius: SecretMatchTheme.cornerRadius, style: .continuous)
+                    .stroke(
+                        isSelected || configuration.isPressed ? SecretMatchTheme.primary.opacity(0.7) : SecretMatchTheme.border,
+                        lineWidth: 1.2
+                    )
             )
             .scaleEffect(configuration.isPressed ? 0.98 : 1)
             .animation(.easeOut(duration: 0.16), value: configuration.isPressed)

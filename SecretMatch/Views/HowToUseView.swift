@@ -157,7 +157,7 @@ struct HowToUseView: View {
                 }
             }
             .frame(maxWidth: 650)
-            .secretCard(cornerRadius: 24, padding: isCompact ? 20 : 16)
+            .secretCard(padding: isCompact ? 20 : 16)
         }
         .padding(.horizontal, isCompact ? 24 : 0)
         .animation(.easeOut(duration: 0.26), value: step)
@@ -211,9 +211,9 @@ struct HowToUseView: View {
         .padding(.horizontal, 14)
         .frame(maxWidth: .infinity, minHeight: isCompact ? 54 : 42)
         .background(isSelected ? option.color.opacity(0.92) : option.color.opacity(0.16))
-        .clipShape(RoundedRectangle(cornerRadius: 15, style: .continuous))
+        .clipShape(RoundedRectangle(cornerRadius: SecretMatchTheme.cornerRadius, style: .continuous))
         .overlay(
-            RoundedRectangle(cornerRadius: 15, style: .continuous)
+            RoundedRectangle(cornerRadius: SecretMatchTheme.cornerRadius, style: .continuous)
                 .stroke(option.color.opacity(isSelected ? 1 : 0.58), lineWidth: isSelected ? 2 : 1.2)
         )
         .shadow(color: isSelected ? option.color.opacity(0.3) : .clear, radius: 12)
@@ -268,9 +268,9 @@ struct HowToUseView: View {
                 endPoint: .bottomTrailing
             )
         )
-        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .clipShape(RoundedRectangle(cornerRadius: SecretMatchTheme.cornerRadius, style: .continuous))
         .overlay(
-            RoundedRectangle(cornerRadius: 16, style: .continuous)
+            RoundedRectangle(cornerRadius: SecretMatchTheme.cornerRadius, style: .continuous)
                 .stroke(step == 4 ? SecretMatchTheme.secondary : SecretMatchTheme.border, lineWidth: step == 4 ? 2 : 1)
         )
         .opacity(step >= 4 ? 1 : 0.55)
@@ -289,8 +289,8 @@ struct HowToUseView: View {
         .padding(14)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(SecretMatchTheme.primary.opacity(0.12))
-        .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
-        .overlay(RoundedRectangle(cornerRadius: 14).stroke(SecretMatchTheme.primary.opacity(0.3)))
+        .clipShape(RoundedRectangle(cornerRadius: SecretMatchTheme.cornerRadius, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: SecretMatchTheme.cornerRadius).stroke(SecretMatchTheme.primary.opacity(0.3)))
     }
 
     private var controls: some View {
@@ -444,9 +444,9 @@ private struct SecretIconButtonStyle: ButtonStyle {
             .frame(width: 54, height: 56)
             .foregroundStyle(.white)
             .background(configuration.isPressed ? SecretMatchTheme.primary.opacity(0.8) : SecretMatchTheme.surfaceRaised)
-            .clipShape(RoundedRectangle(cornerRadius: 15, style: .continuous))
+            .clipShape(RoundedRectangle(cornerRadius: SecretMatchTheme.cornerRadius, style: .continuous))
             .overlay(
-                RoundedRectangle(cornerRadius: 15, style: .continuous)
+                RoundedRectangle(cornerRadius: SecretMatchTheme.cornerRadius, style: .continuous)
                     .stroke(SecretMatchTheme.border, lineWidth: 1)
             )
             .scaleEffect(configuration.isPressed ? 0.96 : 1)
@@ -458,7 +458,7 @@ private extension View {
     func highlighted(_ isActive: Bool) -> some View {
         padding(2)
             .overlay(
-                RoundedRectangle(cornerRadius: 18, style: .continuous)
+                RoundedRectangle(cornerRadius: SecretMatchTheme.cornerRadius, style: .continuous)
                     .stroke(isActive ? SecretMatchTheme.secondary.opacity(0.95) : .clear, lineWidth: 2)
             )
             .shadow(color: isActive ? SecretMatchTheme.secondary.opacity(0.18) : .clear, radius: 16)

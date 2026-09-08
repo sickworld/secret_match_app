@@ -72,6 +72,8 @@ struct AdminRecordEditorView: View {
                     }
                 }
             }
+            .scrollContentBackground(.hidden)
+            .background(SecretMatchTheme.background)
             .navigationTitle(title)
             .navigationBarTitleDisplayMode(.inline)
             .interactiveDismissDisabled(isSaving)

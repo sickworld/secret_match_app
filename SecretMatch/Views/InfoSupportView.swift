@@ -51,7 +51,7 @@ struct InfoSupportView: View {
                 }
             }
             .frame(maxWidth: 760, maxHeight: 820)
-            .secretCard(cornerRadius: 28, padding: 30)
+            .secretCard(padding: 30)
             .padding(.horizontal, 28)
             .padding(.vertical, 24)
 
@@ -93,7 +93,7 @@ struct InfoSupportView: View {
                     .foregroundStyle(.white)
                     .frame(width: 48, height: 48)
                     .background(SecretMatchTheme.surfaceRaised)
-                    .clipShape(Circle())
+                    .clipShape(RoundedRectangle(cornerRadius: SecretMatchTheme.cornerRadius))
             }
             .accessibilityLabel("Info und Support schließen")
         }
@@ -106,7 +106,7 @@ struct InfoSupportView: View {
                 .foregroundStyle(SecretMatchTheme.secondary)
                 .frame(width: 46, height: 46)
                 .background(SecretMatchTheme.secondary.opacity(0.12))
-                .clipShape(RoundedRectangle(cornerRadius: 13))
+                .clipShape(RoundedRectangle(cornerRadius: SecretMatchTheme.cornerRadius))
 
             VStack(alignment: .leading, spacing: 4) {
                 Text(title)
@@ -127,8 +127,8 @@ struct InfoSupportView: View {
         .padding(16)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(SecretMatchTheme.surfaceRaised)
-        .clipShape(RoundedRectangle(cornerRadius: 16))
-        .overlay(RoundedRectangle(cornerRadius: 16).stroke(SecretMatchTheme.border))
+        .clipShape(RoundedRectangle(cornerRadius: SecretMatchTheme.cornerRadius))
+        .overlay(RoundedRectangle(cornerRadius: SecretMatchTheme.cornerRadius).stroke(SecretMatchTheme.border))
     }
 
     private var impressum: some View {
@@ -152,8 +152,8 @@ struct InfoSupportView: View {
         .padding(16)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(Color.white.opacity(0.045))
-        .clipShape(RoundedRectangle(cornerRadius: 16))
-        .overlay(RoundedRectangle(cornerRadius: 16).stroke(SecretMatchTheme.border))
+        .clipShape(RoundedRectangle(cornerRadius: SecretMatchTheme.cornerRadius))
+        .overlay(RoundedRectangle(cornerRadius: SecretMatchTheme.cornerRadius).stroke(SecretMatchTheme.border))
     }
 
     private var appVersion: String {

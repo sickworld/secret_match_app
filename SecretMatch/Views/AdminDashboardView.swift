@@ -1,7 +1,82 @@
 import SwiftUI
 
-enum AdminDashboardSection {
+enum AdminDashboardSection: String, CaseIterable, Identifiable {
     case overview, readiness, diagnostics, liveFeed, eventLog, statistics, actions, requests, matches, feedback, controls, participants, system
+
+    var id: String { rawValue }
+
+    static let featureSections: [AdminDashboardSection] = [
+        .liveFeed, .actions, .requests, .matches,
+        .participants, .controls, .readiness, .diagnostics,
+        .eventLog, .statistics, .feedback, .system
+    ]
+
+    var title: String {
+        switch self {
+        case .overview: return "Aktionen"
+        case .readiness: return "Event-Check"
+        case .diagnostics: return "Sendungsdiagnose"
+        case .liveFeed: return "Livefeed"
+        case .eventLog: return "Protokoll"
+        case .statistics: return "Statistik"
+        case .actions: return "Aktionen verwalten"
+        case .requests: return "Match-Requests"
+        case .matches: return "Matches verwalten"
+        case .feedback: return "Feedback"
+        case .controls: return "Eventsteuerung"
+        case .participants: return "Teilnehmer"
+        case .system: return "System & Reset"
+        }
+    }
+
+    var subtitle: String {
+        switch self {
+        case .overview: return "Alle Werkzeuge für dein Event"
+        case .readiness: return "Vor dem Start alles prüfen"
+        case .diagnostics: return "Sendungen per Request-ID verfolgen"
+        case .liveFeed: return "Aktivität während des Events"
+        case .eventLog: return "Zentrale Ereignisse und Admin-Eingriffe"
+        case .statistics: return "Eventverlauf auswerten und exportieren"
+        case .actions: return "Empfangene Aktionen anlegen und bearbeiten"
+        case .requests: return "Offene und gematchte Wünsche verwalten"
+        case .matches: return "Erfolgreiche Matches verwalten"
+        case .feedback: return "Anonyme Bewertungen auswerten"
+        case .controls: return "Billboards, Schnelltexte und Testdaten"
+        case .participants: return "Nummern, PIN und Gender verwalten"
+        case .system: return "Status, Geräte und Event-Reset"
+        }
+    }
+
+    var systemImage: String {
+        switch self {
+        case .overview: return "square.grid.2x2.fill"
+        case .readiness: return "checkmark.seal.fill"
+        case .diagnostics: return "waveform.path.ecg.rectangle"
+        case .liveFeed: return "dot.radiowaves.left.and.right"
+        case .eventLog: return "list.bullet.rectangle.portrait.fill"
+        case .statistics: return "chart.bar.xaxis"
+        case .actions: return "paperplane.fill"
+        case .requests: return "heart.text.square.fill"
+        case .matches: return "sparkles"
+        case .feedback: return "star.bubble.fill"
+        case .controls: return "slider.horizontal.3"
+        case .participants: return "person.3.fill"
+        case .system: return "gearshape.2.fill"
+        }
+    }
+
+    var tint: Color {
+        switch self {
+        case .overview, .actions, .feedback: return SecretMatchTheme.primary
+        case .readiness, .eventLog, .controls: return SecretMatchTheme.secondary
+        case .diagnostics, .system: return .orange
+        case .liveFeed: return .green
+        case .statistics: return .cyan
+        case .requests: return Color(hex: "#8E63D2")
+        case .matches: return Color(hex: "#E83E8C")
+        case .participants: return Color(hex: "#3E9ED6")
+        }
+    }
 }
 
 private struct AdminDashboardSectionKey: EnvironmentKey {
@@ -19,6 +94,7 @@ struct AdminDashboardView: View {
     @EnvironmentObject private var api: APIService
     @Environment(\.adminDashboardSection) private var dashboardSection
     @Binding var showBillboard: Bool
+    @Binding var selectedSection: AdminDashboardSection
 
     @State private var participantSearch = ""
     @State private var newParticipantNumber = ""
@@ -94,21 +170,8 @@ struct AdminDashboardView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 22) {
-#if ADMIN_APP
                 operationFeedback
                 adminAppContent
-#else
-                header
-                liveStatus
-                deviceStatus
-                metrics
-                liveFeed
-                controls
-                topPreview
-                participants
-                systemStatus
-                resetCard
-#endif
             }
             .padding(24)
             .frame(maxWidth: 1180)
@@ -148,31 +211,79 @@ struct AdminDashboardView: View {
         }
     }
 
-#if ADMIN_APP
     @ViewBuilder
     private var adminAppContent: some View {
         switch dashboardSection {
         case .overview:
             header
+            featureOverview
             liveStatus
             deviceStatus
             metrics
             topPreview
         case .controls:
-            sectionHeading("Eventsteuerung", subtitle: "Billboard und Testdaten verwalten")
+            sectionHeading(dashboardSection.title, subtitle: dashboardSection.subtitle)
             controls
             topPreview
         case .participants:
-            sectionHeading("Teilnehmer", subtitle: "Nummern freigeben, Gender verwalten, abmelden oder sperren")
+            sectionHeading(dashboardSection.title, subtitle: dashboardSection.subtitle)
             participants
         case .system:
-            sectionHeading("System & Reset", subtitle: "Systemzustand prüfen und Events vorbereiten")
+            sectionHeading(dashboardSection.title, subtitle: dashboardSection.subtitle)
             systemStatus
             deviceStatus
             resetCard
         case .readiness, .diagnostics, .liveFeed, .eventLog, .statistics, .actions, .requests, .matches, .feedback:
             EmptyView()
         }
+    }
+
+    private var featureOverview: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            VStack(alignment: .leading, spacing: 5) {
+                Text("ADMIN-AKTIONEN")
+                    .font(.caption.bold())
+                    .tracking(1.8)
+                    .foregroundStyle(SecretMatchTheme.secondary)
+                Text("Werkzeuge")
+                    .font(.title2.bold())
+                    .foregroundStyle(.white)
+                Text("Dieselben Funktionen stehen auf iPhone und iPad zur Verfügung.")
+                    .foregroundStyle(SecretMatchTheme.muted)
+            }
+
+            LazyVGrid(columns: [GridItem(.adaptive(minimum: 235), spacing: 12)], spacing: 12) {
+                ForEach(AdminDashboardSection.featureSections) { section in
+                    Button {
+                        selectedSection = section
+                    } label: {
+                        HStack(alignment: .top, spacing: 13) {
+                            Image(systemName: section.systemImage)
+                                .font(.title3.bold())
+                                .foregroundStyle(section.tint)
+                                .frame(width: 28)
+
+                            VStack(alignment: .leading, spacing: 5) {
+                                Text(section.title)
+                                    .font(.headline.bold())
+                                Text(section.subtitle)
+                                    .font(.caption)
+                                    .foregroundStyle(SecretMatchTheme.muted)
+                                    .fixedSize(horizontal: false, vertical: true)
+                            }
+
+                            Spacer(minLength: 0)
+                            Image(systemName: "chevron.right")
+                                .font(.caption.bold())
+                                .foregroundStyle(SecretMatchTheme.muted)
+                        }
+                    }
+                    .buttonStyle(SecretAdminFeatureButtonStyle(tint: section.tint))
+                    .accessibilityHint("Öffnet \(section.title)")
+                }
+            }
+        }
+        .secretCard(padding: 20)
     }
 
     private func sectionHeading(_ title: String, subtitle: String) -> some View {
@@ -188,7 +299,6 @@ struct AdminDashboardView: View {
                 .foregroundStyle(SecretMatchTheme.muted)
         }
     }
-#endif
 
     private var liveStatus: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -225,7 +335,7 @@ struct AdminDashboardView: View {
                 .font(.caption)
                 .foregroundStyle(SecretMatchTheme.muted)
         }
-        .secretCard(cornerRadius: 20, padding: 20)
+        .secretCard(padding: 20)
     }
 
     private var header: some View {
@@ -291,7 +401,7 @@ struct AdminDashboardView: View {
                             .font(.title2)
                             .frame(width: 44, height: 44)
                             .background(entry.color.opacity(0.18))
-                            .clipShape(RoundedRectangle(cornerRadius: 12))
+                            .clipShape(RoundedRectangle(cornerRadius: SecretMatchTheme.cornerRadius))
 
                         VStack(alignment: .leading, spacing: 4) {
                             Text(entry.title)
@@ -305,12 +415,12 @@ struct AdminDashboardView: View {
                     }
                     .padding(12)
                     .background(entry.color.opacity(0.09))
-                    .clipShape(RoundedRectangle(cornerRadius: 14))
-                    .overlay(RoundedRectangle(cornerRadius: 14).stroke(entry.color.opacity(0.32)))
+                    .clipShape(RoundedRectangle(cornerRadius: SecretMatchTheme.cornerRadius))
+                    .overlay(RoundedRectangle(cornerRadius: SecretMatchTheme.cornerRadius).stroke(entry.color.opacity(0.32)))
                 }
             }
         }
-        .secretCard(cornerRadius: 20, padding: 20)
+        .secretCard(padding: 20)
     }
 
     private var liveFeedEntries: [LiveFeedEntry] {
@@ -374,10 +484,8 @@ struct AdminDashboardView: View {
     private var controls: some View {
         LazyVGrid(columns: [GridItem(.adaptive(minimum: 330), spacing: 16)], spacing: 16) {
             controlCard(title: "📺 Billboard-Steuerung", subtitle: "Darstellung und globale Steuerung aller Bildschirme") {
-#if !ADMIN_APP
                 Button("Vollbild öffnen") { showBillboard = true }
                     .buttonStyle(SecretPrimaryButtonStyle())
-#endif
 
                 HStack {
                     Button("Top 16 testen") { Task { await billboard("start_top_test") } }
@@ -411,7 +519,7 @@ struct AdminDashboardView: View {
                 TextEditor(text: $quickMessagesText)
                     .frame(minHeight: 150)
                     .foregroundStyle(.primary)
-                    .clipShape(RoundedRectangle(cornerRadius: 10))
+                    .clipShape(RoundedRectangle(cornerRadius: SecretMatchTheme.cornerRadius))
                     .onChange(of: quickMessagesText) { _, _ in
                         if quickMessagesSaveState != .saving {
                             quickMessagesSaveState = .idle
@@ -483,7 +591,8 @@ struct AdminDashboardView: View {
 
                 HStack(spacing: 10) {
                     TextField("Höchste Nummer", text: $participantRangeMax)
-                        .textFieldStyle(.roundedBorder)
+                        .textFieldStyle(.plain)
+                        .secretAdminInput()
                         .keyboardType(.numberPad)
                         .onChange(of: participantRangeMax) { _, value in
                             participantRangeMax = String(value.filter(\.isNumber).prefix(5))
@@ -506,7 +615,8 @@ struct AdminDashboardView: View {
                         .font(.caption.bold())
                         .foregroundStyle(.orange)
                     TextField("NUMMERN ANPASSEN", text: $participantRangeConfirmation)
-                        .textFieldStyle(.roundedBorder)
+                        .textFieldStyle(.plain)
+                        .secretAdminInput()
                         .textInputAutocapitalization(.characters)
                 }
                 Text("Die Testnummern 901–916 bleiben bei diesem Abgleich unverändert.")
@@ -515,11 +625,12 @@ struct AdminDashboardView: View {
             }
             .padding(14)
             .background(Color.white.opacity(0.06))
-            .clipShape(RoundedRectangle(cornerRadius: 14))
+            .clipShape(RoundedRectangle(cornerRadius: SecretMatchTheme.cornerRadius))
 
             HStack(spacing: 10) {
                 TextField("Neue Nummer", text: $newParticipantNumber)
-                    .textFieldStyle(.roundedBorder)
+                    .textFieldStyle(.plain)
+                    .secretAdminInput()
                     .keyboardType(.numberPad)
                 Button {
                     Task { await addParticipant() }
@@ -531,7 +642,8 @@ struct AdminDashboardView: View {
             }
 
             TextField("Nummer suchen", text: $participantSearch)
-                .textFieldStyle(.roundedBorder)
+                .textFieldStyle(.plain)
+                .secretAdminInput(highlighted: !participantSearch.isEmpty)
 
             if filteredParticipants.isEmpty {
                 Text("Keine passende Nummer gefunden.")
@@ -587,7 +699,7 @@ struct AdminDashboardView: View {
                     }
                     .padding(12)
                     .background(Color.white.opacity(0.06))
-                    .clipShape(RoundedRectangle(cornerRadius: 12))
+                    .clipShape(RoundedRectangle(cornerRadius: SecretMatchTheme.cornerRadius))
                 }
                 if filteredParticipants.count > 24 {
                     Text("\(filteredParticipants.count - 24) weitere – Suche zum Eingrenzen verwenden.")
@@ -596,7 +708,7 @@ struct AdminDashboardView: View {
                 }
             }
         }
-        .secretCard(cornerRadius: 20, padding: 20)
+        .secretCard(padding: 20)
     }
 
     private var topPreview: some View {
@@ -626,7 +738,7 @@ struct AdminDashboardView: View {
                         .padding(10)
                         .frame(maxWidth: .infinity)
                         .background(SecretMatchTheme.primary.opacity(0.16))
-                        .clipShape(RoundedRectangle(cornerRadius: 10))
+                        .clipShape(RoundedRectangle(cornerRadius: SecretMatchTheme.cornerRadius))
                 }
             }
             if api.adminDashboard?.topPeople?.isEmpty != false {
@@ -634,7 +746,7 @@ struct AdminDashboardView: View {
                     .foregroundStyle(SecretMatchTheme.muted)
             }
         }
-        .secretCard(cornerRadius: 20, padding: 20)
+        .secretCard(padding: 20)
     }
 
     private var deviceStatus: some View {
@@ -701,14 +813,14 @@ struct AdminDashboardView: View {
                     )
                     .padding(10)
                     .background(Color.white.opacity(0.06))
-                    .clipShape(RoundedRectangle(cornerRadius: 12))
+                    .clipShape(RoundedRectangle(cornerRadius: SecretMatchTheme.cornerRadius))
                 }
             }
             Text("iPads registrieren sich automatisch mit ihrem ersten Heartbeat. Ein aktives iPad erscheint nach dem Entfernen wieder, sobald es erneut sendet.")
                 .font(.caption)
                 .foregroundStyle(SecretMatchTheme.muted)
         }
-        .secretCard(cornerRadius: 20, padding: 20)
+        .secretCard(padding: 20)
     }
 
     private var billboardStatuses: [AdminBillboardStatus] {
@@ -781,8 +893,8 @@ struct AdminDashboardView: View {
         }
         .padding(12)
         .background(color.opacity(0.10))
-        .overlay(RoundedRectangle(cornerRadius: 12).stroke(color.opacity(0.45)))
-        .clipShape(RoundedRectangle(cornerRadius: 12))
+        .overlay(RoundedRectangle(cornerRadius: SecretMatchTheme.cornerRadius).stroke(color.opacity(0.45)))
+        .clipShape(RoundedRectangle(cornerRadius: SecretMatchTheme.cornerRadius))
     }
 
     private var pinEditor: some View {
@@ -795,6 +907,8 @@ struct AdminDashboardView: View {
                     Text("Die Nummer wird beim Speichern auf allen Geräten abgemeldet.")
                 }
             }
+            .scrollContentBackground(.hidden)
+            .background(SecretMatchTheme.background)
             .navigationTitle("PIN für \(pinEditorNumber?.displayEventNumber ?? "")")
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) { Button("Abbrechen") { pinEditorNumber = nil } }
@@ -816,6 +930,8 @@ struct AdminDashboardView: View {
                     Text("Dieser Name erscheint im Dashboard sowie in Ausfall- und Entwarnungsmeldungen.")
                 }
             }
+            .scrollContentBackground(.hidden)
+            .background(SecretMatchTheme.background)
             .navigationTitle(editor.title)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
@@ -869,6 +985,8 @@ struct AdminDashboardView: View {
                     }
                 }
             }
+            .scrollContentBackground(.hidden)
+            .background(SecretMatchTheme.background)
             .navigationTitle("Billboard anlegen")
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
@@ -891,7 +1009,7 @@ struct AdminDashboardView: View {
             }
             .foregroundStyle(.red)
         }
-        .secretCard(cornerRadius: 20, padding: 20)
+        .secretCard(padding: 20)
     }
 
     private var resetAssistant: some View {
@@ -914,6 +1032,8 @@ struct AdminDashboardView: View {
                     .disabled(resetConfirmation != "EVENT RESET" || isWorking)
                 }
             }
+            .scrollContentBackground(.hidden)
+            .background(SecretMatchTheme.background)
             .navigationTitle("Event-Reset")
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
@@ -974,7 +1094,7 @@ struct AdminDashboardView: View {
                 Text(errorMessage).foregroundStyle(.red).font(.callout.bold())
             }
         }
-        .secretCard(cornerRadius: 20, padding: 20)
+        .secretCard(padding: 20)
     }
 
     private var filteredParticipants: [String] {
@@ -1094,8 +1214,8 @@ struct AdminDashboardView: View {
         }
         .padding(18)
         .background(color.opacity(0.14))
-        .overlay(RoundedRectangle(cornerRadius: 18).stroke(color.opacity(0.55)))
-        .clipShape(RoundedRectangle(cornerRadius: 18))
+        .overlay(RoundedRectangle(cornerRadius: SecretMatchTheme.cornerRadius).stroke(color.opacity(0.55)))
+        .clipShape(RoundedRectangle(cornerRadius: SecretMatchTheme.cornerRadius))
     }
 
     private func controlCard<Content: View>(title: String, subtitle: String,
@@ -1106,7 +1226,7 @@ struct AdminDashboardView: View {
             content()
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .secretCard(cornerRadius: 20, padding: 20)
+        .secretCard(padding: 20)
     }
 
     private func statusRow(_ label: String, _ value: String, good: Bool? = nil) -> some View {

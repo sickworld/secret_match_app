@@ -31,7 +31,7 @@ struct PrivacyNoticeView: View {
                             .foregroundStyle(.white)
                             .frame(width: 48, height: 48)
                             .background(SecretMatchTheme.surfaceRaised)
-                            .clipShape(Circle())
+                            .clipShape(RoundedRectangle(cornerRadius: SecretMatchTheme.cornerRadius))
                     }
                     .accessibilityLabel("Datenschutz schließen")
                 }
@@ -78,7 +78,7 @@ struct PrivacyNoticeView: View {
                 }
             }
             .frame(maxWidth: 920, maxHeight: .infinity)
-            .secretCard(cornerRadius: 28, padding: 30)
+            .secretCard(padding: 30)
             .padding(.horizontal, 28)
             .padding(.vertical, 24)
         }
@@ -91,7 +91,7 @@ struct PrivacyNoticeView: View {
                 .foregroundStyle(SecretMatchTheme.secondary)
                 .frame(width: 42, height: 42)
                 .background(SecretMatchTheme.secondary.opacity(0.12))
-                .clipShape(RoundedRectangle(cornerRadius: 12))
+                .clipShape(RoundedRectangle(cornerRadius: SecretMatchTheme.cornerRadius))
 
             VStack(alignment: .leading, spacing: 5) {
                 Text(title)
@@ -106,7 +106,7 @@ struct PrivacyNoticeView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(14)
         .background(Color.white.opacity(0.045))
-        .clipShape(RoundedRectangle(cornerRadius: 15))
-        .overlay(RoundedRectangle(cornerRadius: 15).stroke(SecretMatchTheme.border))
+        .clipShape(RoundedRectangle(cornerRadius: SecretMatchTheme.cornerRadius))
+        .overlay(RoundedRectangle(cornerRadius: SecretMatchTheme.cornerRadius).stroke(SecretMatchTheme.border))
     }
 }

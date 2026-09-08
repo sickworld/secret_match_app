@@ -110,7 +110,7 @@ struct AdminNumberLookupView: View {
                 .disabled(query.normalizedEventNumber.isEmpty || isLoading || isMutating)
         }
         .padding(16)
-        .secretCard(cornerRadius: 18, padding: 0)
+        .secretCard(padding: 0)
     }
 
     @ViewBuilder
@@ -282,7 +282,7 @@ struct AdminNumberLookupView: View {
             Label(title, systemImage: icon).font(.title3.bold()).foregroundStyle(.white)
             content()
         }
-        .secretCard(cornerRadius: 18, padding: 16)
+        .secretCard(padding: 16)
     }
 
     private func statusCard(_ title: String, value: String, icon: String, color: Color) -> some View {
@@ -292,7 +292,7 @@ struct AdminNumberLookupView: View {
             Text(title).font(.caption.bold()).foregroundStyle(SecretMatchTheme.muted)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .secretCard(cornerRadius: 16, padding: 14)
+        .secretCard(padding: 14)
     }
 
     private func metric(_ title: String, _ value: Int) -> some View {
@@ -303,7 +303,7 @@ struct AdminNumberLookupView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(12)
         .background(SecretMatchTheme.surfaceRaised)
-        .clipShape(RoundedRectangle(cornerRadius: 13))
+        .clipShape(RoundedRectangle(cornerRadius: SecretMatchTheme.cornerRadius))
     }
 
     private func activityTitle(_ activity: AdminNumberActivity) -> String {

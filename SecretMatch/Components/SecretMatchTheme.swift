@@ -2,6 +2,9 @@ import SwiftUI
 import UIKit
 
 enum SecretMatchTheme {
+    /// The product uses one deliberately compact radius for interactive controls
+    /// and content panels. Capsules remain reserved for short status badges.
+    static let cornerRadius: CGFloat = 8
     static let primary = adaptiveColor(standard: "#E83E8C", increased: "#FF5FA8")
     static let primaryHover = adaptiveColor(standard: "#FF5FA8", increased: "#FF8FC4")
     static let secondary = adaptiveColor(standard: "#F4B400", increased: "#FFD60A")
@@ -35,7 +38,7 @@ struct SecretBinaryStatusIcon: View {
 
 struct SecretCardModifier: ViewModifier {
     @Environment(\.secretMatchHighContrast) private var highContrast
-    var cornerRadius: CGFloat = 20
+    var cornerRadius: CGFloat = SecretMatchTheme.cornerRadius
     var padding: CGFloat = 24
 
     func body(content: Content) -> some View {
@@ -55,7 +58,7 @@ struct SecretCardModifier: ViewModifier {
 }
 
 extension View {
-    func secretCard(cornerRadius: CGFloat = 20, padding: CGFloat = 24) -> some View {
+    func secretCard(cornerRadius: CGFloat = SecretMatchTheme.cornerRadius, padding: CGFloat = 24) -> some View {
         modifier(SecretCardModifier(cornerRadius: cornerRadius, padding: padding))
     }
 }
@@ -83,9 +86,9 @@ struct SecretPrimaryButtonStyle: ButtonStyle {
                     endPoint: .bottomTrailing
                 )
             )
-            .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+            .clipShape(RoundedRectangle(cornerRadius: SecretMatchTheme.cornerRadius, style: .continuous))
             .overlay(
-                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                RoundedRectangle(cornerRadius: SecretMatchTheme.cornerRadius, style: .continuous)
                     .stroke(Color.white.opacity(highContrast ? 0.9 : 0.12), lineWidth: highContrast ? 2 : 1)
             )
             .shadow(
@@ -110,9 +113,9 @@ struct SecretSecondaryButtonStyle: ButtonStyle {
             .padding(.horizontal, 18)
             .foregroundStyle(SecretMatchTheme.text)
             .background(configuration.isPressed ? SecretMatchTheme.surfaceRaised : SecretMatchTheme.surface)
-            .clipShape(RoundedRectangle(cornerRadius: 15, style: .continuous))
+            .clipShape(RoundedRectangle(cornerRadius: SecretMatchTheme.cornerRadius, style: .continuous))
             .overlay(
-                RoundedRectangle(cornerRadius: 15, style: .continuous)
+                RoundedRectangle(cornerRadius: SecretMatchTheme.cornerRadius, style: .continuous)
                     .stroke(SecretMatchTheme.border.opacity(highContrast ? 0.9 : 1), lineWidth: highContrast ? 2 : 1)
             )
             .scaleEffect(configuration.isPressed ? 0.98 : 1)
@@ -129,9 +132,9 @@ struct SecretInputModifier: ViewModifier {
             .padding(.horizontal, 18)
             .frame(maxWidth: .infinity, minHeight: 72)
             .background(Color.black.opacity(highContrast ? 1 : 0.28))
-            .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+            .clipShape(RoundedRectangle(cornerRadius: SecretMatchTheme.cornerRadius, style: .continuous))
             .overlay(
-                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                RoundedRectangle(cornerRadius: SecretMatchTheme.cornerRadius, style: .continuous)
                     .stroke(
                         highlighted ? SecretMatchTheme.primary : SecretMatchTheme.border.opacity(highContrast ? 0.9 : 1),
                         lineWidth: highContrast ? 2.5 : (highlighted ? 1.5 : 1)
@@ -141,9 +144,55 @@ struct SecretInputModifier: ViewModifier {
     }
 }
 
+struct SecretAdminFeatureButtonStyle: ButtonStyle {
+    @Environment(\.secretMatchHighContrast) private var highContrast
+    let tint: Color
+
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .frame(maxWidth: .infinity, minHeight: 92, alignment: .leading)
+            .padding(16)
+            .foregroundStyle(SecretMatchTheme.text)
+            .background(
+                RoundedRectangle(cornerRadius: SecretMatchTheme.cornerRadius, style: .continuous)
+                    .fill(configuration.isPressed ? tint.opacity(0.24) : SecretMatchTheme.surfaceRaised)
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: SecretMatchTheme.cornerRadius, style: .continuous)
+                    .stroke(tint.opacity(highContrast ? 0.95 : 0.55), lineWidth: highContrast ? 2 : 1)
+            )
+            .scaleEffect(configuration.isPressed ? 0.985 : 1)
+            .animation(.easeOut(duration: 0.14), value: configuration.isPressed)
+    }
+}
+
 extension View {
     func secretInput(highlighted: Bool = false) -> some View {
         modifier(SecretInputModifier(highlighted: highlighted))
+    }
+
+    func secretAdminInput(highlighted: Bool = false) -> some View {
+        modifier(SecretAdminInputModifier(highlighted: highlighted))
+    }
+}
+
+struct SecretAdminInputModifier: ViewModifier {
+    @Environment(\.secretMatchHighContrast) private var highContrast
+    var highlighted = false
+
+    func body(content: Content) -> some View {
+        content
+            .padding(.horizontal, 12)
+            .frame(maxWidth: .infinity, minHeight: 48)
+            .background(Color.black.opacity(highContrast ? 1 : 0.28))
+            .clipShape(RoundedRectangle(cornerRadius: SecretMatchTheme.cornerRadius, style: .continuous))
+            .overlay(
+                RoundedRectangle(cornerRadius: SecretMatchTheme.cornerRadius, style: .continuous)
+                    .stroke(
+                        highlighted ? SecretMatchTheme.primary : SecretMatchTheme.border,
+                        lineWidth: highContrast ? 2 : 1
+                    )
+            )
     }
 }
 

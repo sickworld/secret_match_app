@@ -25,7 +25,7 @@ struct AdminEventLogView: View {
                         .padding(.horizontal, 14)
                         .padding(.vertical, 10)
                         .background(Color.green.opacity(0.12))
-                        .clipShape(RoundedRectangle(cornerRadius: 12))
+                        .clipShape(RoundedRectangle(cornerRadius: SecretMatchTheme.cornerRadius))
                 }
                 if let actionErrorMessage {
                     Label(actionErrorMessage, systemImage: "exclamationmark.triangle.fill")
@@ -34,7 +34,7 @@ struct AdminEventLogView: View {
                         .padding(.horizontal, 14)
                         .padding(.vertical, 10)
                         .background(Color.orange.opacity(0.12))
-                        .clipShape(RoundedRectangle(cornerRadius: 12))
+                        .clipShape(RoundedRectangle(cornerRadius: SecretMatchTheme.cornerRadius))
                 }
                 incidentSummary
                 filters
@@ -178,7 +178,7 @@ struct AdminEventLogView: View {
                     .padding(.horizontal, 14)
                     .frame(minHeight: 50)
                     .background(SecretMatchTheme.surfaceRaised)
-                    .clipShape(RoundedRectangle(cornerRadius: 14))
+                    .clipShape(RoundedRectangle(cornerRadius: SecretMatchTheme.cornerRadius))
                     .foregroundStyle(.white)
                     .onSubmit { Task { await load(reset: true) } }
 
@@ -209,7 +209,7 @@ struct AdminEventLogView: View {
                 }
             }
         }
-        .secretCard(cornerRadius: 18, padding: 14)
+        .secretCard(padding: 14)
     }
 
     private func eventRow(_ entry: AdminEventLogEntry) -> some View {
@@ -222,7 +222,7 @@ struct AdminEventLogView: View {
                     .foregroundStyle(severityColor(entry.severity))
                     .frame(width: 44, height: 44)
                     .background(severityColor(entry.severity).opacity(0.15))
-                    .clipShape(RoundedRectangle(cornerRadius: 12))
+                    .clipShape(RoundedRectangle(cornerRadius: SecretMatchTheme.cornerRadius))
 
                 VStack(alignment: .leading, spacing: 5) {
                     HStack {
@@ -253,8 +253,8 @@ struct AdminEventLogView: View {
             }
             .padding(14)
             .background(SecretMatchTheme.surface)
-            .clipShape(RoundedRectangle(cornerRadius: 16))
-            .overlay(RoundedRectangle(cornerRadius: 16).stroke(severityColor(entry.severity).opacity(0.3)))
+            .clipShape(RoundedRectangle(cornerRadius: SecretMatchTheme.cornerRadius))
+            .overlay(RoundedRectangle(cornerRadius: SecretMatchTheme.cornerRadius).stroke(severityColor(entry.severity).opacity(0.3)))
         }
         .buttonStyle(.plain)
         .accessibilityHint("Öffnet alle technischen Details dieses Ereignisses")
@@ -305,8 +305,8 @@ struct AdminEventLogView: View {
         }
         .padding(14)
         .background(color.opacity(0.1))
-        .clipShape(RoundedRectangle(cornerRadius: 15))
-        .overlay(RoundedRectangle(cornerRadius: 15).stroke(color.opacity(0.3)))
+        .clipShape(RoundedRectangle(cornerRadius: SecretMatchTheme.cornerRadius))
+        .overlay(RoundedRectangle(cornerRadius: SecretMatchTheme.cornerRadius).stroke(color.opacity(0.3)))
     }
 
     private func filterPicker(

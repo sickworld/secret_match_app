@@ -107,8 +107,8 @@ struct AdminEventCheckView: View {
         }
         .padding(20)
         .background(presentation.color.opacity(0.12))
-        .clipShape(RoundedRectangle(cornerRadius: 20))
-        .overlay(RoundedRectangle(cornerRadius: 20).stroke(presentation.color.opacity(0.45), lineWidth: 1.5))
+        .clipShape(RoundedRectangle(cornerRadius: SecretMatchTheme.cornerRadius))
+        .overlay(RoundedRectangle(cornerRadius: SecretMatchTheme.cornerRadius).stroke(presentation.color.opacity(0.45), lineWidth: 1.5))
     }
 
     private func checkSection(_ title: String, items: [CheckItem]) -> some View {
@@ -135,7 +135,7 @@ struct AdminEventCheckView: View {
                         Spacer()
                     }
                     .frame(maxWidth: .infinity, minHeight: 72, alignment: .topLeading)
-                    .secretCard(cornerRadius: 16, padding: 14)
+                    .secretCard(padding: 14)
                 }
             }
         }

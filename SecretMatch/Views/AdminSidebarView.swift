@@ -3,11 +3,7 @@ import SwiftUI
 struct AdminSidebarView: View {
     @EnvironmentObject var api: APIService
 
-    @Binding var showActions: Bool
-    @Binding var showRequests: Bool
-    @Binding var showMatches: Bool
     @Binding var showBillboard: Bool
-    @Binding var showLiveFeed: Bool
     @Binding var dashboardSection: AdminDashboardSection
     var dismissMenu: () -> Void = {}
     var logout: () -> Void
@@ -30,123 +26,11 @@ struct AdminSidebarView: View {
             Divider().background(Color.white.opacity(0.3))
 
 #if ADMIN_APP
-            Button {
-                dashboardSection = .overview
-                dismissMenu()
-            } label: {
-                Label("Dashboard", systemImage: "gauge.with.dots.needle.50percent")
+            ForEach([AdminDashboardSection.overview] + AdminDashboardSection.featureSections) { section in
+                navigationButton(section)
             }
-            .buttonStyle(SidebarButtonStyle())
-
-            Button {
-                dashboardSection = .liveFeed
-                dismissMenu()
-            } label: {
-                Label("Livefeed", systemImage: "dot.radiowaves.left.and.right")
-            }
-            .buttonStyle(SidebarButtonStyle())
-
-            Button {
-                dashboardSection = .readiness
-                dismissMenu()
-            } label: {
-                Label("Event-Check", systemImage: "checkmark.seal.fill")
-            }
-            .buttonStyle(SidebarButtonStyle())
-
-            Button {
-                dashboardSection = .diagnostics
-                dismissMenu()
-            } label: {
-                Label("Sendungsdiagnose", systemImage: "waveform.path.ecg.rectangle")
-            }
-            .buttonStyle(SidebarButtonStyle())
-
-            Button {
-                dashboardSection = .eventLog
-                dismissMenu()
-            } label: {
-                Label("Protokoll", systemImage: "list.bullet.rectangle.portrait.fill")
-            }
-            .buttonStyle(SidebarButtonStyle())
-
-            Button {
-                dashboardSection = .statistics
-                dismissMenu()
-            } label: {
-                Label("Statistik", systemImage: "chart.bar.xaxis")
-            }
-            .buttonStyle(SidebarButtonStyle())
-
-            Button {
-                dashboardSection = .controls
-                dismissMenu()
-            } label: {
-                Label("Eventsteuerung", systemImage: "slider.horizontal.3")
-            }
-            .buttonStyle(SidebarButtonStyle())
-
-            Button {
-                dashboardSection = .participants
-                dismissMenu()
-            } label: {
-                Label("Teilnehmer", systemImage: "person.3.fill")
-            }
-            .buttonStyle(SidebarButtonStyle())
-
-            Button {
-                dashboardSection = .system
-                dismissMenu()
-            } label: {
-                Label("System & Reset", systemImage: "gearshape.2.fill")
-            }
-            .buttonStyle(SidebarButtonStyle())
-#endif
-
-            Button {
-#if ADMIN_APP
-                dashboardSection = .actions
-                dismissMenu()
 #else
-                showActions = true
-#endif
-            } label: {
-                Label("Alle Aktionen", systemImage: "paperplane.fill")
-            }
-            .buttonStyle(SidebarButtonStyle())
-
-            Button {
-#if ADMIN_APP
-                dashboardSection = .requests
-                dismissMenu()
-#else
-                showRequests = true
-#endif
-            } label: {
-                Label("Match-Requests", systemImage: "heart.text.square.fill")
-            }
-            .buttonStyle(SidebarButtonStyle())
-
-            Button {
-#if ADMIN_APP
-                dashboardSection = .matches
-                dismissMenu()
-#else
-                showMatches = true
-#endif
-            } label: {
-                Label("Alle Matches", systemImage: "sparkles")
-            }
-            .buttonStyle(SidebarButtonStyle())
-
-#if ADMIN_APP
-            Button {
-                dashboardSection = .feedback
-                dismissMenu()
-            } label: {
-                Label("Feedback", systemImage: "star.bubble.fill")
-            }
-            .buttonStyle(SidebarButtonStyle())
+            navigationButton(.overview, title: "Aktionen")
 #endif
 
 #if !ADMIN_APP
@@ -165,7 +49,7 @@ struct AdminSidebarView: View {
             } label: {
                 Label("Admin Logout", systemImage: "rectangle.portrait.and.arrow.right")
             }
-            .buttonStyle(LogoutButtonStyle())
+            .buttonStyle(LogoutButtonStyle(compact: isCompact))
 
             if !isCompact {
                 Spacer()
@@ -187,7 +71,7 @@ struct AdminSidebarView: View {
                         .padding(.horizontal, 5)
                         .padding(.vertical, 3)
                         .background(Color.white.opacity(0.94))
-                        .clipShape(RoundedRectangle(cornerRadius: 8))
+                        .clipShape(RoundedRectangle(cornerRadius: SecretMatchTheme.cornerRadius))
                         .accessibilityLabel("FICKEN Likör")
 
                     Image("club2020")
@@ -207,5 +91,16 @@ struct AdminSidebarView: View {
                 .fill(SecretMatchTheme.border)
                 .frame(width: isCompact ? nil : 1, height: isCompact ? 1 : nil)
         }
+    }
+
+    private func navigationButton(_ section: AdminDashboardSection, title: String? = nil) -> some View {
+        Button {
+            dashboardSection = section
+            dismissMenu()
+        } label: {
+            Label(title ?? section.title, systemImage: section.systemImage)
+        }
+        .buttonStyle(SidebarButtonStyle(compact: isCompact, isSelected: dashboardSection == section))
+        .accessibilityAddTraits(dashboardSection == section ? .isSelected : [])
     }
 }

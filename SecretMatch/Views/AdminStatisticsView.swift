@@ -170,7 +170,7 @@ struct AdminStatisticsView: View {
                 funnelRow("Gegenseitig bestätigt", value: reciprocated, maximum: maximum, color: Color(hex: "#E83E8C"))
                 funnelRow("Match-Paare", value: stats.matches, maximum: maximum, color: SecretMatchTheme.secondary)
             }
-            .secretCard(cornerRadius: 18, padding: 16)
+            .secretCard(padding: 16)
         }
     }
 
@@ -195,7 +195,7 @@ struct AdminStatisticsView: View {
                     comparisonRow(title, current: currentValue, last: lastValue, maximum: maximum)
                 }
             }
-            .secretCard(cornerRadius: 18, padding: 16)
+            .secretCard(padding: 16)
         }
     }
 
@@ -205,7 +205,7 @@ struct AdminStatisticsView: View {
             if entries.isEmpty {
                 Text("Noch keine Teilnehmeraktivität vorhanden.")
                     .foregroundStyle(SecretMatchTheme.muted)
-                    .secretCard(cornerRadius: 16, padding: 18)
+                    .secretCard(padding: 18)
             } else {
                 let maximum = max(1, entries.map(\.activityTotal).max() ?? 1)
                 VStack(spacing: 14) {
@@ -234,7 +234,7 @@ struct AdminStatisticsView: View {
                         }
                     }
                 }
-                .secretCard(cornerRadius: 18, padding: 16)
+                .secretCard(padding: 16)
             }
         }
     }
@@ -246,7 +246,7 @@ struct AdminStatisticsView: View {
             if devices.isEmpty {
                 Text("Noch keine iPads verbunden.")
                     .foregroundStyle(SecretMatchTheme.muted)
-                    .secretCard(cornerRadius: 16, padding: 18)
+                    .secretCard(padding: 18)
             } else {
                 LazyVGrid(columns: [GridItem(.adaptive(minimum: 270), spacing: 12)], spacing: 12) {
                     ForEach(devices) { device in
@@ -279,7 +279,7 @@ struct AdminStatisticsView: View {
                             }
                             .frame(height: 12)
                         }
-                        .secretCard(cornerRadius: 16, padding: 14)
+                        .secretCard(padding: 14)
                     }
                 }
             }
@@ -292,7 +292,7 @@ struct AdminStatisticsView: View {
             if stats.timeline.isEmpty {
                 Text("Noch keine Aktivität vorhanden.")
                     .foregroundStyle(SecretMatchTheme.muted)
-                    .secretCard(cornerRadius: 16, padding: 18)
+                    .secretCard(padding: 18)
             } else {
                 let maximum = max(1, stats.timeline.map(\.total).max() ?? 1)
                 VStack(spacing: 12) {
@@ -317,7 +317,7 @@ struct AdminStatisticsView: View {
                         }
                     }
                 }
-                .secretCard(cornerRadius: 18, padding: 16)
+                .secretCard(padding: 16)
             }
         }
     }
@@ -332,8 +332,8 @@ struct AdminStatisticsView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(16)
         .background(color.opacity(0.11))
-        .clipShape(RoundedRectangle(cornerRadius: 16))
-        .overlay(RoundedRectangle(cornerRadius: 16).stroke(color.opacity(0.32)))
+        .clipShape(RoundedRectangle(cornerRadius: SecretMatchTheme.cornerRadius))
+        .overlay(RoundedRectangle(cornerRadius: SecretMatchTheme.cornerRadius).stroke(color.opacity(0.32)))
     }
 
     private func percentageMetric(_ title: String, _ value: Double, color: Color) -> some View {
@@ -346,8 +346,8 @@ struct AdminStatisticsView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(16)
         .background(color.opacity(0.11))
-        .clipShape(RoundedRectangle(cornerRadius: 16))
-        .overlay(RoundedRectangle(cornerRadius: 16).stroke(color.opacity(0.32)))
+        .clipShape(RoundedRectangle(cornerRadius: SecretMatchTheme.cornerRadius))
+        .overlay(RoundedRectangle(cornerRadius: SecretMatchTheme.cornerRadius).stroke(color.opacity(0.32)))
     }
 
     private func distributionCard(_ title: String, entries: [AdminStatisticCount]) -> some View {
@@ -366,7 +366,7 @@ struct AdminStatisticsView: View {
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .secretCard(cornerRadius: 18, padding: 16)
+        .secretCard(padding: 16)
     }
 
     private func barSegment(_ value: Int, maximum: Int, width: CGFloat, color: Color) -> some View {

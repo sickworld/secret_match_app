@@ -85,7 +85,7 @@ struct AdminDeliveryDiagnosticsView: View {
                 .disabled(sourceNumber.normalizedEventNumber.isEmpty || isLoading)
             }
         }
-        .secretCard(cornerRadius: 18, padding: 16)
+        .secretCard(padding: 16)
     }
 
     private func numberField(_ title: String, text: Binding<String>) -> some View {
@@ -98,7 +98,7 @@ struct AdminDeliveryDiagnosticsView: View {
                 .keyboardType(.numberPad)
                 .padding(12)
                 .background(SecretMatchTheme.surfaceRaised)
-                .clipShape(RoundedRectangle(cornerRadius: 12))
+                .clipShape(RoundedRectangle(cornerRadius: SecretMatchTheme.cornerRadius))
         }
         .frame(maxWidth: .infinity)
     }
@@ -158,10 +158,10 @@ struct AdminDeliveryDiagnosticsView: View {
             }
             .padding(12)
             .background(SecretMatchTheme.surfaceRaised)
-            .clipShape(RoundedRectangle(cornerRadius: 13))
+            .clipShape(RoundedRectangle(cornerRadius: SecretMatchTheme.cornerRadius))
         }
-        .secretCard(cornerRadius: 18, padding: 16)
-        .overlay(RoundedRectangle(cornerRadius: 18).stroke(presentation.color.opacity(0.28)))
+        .secretCard(padding: 16)
+        .overlay(RoundedRectangle(cornerRadius: SecretMatchTheme.cornerRadius).stroke(presentation.color.opacity(0.28)))
     }
 
     private func statusPresentation(_ state: String) -> (title: String, icon: String, color: Color) {

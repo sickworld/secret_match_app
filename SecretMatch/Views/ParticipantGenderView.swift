@@ -45,7 +45,7 @@ struct ParticipantGenderView: View {
                 }
             }
             .frame(maxWidth: 700)
-            .secretCard(cornerRadius: 28, padding: 34)
+            .secretCard(padding: 34)
             .padding(.horizontal, 28)
         }
     }
@@ -63,8 +63,8 @@ struct ParticipantGenderView: View {
             .foregroundStyle(.white)
             .frame(maxWidth: .infinity, minHeight: 116)
             .background(SecretMatchTheme.surfaceRaised)
-            .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
-            .overlay(RoundedRectangle(cornerRadius: 18).stroke(SecretMatchTheme.border, lineWidth: 1.2))
+            .clipShape(RoundedRectangle(cornerRadius: SecretMatchTheme.cornerRadius, style: .continuous))
+            .overlay(RoundedRectangle(cornerRadius: SecretMatchTheme.cornerRadius).stroke(SecretMatchTheme.border, lineWidth: 1.2))
         }
         .disabled(isSubmitting)
     }

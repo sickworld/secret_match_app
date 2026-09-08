@@ -102,9 +102,9 @@ struct CustomTextKeyboard: View {
                 .foregroundStyle(.white)
                 .frame(maxWidth: .infinity, minHeight: 50)
                 .background(color)
-                .clipShape(RoundedRectangle(cornerRadius: 7, style: .continuous))
+                .clipShape(RoundedRectangle(cornerRadius: SecretMatchTheme.cornerRadius, style: .continuous))
                 .overlay(
-                    RoundedRectangle(cornerRadius: 7, style: .continuous)
+                    RoundedRectangle(cornerRadius: SecretMatchTheme.cornerRadius, style: .continuous)
                         .stroke(SecretMatchTheme.border, lineWidth: highContrast ? 2 : 1)
                 )
         }

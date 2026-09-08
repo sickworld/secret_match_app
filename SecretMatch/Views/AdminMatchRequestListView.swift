@@ -58,7 +58,7 @@ struct AdminMatchRequestListView: View {
                 }
             }
             .frame(maxWidth: 1040, maxHeight: isEmbedded ? .infinity : 780)
-            .secretCard(cornerRadius: 26, padding: 26)
+            .secretCard(padding: 26)
             .padding(24)
         }
         .task { await loadRequests() }
@@ -110,7 +110,7 @@ struct AdminMatchRequestListView: View {
                         .frame(width: 50, height: 50)
                         .foregroundStyle(.white)
                         .background(SecretMatchTheme.surfaceRaised)
-                        .clipShape(Circle())
+                        .clipShape(RoundedRectangle(cornerRadius: SecretMatchTheme.cornerRadius))
                 }
                 .accessibilityLabel("Match-Requests schließen")
             }
@@ -137,7 +137,7 @@ struct AdminMatchRequestListView: View {
         .padding(.horizontal, 16)
         .frame(minWidth: 240, maxWidth: .infinity, minHeight: 54)
         .background(Color.black.opacity(0.25))
-        .clipShape(RoundedRectangle(cornerRadius: 14))
+        .clipShape(RoundedRectangle(cornerRadius: SecretMatchTheme.cornerRadius))
     }
 
     private var typePicker: some View {
@@ -150,7 +150,7 @@ struct AdminMatchRequestListView: View {
         .tint(.white)
         .frame(minWidth: 130, minHeight: 54)
         .background(SecretMatchTheme.surfaceRaised)
-        .clipShape(RoundedRectangle(cornerRadius: 14))
+        .clipShape(RoundedRectangle(cornerRadius: SecretMatchTheme.cornerRadius))
     }
 
     private var statusPicker: some View {
@@ -163,7 +163,7 @@ struct AdminMatchRequestListView: View {
         .tint(.white)
         .frame(minWidth: 130, minHeight: 54)
         .background(SecretMatchTheme.surfaceRaised)
-        .clipShape(RoundedRectangle(cornerRadius: 14))
+        .clipShape(RoundedRectangle(cornerRadius: SecretMatchTheme.cornerRadius))
     }
 
     private func loadErrorState(message: String) -> some View {
@@ -188,7 +188,7 @@ struct AdminMatchRequestListView: View {
                     .font(.system(size: 30))
                     .frame(width: 54, height: 54)
                     .background(color.opacity(0.2))
-                    .clipShape(RoundedRectangle(cornerRadius: 12))
+                    .clipShape(RoundedRectangle(cornerRadius: SecretMatchTheme.cornerRadius))
 
                 VStack(alignment: .leading, spacing: 6) {
                     Text(request.type == "hot" ? "Fuck-Request" : "Hot-Request")
@@ -210,7 +210,7 @@ struct AdminMatchRequestListView: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(12)
                     .background(Color.black.opacity(0.2))
-                    .clipShape(RoundedRectangle(cornerRadius: 10))
+                    .clipShape(RoundedRectangle(cornerRadius: SecretMatchTheme.cornerRadius))
             }
 
             HStack {
@@ -234,8 +234,8 @@ struct AdminMatchRequestListView: View {
         }
         .padding()
         .background(color.opacity(0.14))
-        .clipShape(RoundedRectangle(cornerRadius: 14))
-        .overlay(RoundedRectangle(cornerRadius: 14).stroke(color.opacity(0.65), lineWidth: 1.2))
+        .clipShape(RoundedRectangle(cornerRadius: SecretMatchTheme.cornerRadius))
+        .overlay(RoundedRectangle(cornerRadius: SecretMatchTheme.cornerRadius).stroke(color.opacity(0.65), lineWidth: 1.2))
     }
 
     private func statusBadge(_ isMatched: Bool) -> some View {
@@ -358,6 +358,8 @@ private struct AdminMatchRequestEditorView: View {
                     }
                 }
             }
+            .scrollContentBackground(.hidden)
+            .background(SecretMatchTheme.background)
             .navigationTitle("Match-Request bearbeiten")
             .navigationBarTitleDisplayMode(.inline)
             .interactiveDismissDisabled(isSaving)

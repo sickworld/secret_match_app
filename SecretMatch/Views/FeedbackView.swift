@@ -29,7 +29,7 @@ struct FeedbackView: View {
                 }
             }
             .frame(maxWidth: 760)
-            .secretCard(cornerRadius: 28, padding: 30)
+            .secretCard(padding: 30)
             .padding(.horizontal, 28)
             .padding(.vertical, 24)
         }
@@ -111,7 +111,7 @@ struct FeedbackView: View {
                 .foregroundStyle(.white)
                 .frame(width: 48, height: 48)
                 .background(SecretMatchTheme.surfaceRaised)
-                .clipShape(Circle())
+                .clipShape(RoundedRectangle(cornerRadius: SecretMatchTheme.cornerRadius))
         }
         .disabled(isSubmitting)
         .accessibilityLabel("Feedback schließen")
@@ -160,9 +160,9 @@ struct FeedbackView: View {
                         .foregroundStyle(value <= (selection.wrappedValue ?? 0) ? SecretMatchTheme.secondary : SecretMatchTheme.muted)
                         .frame(maxWidth: .infinity, minHeight: 58)
                         .background(SecretMatchTheme.surfaceRaised)
-                        .clipShape(RoundedRectangle(cornerRadius: 14))
+                        .clipShape(RoundedRectangle(cornerRadius: SecretMatchTheme.cornerRadius))
                         .overlay(
-                            RoundedRectangle(cornerRadius: 14)
+                            RoundedRectangle(cornerRadius: SecretMatchTheme.cornerRadius)
                                 .stroke(selection.wrappedValue == value ? SecretMatchTheme.secondary : SecretMatchTheme.border, lineWidth: 1.2)
                         )
                 }

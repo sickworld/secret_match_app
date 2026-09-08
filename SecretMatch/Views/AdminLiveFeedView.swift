@@ -36,7 +36,7 @@ struct AdminLiveFeedView: View {
                                 .frame(width: 50, height: 50)
                                 .foregroundStyle(.white)
                                 .background(SecretMatchTheme.surfaceRaised)
-                                .clipShape(Circle())
+                                .clipShape(RoundedRectangle(cornerRadius: SecretMatchTheme.cornerRadius))
                         }
                         .accessibilityLabel("Livefeed schließen")
                     }
@@ -87,7 +87,7 @@ struct AdminLiveFeedView: View {
                 }
             }
             .frame(maxWidth: isEmbedded ? 1040 : 680, maxHeight: isEmbedded ? .infinity : 780)
-            .secretCard(cornerRadius: 26, padding: 22)
+            .secretCard(padding: 22)
             .padding(16)
         }
         .task {
@@ -105,7 +105,7 @@ struct AdminLiveFeedView: View {
                 .font(.title2)
                 .frame(width: 44, height: 44)
                 .background(entry.color.opacity(0.18))
-                .clipShape(RoundedRectangle(cornerRadius: 12))
+                .clipShape(RoundedRectangle(cornerRadius: SecretMatchTheme.cornerRadius))
             VStack(alignment: .leading, spacing: 4) {
                 Text(entry.title).font(.headline).foregroundStyle(.white)
                 Text(entry.detail).font(.subheadline.weight(.semibold)).foregroundStyle(SecretMatchTheme.muted)
@@ -114,8 +114,8 @@ struct AdminLiveFeedView: View {
         }
         .padding(12)
         .background(entry.color.opacity(0.09))
-        .clipShape(RoundedRectangle(cornerRadius: 14))
-        .overlay(RoundedRectangle(cornerRadius: 14).stroke(entry.color.opacity(0.32)))
+        .clipShape(RoundedRectangle(cornerRadius: SecretMatchTheme.cornerRadius))
+        .overlay(RoundedRectangle(cornerRadius: SecretMatchTheme.cornerRadius).stroke(entry.color.opacity(0.32)))
     }
 
     private var entries: [Entry] {

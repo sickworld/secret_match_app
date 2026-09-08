@@ -226,7 +226,7 @@ struct SidebarView: View {
                 .padding(.horizontal, isCompact ? 6 : metric(6, 6))
                 .padding(.vertical, isCompact ? 4 : metric(4, 4))
                 .background(Color.white.opacity(0.94))
-                .clipShape(RoundedRectangle(cornerRadius: isCompact ? 6 : metric(6, 6)))
+                .clipShape(RoundedRectangle(cornerRadius: SecretMatchTheme.cornerRadius))
                 .accessibilityLabel("FICKEN Likör")
 
             Image("club2020")

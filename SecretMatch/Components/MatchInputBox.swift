@@ -315,9 +315,9 @@ struct MatchInputBox: View {
                 .padding(.horizontal, metric(14, 14))
                 .frame(minHeight: metric(48, 48))
                 .background(SecretMatchTheme.secondary.opacity(0.1))
-                .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                .clipShape(RoundedRectangle(cornerRadius: SecretMatchTheme.cornerRadius, style: .continuous))
                 .overlay(
-                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                    RoundedRectangle(cornerRadius: SecretMatchTheme.cornerRadius, style: .continuous)
                         .stroke(SecretMatchTheme.secondary.opacity(0.35), lineWidth: 1)
                 )
                 .transition(.move(edge: .top).combined(with: .opacity))
@@ -472,9 +472,9 @@ struct MatchInputBox: View {
         .padding(14)
         .frame(maxWidth: .infinity)
         .background(SecretMatchTheme.surfaceRaised)
-        .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+        .clipShape(RoundedRectangle(cornerRadius: SecretMatchTheme.cornerRadius, style: .continuous))
         .overlay(
-            RoundedRectangle(cornerRadius: 14, style: .continuous)
+            RoundedRectangle(cornerRadius: SecretMatchTheme.cornerRadius, style: .continuous)
                 .stroke(SecretMatchTheme.secondary.opacity(0.9), lineWidth: 2)
         )
         .accessibilityElement(children: .contain)
@@ -510,9 +510,9 @@ struct MatchInputBox: View {
         .padding(14)
         .frame(maxWidth: .infinity)
         .background(SecretMatchTheme.surfaceRaised)
-        .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+        .clipShape(RoundedRectangle(cornerRadius: SecretMatchTheme.cornerRadius, style: .continuous))
         .overlay(
-            RoundedRectangle(cornerRadius: 14, style: .continuous)
+            RoundedRectangle(cornerRadius: SecretMatchTheme.cornerRadius, style: .continuous)
                 .stroke(presentation.color.opacity(0.9), lineWidth: 2)
         )
         .accessibilityElement(children: .combine)
@@ -551,7 +551,7 @@ struct MatchInputBox: View {
                     : (usesColorIndependentSelection ? Color.black : option.color.opacity(0.16))
             )
             .overlay(
-                RoundedRectangle(cornerRadius: 10)
+                RoundedRectangle(cornerRadius: SecretMatchTheme.cornerRadius)
                     .stroke(
                         isSelected ? Color.white : (usesColorIndependentSelection ? Color.white.opacity(0.9) : option.color.opacity(0.55)),
                         lineWidth: usesColorIndependentSelection ? 2.5 : (isSelected ? 2 : 1.2)

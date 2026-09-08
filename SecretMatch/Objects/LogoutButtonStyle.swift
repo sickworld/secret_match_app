@@ -39,13 +39,6 @@ struct LogoutButtonStyle: ButtonStyle {
         return metric(20, 21)
     }
 
-    private var cornerRadius: CGFloat {
-        guard stabilizedScale != nil else {
-            return veryCompact ? 12 : (compact ? 14 : 17)
-        }
-        return metric(17, 18)
-    }
-
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .font(.system(size: fontSize, weight: .bold, design: .rounded))
@@ -53,9 +46,9 @@ struct LogoutButtonStyle: ButtonStyle {
             .frame(maxWidth: .infinity, minHeight: minHeight)
             .background(SecretMatchTheme.danger.opacity(configuration.isPressed ? 0.24 : 0.14))
             .foregroundStyle(.white)
-            .clipShape(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
+            .clipShape(RoundedRectangle(cornerRadius: SecretMatchTheme.cornerRadius, style: .continuous))
             .overlay(
-                RoundedRectangle(cornerRadius: cornerRadius)
+                RoundedRectangle(cornerRadius: SecretMatchTheme.cornerRadius)
                     .stroke(SecretMatchTheme.danger.opacity(0.65), lineWidth: 1.2)
             )
             .opacity(configuration.isPressed ? 0.7 : 1.0)
