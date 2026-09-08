@@ -244,12 +244,12 @@ class APIService: ObservableObject {
     func applicationDidBecomeActive() {
         isApplicationActive = true
         startConnectionPolling()
+        startDeviceHeartbeat()
         Task { @MainActor [weak self] in
             await self?.checkConnection()
             guard self?.isApplicationActive == true,
                   self?.connectionState == .online else { return }
             await self?.retryPendingSends()
-            self?.startDeviceHeartbeat()
             if self?.isAdmin == true {
                 await self?.syncAdminPushToken()
             }
@@ -1006,6 +1006,13 @@ class APIService: ObservableObject {
                 }
                 _ = try? await URLSession.shared.data(for: logoutRequest)
             }
+        } else if !number.isEmpty {
+            var logoutRequest = URLRequest(url: baseURL.appendingPathComponent("logout"))
+            logoutRequest.httpMethod = "POST"
+            logoutRequest.timeoutInterval = 3
+            Task {
+                _ = try? await URLSession.shared.data(for: logoutRequest)
+            }
         }
 
         adminToken = nil
@@ -1016,8 +1023,6 @@ class APIService: ObservableObject {
         adminEventLog = []
         adminStatistics = nil
         retryTask?.cancel()
-        heartbeatTask?.cancel()
-        heartbeatTask = nil
         updateQueuedSendCount()
         self.matches = []
         self.actions = []
@@ -1027,15 +1032,10 @@ class APIService: ObservableObject {
         self.adminFeedback = []
         self.isAdmin = false
         interactionDeliveryStatus = nil
+        startDeviceHeartbeat()
     }
 
     func cancelParticipantLogin() async {
-        if !isAdmin, !number.isEmpty {
-            var request = URLRequest(url: baseURL.appendingPathComponent("logout"))
-            request.httpMethod = "POST"
-            request.timeoutInterval = 3
-            _ = try? await URLSession.shared.data(for: request)
-        }
         logout()
     }
 
@@ -1150,7 +1150,11 @@ class APIService: ObservableObject {
 
     private func startDeviceHeartbeat() {
         heartbeatTask?.cancel()
-        guard isLoggedIn, isApplicationActive else { return }
+#if ADMIN_APP
+        heartbeatTask = nil
+        return
+#else
+        guard isApplicationActive else { return }
         UIDevice.current.isBatteryMonitoringEnabled = true
         heartbeatTask = Task { @MainActor [weak self] in
             while !Task.isCancelled {
@@ -1158,10 +1162,11 @@ class APIService: ObservableObject {
                 do { try await Task.sleep(for: .seconds(30)) } catch { return }
             }
         }
+#endif
     }
 
     private func sendDeviceHeartbeat() async {
-        guard isLoggedIn else { return }
+        guard isApplicationActive, !isAdmin else { return }
         let deviceID = installationID
         let rawLevel = UIDevice.current.batteryLevel
         let level = rawLevel < 0 ? 0 : Int((rawLevel * 100).rounded())
@@ -1173,24 +1178,29 @@ class APIService: ObservableObject {
         default: state = "unknown"
         }
         let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? ""
-        let ownPending = pendingInteractions.filter { $0.senderNumber == number.normalizedEventNumber }
-        let oldestPendingSeconds = ownPending.map {
+        let devicePending = pendingInteractions
+        let oldestPendingSeconds = devicePending.map {
             max(0, Int(Date().timeIntervalSince($0.createdAt)))
         }.max() ?? 0
         let lastSync = UserDefaults.standard.object(forKey: Self.lastSuccessfulSyncKey) as? Date
         var request = URLRequest(url: baseURL.appendingPathComponent("heartbeat"))
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        request.httpBody = try? JSONSerialization.data(withJSONObject: [
+        var body: [String: Any] = [
             "device_id": deviceID,
             "battery_level": level,
             "battery_state": state,
             "app_version": version,
-            "queued_send_count": ownPending.count,
+            "queued_send_count": devicePending.count,
             "oldest_pending_seconds": oldestPendingSeconds,
             "last_successful_sync_at": lastSync.map(Self.iso8601String) ?? "",
             "connection_state": telemetryValue(for: connectionState),
-        ])
+            "participant_logged_in": !number.isEmpty,
+        ]
+        if let deviceToken = DeviceHeartbeatCredentialStore.loadOrCreateToken() {
+            body["device_token"] = deviceToken
+        }
+        request.httpBody = try? JSONSerialization.data(withJSONObject: body)
         request.timeoutInterval = 8
         do {
             let (_, response) = try await URLSession.shared.data(for: request)
@@ -1597,12 +1607,11 @@ class APIService: ObservableObject {
         guard !isAdmin else { return }
         isLoggedIn = false
         number = ""
-        heartbeatTask?.cancel()
-        heartbeatTask = nil
         retryTask?.cancel()
         matches = []
         actions = []
         updateQueuedSendCount()
+        startDeviceHeartbeat()
     }
 
     private func telemetryValue(for state: ConnectionState) -> String {

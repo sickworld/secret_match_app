@@ -654,7 +654,7 @@ struct AdminDashboardView: View {
                         VStack(alignment: .leading, spacing: 2) {
                             Text(device.name ?? "iPad")
                                 .font(.title3.bold().monospacedDigit())
-                            Text("Nummer \(device.number.displayEventNumber)")
+                            Text(device.number.isEmpty ? "Keine Nummer angemeldet" : "Nummer \(device.number.displayEventNumber)")
                                 .font(.subheadline.bold().monospacedDigit())
                                 .foregroundStyle(SecretMatchTheme.muted)
                             Text(device.isOnline ? "Online" : "Offline · zuletzt \(device.lastSeenDescription)")
@@ -1042,7 +1042,7 @@ struct AdminDashboardView: View {
         case .blockParticipant(let number):
             return "\(number.displayEventNumber) sperren, das Profil löschen und alle Sitzungen dieser Nummer abmelden?"
         case .deleteDevice(_, let name):
-            return "\(name) aus der iPad-Liste entfernen? Ist die App dort noch aktiv, registriert sich das iPad mit dem nächsten Heartbeat erneut."
+            return "\(name) aus der iPad-Liste entfernen und den Gerätezugang widerrufen? Ist dort noch eine Nummer angemeldet, registriert es sich beim nächsten Heartbeat, sonst beim nächsten Teilnehmer-Login erneut."
         case .deleteBillboard(_, let name):
             return "Den Zugang für \(name) löschen? Die laufende Sitzung wird sofort ungültig und das Billboard muss danach neu angemeldet werden."
         case nil: return ""

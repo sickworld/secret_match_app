@@ -150,11 +150,11 @@ struct AdminEventCheckView: View {
         let billboards = dashboard.billboards ?? []
         let onlineBillboards = billboards.filter(\.online).count
         let quickMessages = dashboard.matchMessageOptions ?? []
-        let moduleCurrent = dashboard.pluginVersion.compare("2026.09.08.3", options: .numeric) != .orderedAscending
+        let moduleCurrent = dashboard.pluginVersion.compare("2026.09.08.4", options: .numeric) != .orderedAscending
 
         return [
             CheckItem(id: "api", title: "Server & API", detail: dashboard.apiOK ? "WordPress antwortet · Modul \(dashboard.pluginVersion)" : "Die API meldet einen Fehler.", passed: dashboard.apiOK, importance: .required, icon: "server.rack"),
-            CheckItem(id: "module", title: "WordPress-Modul", detail: moduleCurrent ? "Version \(dashboard.pluginVersion) unterstützt alle Admin-Werkzeuge." : "Bitte mindestens Version 2026.09.08.3 installieren.", passed: moduleCurrent, importance: .required, icon: "shippingbox.fill"),
+            CheckItem(id: "module", title: "WordPress-Modul", detail: moduleCurrent ? "Version \(dashboard.pluginVersion) unterstützt alle Admin-Werkzeuge." : "Bitte mindestens Version 2026.09.08.4 installieren.", passed: moduleCurrent, importance: .required, icon: "shippingbox.fill"),
             CheckItem(id: "numbers", title: "Eventnummern", detail: dashboard.allowedParticipants > 0 ? "\(dashboard.allowedParticipants) Nummern sind freigegeben." : "Es sind keine Nummern freigegeben.", passed: dashboard.allowedParticipants > 0, importance: .required, icon: "number"),
             CheckItem(id: "ipads", title: "iPads erreichbar", detail: devices.isEmpty ? "Noch kein iPad registriert." : "\(onlineDevices.count) von \(devices.count) iPads sind online.", passed: !devices.isEmpty && offlineDevices == 0, importance: .required, icon: "ipad"),
             CheckItem(id: "queue", title: "Sendewarteschlangen", detail: queued == 0 ? "Keine wartenden Sendungen." : "\(queued) Sendungen warten noch auf Zustellung.", passed: queued == 0, importance: .required, icon: "tray.full"),

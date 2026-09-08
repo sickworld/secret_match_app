@@ -10,7 +10,7 @@ Das zentrale Protokoll benennt jede schreibende Admin-Aktion verständlich, eins
 
 Die Admin-App bietet zusätzlich eine globale Nummernakte mit bestätigtem PIN- und Gender-Reset, einen Event-Startcheck und eine Request-ID-basierte Sendungsdiagnose. Die Statistik lässt sich ohne Eventnummern, Nachrichten, PINs oder Gerätekennungen als PDF beziehungsweise CSV teilen. Auf dem iPad unterscheidet die Versandbestätigung sichtbar zwischen zugestellt, sicher vorgemerkt, teilweise zugestellt und fehlgeschlagen.
 
-Diese Funktionen benötigen das WordPress-Modul ab Version `2026.09.08.3`; das Modul muss vor oder zusammen mit diesem App-Build veröffentlicht werden.
+Diese Funktionen benötigen das WordPress-Modul ab Version `2026.09.08.4`; das Modul muss vor oder zusammen mit diesem App-Build veröffentlicht werden.
 
 ## Eingehende Interessen
 
@@ -30,7 +30,9 @@ Die Admin-App zeigt gesetzte PINs. Unter **PIN verwalten** kann eine PIN manuell
 
 Die Admin-App besitzt eine eigene Rubrik **Match-Requests**. Sie zeigt alle gesendeten Wünsche mit Absender, Empfänger, Typ, Freitext und dem Status offen oder gematcht. Requests können gesucht, gefiltert, bearbeitet und einzeln gelöscht werden; vorhandene gegenseitige Matches bleiben dabei eigenständig bestehen.
 
-Die Teilnehmernavigation bündelt Matches, offene Interessen und erhaltene Aktionen unter **Deine Übersicht**. Drei klar erklärte Reiter unterscheiden gegenseitig bestätigte Matches, noch offene Interessen und direkt empfangene Aktionen. Einheitliche Karten stellen die Eventnummer zuerst dar; Typ- und Nummernfilter funktionieren in allen drei Bereichen. Während einer aktiven Sitzung übermittelt das iPad alle 30 Sekunden Akkustand, Ladezustand und App-Version; die Admin-App zeigt Geräte an, deren letzter Heartbeat höchstens drei Minuten zurückliegt.
+Die Teilnehmernavigation bündelt Matches, offene Interessen und erhaltene Aktionen unter **Deine Übersicht**. Drei klar erklärte Reiter unterscheiden gegenseitig bestätigte Matches, noch offene Interessen und direkt empfangene Aktionen. Einheitliche Karten stellen die Eventnummer zuerst dar; Typ- und Nummernfilter funktionieren in allen drei Bereichen. Nach einer einmaligen Registrierung während eines Teilnehmer-Logins übermittelt das iPad im Vordergrund unabhängig vom aktuellen Login alle 30 Sekunden Akkustand, Ladezustand, App-Version und die gesamte lokale Queue. Der dafür ausgestellte Geräte-Token liegt nur im iOS-Schlüsselbund. Die Admin-App zeigt Geräte an, deren letzter Heartbeat höchstens drei Minuten zurückliegt, und kennzeichnet iPads auf der Loginseite als „Keine Nummer angemeldet“.
+
+Beim manuellen und automatischen Teilnehmer-Logout wird die Sitzung sofort über `POST /wp-json/secretmatch/v1/logout` beendet. Der Geräte-Heartbeat läuft danach weiter und bestätigt dem Server zusätzlich, dass lokal keine Teilnehmernummer angemeldet ist. Damit bleibt das iPad über seinen Gerätenamen überwachbar, ohne die abgemeldete Eventnummer weiter als aktiv zu führen.
 
 Beim Login erhält die PIN-Tastatur einen sichtbaren Kontext mit Eventnummer, Erklärung und direkter Möglichkeit, die Nummer zu ändern. Die PIN-Erstanlage kennzeichnet die Eingabe und Bestätigung zusätzlich eindeutig als Schritt 1 und Schritt 2.
 
