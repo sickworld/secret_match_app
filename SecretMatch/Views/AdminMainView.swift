@@ -44,7 +44,7 @@ struct AdminMainView: View {
         }
         .preference(
             key: SecretMatchAccessibilityControlsHiddenPreferenceKey.self,
-            value: showAdminMenu || showNumberLookup || showBillboard
+            value: true
         )
         .buttonBorderShape(.roundedRectangle(radius: SecretMatchTheme.cornerRadius))
         .tint(SecretMatchTheme.primary)

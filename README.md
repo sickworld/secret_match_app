@@ -54,6 +54,8 @@ Die PIN-Erstanlage kann jederzeit über **Abbrechen** verlassen werden. Dabei ve
 
 Die dauerhaft oben rechts eingeblendete Zoomgruppe **A− · Prozentwert · A+** wechselt zwischen 100 %, 115 % und 130 % Darstellungsgröße. Die gleich hohe, optisch getrennte Schaltfläche **Kontrast** zeigt ihren Zustand zusätzlich mit Kreis oder Häkchen und aktiviert einen dauerhaft gespeicherten High-Contrast-Modus mit schwarzem Hintergrund, helleren Sekundärtexten, kräftigeren Farben und klareren Begrenzungen. Die App respektiert zusätzlich die iPad-Systemeinstellung für erhöhten Kontrast. Beim Start des Bildschirmschoners wird die gesamte Bedienleiste verborgen und die manuelle Darstellung auf 100 % ohne High Contrast zurückgesetzt. Ein durch die iPad-Systemeinstellung erzwungener erhöhter Kontrast bleibt aktiv.
 
+Im integrierten iPad-Adminbereich bleibt die Bediengruppe vollständig ausgeblendet, damit sie keine Admin-Navigation oder Dialoge überlagert. Beim Admin-Logout erscheint sie in den Teilnehmeransichten automatisch wieder; bestehende Zoom- und Kontrasteinstellungen werden durch den Wechsel nicht verändert.
+
 Beim Zoomen werden Texte, Bedienelemente und Abstände gemeinsam skaliert; responsive Ansichten brechen bei Bedarf um oder werden scrollbar. Zoom und Kontrast werden unabhängig voneinander pro App und Gerät gespeichert, bis der Bildschirmschoner beide manuellen Einstellungen zurücksetzt.
 
 Während modale Ansichten oder die appinternen Tastaturen geöffnet sind, wird die globale Bedienleiste vorübergehend ausgeblendet. Dadurch bleiben Schließen- und Tastaturtasten auf allen Zoomstufen frei erreichbar; die gewählte Darstellungsgröße und der Kontrastmodus bleiben dabei erhalten.
