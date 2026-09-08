@@ -53,10 +53,6 @@ struct MatchInputBox: View {
         return renderedValue / normalizedScale
     }
 
-    private var pinsSendButton: Bool {
-        fillsAvailableSpace
-    }
-
     private var visibleDeliveryStatus: InteractionDeliveryStatus? {
         guard let deliveryStatus else { return nil }
 
@@ -83,213 +79,273 @@ struct MatchInputBox: View {
     }
 
     private var floatingFeedbackBottomInset: CGFloat {
-        pinsSendButton ? metric(112, 122) : 124
+        fillsAvailableSpace ? metric(168, 145) : 124
     }
 
     private var content: some View {
         VStack(spacing: 0) {
-            VStack(spacing: 6) {
-                Text("MAKE A MOVE")
-                    .font(.caption2.bold())
-                    .tracking(2)
-                    .foregroundStyle(SecretMatchTheme.secondary)
-
-                Text("Was möchtest du senden?")
-                    .font(.system(size: metric(34, 40), weight: .bold, design: .rounded))
-                    .foregroundStyle(.white)
-
-                Text("Wähle eine oder mehrere Aktionen und gib die Event-Nummer ein.")
-                    .font(.system(size: metric(17, 19), weight: .medium, design: .rounded))
-                    .foregroundStyle(SecretMatchTheme.muted)
-                    .multilineTextAlignment(.center)
-            }
+            introHeader
 
             Color.clear
-                .frame(height: fillsAvailableSpace ? metric(22, 20) : 26)
+                .frame(height: fillsAvailableSpace ? metric(18, 16) : 22)
 
-            LazyVGrid(
-                columns: [GridItem(.flexible()), GridItem(.flexible())],
-                spacing: fillsAvailableSpace ? metric(12, 12) : 12
-            ) {
-                ForEach(options) { option in
-                    selectionButton(for: option)
-                }
-            }
-
-            Color.clear
-                .frame(height: fillsAvailableSpace ? metric(34, 28) : 26)
-
-            VStack(alignment: .leading, spacing: 8) {
-                Text("ZIEL-NUMMER")
-                    .font(.system(size: 14, weight: .bold, design: .rounded))
-                    .tracking(1.2)
-                    .foregroundStyle(SecretMatchTheme.secondary)
-
-                Text(targetNumber.isEmpty ? "Ziel-Nummer eingeben" : targetNumber.displayEventNumber)
-                    .foregroundStyle(targetNumber.isEmpty ? SecretMatchTheme.muted : .white)
-                    .font(.system(size: metric(34, 40), weight: .bold, design: .rounded))
-                    .multilineTextAlignment(.center)
-                    .minimumScaleFactor(0.78)
-                    .secretInput(highlighted: showKeyboard)
-                    .onTapGesture {
-                        withAnimation(.easeOut(duration: 0.2)) {
-                            showKeyboard = true
-                        }
-                    }
-            }
-
-            if selectedActions.contains("normal") || selectedActions.contains("hot") {
-                Spacer(minLength: 18)
-                VStack(alignment: .leading, spacing: 10) {
-                    Text("NACHRICHT ZUM MATCH · OPTIONAL")
-                        .font(.system(size: 14, weight: .bold, design: .rounded))
-                        .tracking(1.2)
-                        .foregroundStyle(SecretMatchTheme.secondary)
-                    if !quickMessages.isEmpty {
-                        ScrollView(.horizontal, showsIndicators: false) {
-                            HStack(spacing: 8) {
-                                ForEach(quickMessages, id: \.self) { option in
-                                    let isSelected = matchMessage == option
-
-                                    Button {
-                                        selectQuickMessage(option)
-                                    } label: {
-                                        HStack(spacing: 7) {
-                                            if isSelected {
-                                                Image(systemName: "checkmark.circle.fill")
-                                            }
-                                            Text(option)
-                                                .lineLimit(1)
-                                        }
-                                        .font(.system(size: 15, weight: .bold, design: .rounded))
-                                        .foregroundStyle(isSelected ? Color.black : Color.white)
-                                        .padding(.horizontal, 14)
-                                        .frame(minHeight: 42)
-                                        .background(
-                                            isSelected
-                                                ? SecretMatchTheme.secondary
-                                                : SecretMatchTheme.surfaceRaised
-                                        )
-                                        .clipShape(Capsule())
-                                        .overlay(
-                                            Capsule()
-                                                .stroke(
-                                                    isSelected
-                                                        ? SecretMatchTheme.secondary
-                                                        : SecretMatchTheme.border,
-                                                    lineWidth: isSelected ? 2 : 1
-                                                )
-                                        )
-                                    }
-                                    .buttonStyle(.plain)
-                                    .accessibilityAddTraits(isSelected ? .isSelected : [])
-                                }
-                            }
-                        }
-                    }
-
-                    if replacedCustomMessage != nil {
-                        HStack(spacing: 10) {
-                            Image(systemName: "arrow.uturn.backward.circle.fill")
-                                .foregroundStyle(SecretMatchTheme.secondary)
-
-                            Text("Text durch Schnelltext ersetzt")
-                                .font(.subheadline.weight(.semibold))
-                                .foregroundStyle(.white)
-
-                            Spacer()
-
-                            Button("Rückgängig") {
-                                restoreReplacedMessage()
-                            }
-                            .font(.subheadline.bold())
-                            .foregroundStyle(SecretMatchTheme.secondary)
-                        }
-                        .padding(.horizontal, 14)
-                        .frame(minHeight: 48)
-                        .background(SecretMatchTheme.secondary.opacity(0.1))
-                        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 12, style: .continuous)
-                                .stroke(SecretMatchTheme.secondary.opacity(0.35), lineWidth: 1)
-                        )
-                        .transition(.move(edge: .top).combined(with: .opacity))
-                    }
-
-                    Button {
-                        showKeyboard = false
-                        showTextKeyboard = true
-                    } label: {
-                        HStack(alignment: .top, spacing: 12) {
-                            Image(systemName: "keyboard")
-                                .foregroundStyle(SecretMatchTheme.secondary)
-                            Text(matchMessage.isEmpty ? "Eigene Nachricht schreiben …" : matchMessage)
-                                .font(.system(size: 19, weight: .medium, design: .rounded))
-                                .foregroundStyle(matchMessage.isEmpty ? SecretMatchTheme.muted : .white)
-                                .multilineTextAlignment(.leading)
-                                .frame(maxWidth: .infinity, minHeight: 30, alignment: .topLeading)
-                        }
-                        .padding(14)
-                        .background(SecretMatchTheme.surfaceRaised)
-                        .clipShape(RoundedRectangle(cornerRadius: 14))
-                    }
-                    .buttonStyle(.plain)
-                    .accessibilityLabel(matchMessage.isEmpty ? "Eigene Match-Nachricht schreiben" : "Match-Nachricht: \(matchMessage)")
-                    .accessibilityHint("Öffnet die appinterne Tastatur")
-                    Text("\(matchMessage.count)/180")
-                        .font(.caption.monospacedDigit())
-                        .foregroundStyle(SecretMatchTheme.muted)
-                        .frame(maxWidth: .infinity, alignment: .trailing)
-                }
-            }
-
-            if !pinsSendButton {
-                Spacer(minLength: 26)
-                sendButton
-            }
-
+            actionPanel
         }
         .frame(
             maxWidth: fillsAvailableSpace ? .infinity : 780,
-            minHeight: fillsAvailableSpace
-                ? max(0, (availableHeight ?? 0) - metric(105, 105))
-                : nil,
             alignment: .top
         )
+    }
+
+    private var introHeader: some View {
+        VStack(spacing: 5) {
+            Text("MAKE A MOVE")
+                .font(.caption2.bold())
+                .tracking(2)
+                .foregroundStyle(SecretMatchTheme.secondary)
+
+            Text("Was möchtest du senden?")
+                .font(.system(size: metric(32, 37), weight: .bold, design: .rounded))
+                .foregroundStyle(.white)
+
+            Text("Wähle deine Aktionen und anschließend die Zielnummer.")
+                .font(.system(size: metric(16, 18), weight: .medium, design: .rounded))
+                .foregroundStyle(SecretMatchTheme.muted)
+                .multilineTextAlignment(.center)
+        }
+    }
+
+    private var actionPanel: some View {
+        VStack(spacing: 0) {
+            VStack(alignment: .leading, spacing: metric(10, 10)) {
+                panelSectionTitle("AKTIONEN AUSWÄHLEN")
+
+                LazyVGrid(
+                    columns: [GridItem(.flexible()), GridItem(.flexible())],
+                    spacing: metric(9, 10)
+                ) {
+                    ForEach(options) { option in
+                        selectionButton(for: option)
+                    }
+                }
+            }
+            .padding(.horizontal, metric(16, 17))
+            .padding(.vertical, metric(14, 14))
+
+            panelDivider
+
+            targetNumberSection
+                .padding(.horizontal, metric(16, 17))
+                .padding(.vertical, metric(13, 14))
+
+            if selectedActions.contains("normal") || selectedActions.contains("hot") {
+                panelDivider
+
+                optionalMessageSection
+                    .padding(.horizontal, metric(16, 17))
+                    .padding(.vertical, metric(13, 14))
+            }
+
+            panelDivider
+
+            sendButton
+                .padding(.horizontal, metric(16, 17))
+                .padding(.vertical, metric(13, 14))
+        }
+        .background(SecretMatchTheme.surfaceRaised.opacity(highContrast ? 0.78 : 0.38))
+        .overlay {
+            Rectangle()
+                .stroke(
+                    SecretMatchTheme.border.opacity(highContrast ? 1 : 0.95),
+                    lineWidth: highContrast ? 2 : 1
+                )
+        }
+    }
+
+    private func panelSectionTitle(_ title: String) -> some View {
+        Text(title)
+            .font(.system(size: metric(13, 14), weight: .bold, design: .rounded))
+            .tracking(1.2)
+            .foregroundStyle(SecretMatchTheme.secondary)
+    }
+
+    private var panelDivider: some View {
+        Rectangle()
+            .fill(SecretMatchTheme.border.opacity(highContrast ? 1 : 0.9))
+            .frame(height: highContrast ? 2 : 1)
+            .accessibilityHidden(true)
+    }
+
+    private var targetNumberSection: some View {
+        VStack(alignment: .leading, spacing: metric(8, 8)) {
+            panelSectionTitle("ZIELNUMMER")
+
+            HStack(spacing: metric(12, 13)) {
+                Image(systemName: "number")
+                    .font(.system(size: metric(19, 21), weight: .bold))
+                    .foregroundStyle(SecretMatchTheme.secondary)
+                    .frame(width: metric(24, 26))
+
+                Text(targetNumber.isEmpty ? "Nummer eingeben" : targetNumber.displayEventNumber)
+                    .foregroundStyle(targetNumber.isEmpty ? SecretMatchTheme.muted : .white)
+                    .font(.system(size: metric(24, 28), weight: .bold, design: .rounded))
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.78)
+
+                Spacer(minLength: 0)
+
+                Image(systemName: "chevron.right")
+                    .font(.system(size: metric(13, 14), weight: .bold))
+                    .foregroundStyle(SecretMatchTheme.muted)
+                    .accessibilityHidden(true)
+            }
+            .padding(.horizontal, metric(14, 15))
+            .frame(maxWidth: .infinity, minHeight: metric(64, 70), alignment: .leading)
+            .background(Color.black.opacity(highContrast ? 1 : 0.3))
+            .overlay {
+                Rectangle()
+                    .stroke(
+                        showKeyboard ? SecretMatchTheme.primary : SecretMatchTheme.border.opacity(highContrast ? 1 : 0.95),
+                        lineWidth: highContrast ? 2.5 : (showKeyboard ? 1.5 : 1)
+                    )
+            }
+            .contentShape(Rectangle())
+            .onTapGesture {
+                withAnimation(.easeOut(duration: 0.2)) {
+                    showTextKeyboard = false
+                    showKeyboard = true
+                }
+            }
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel(targetNumber.isEmpty ? "Zielnummer eingeben" : "Zielnummer \(targetNumber.displayEventNumber)")
+            .accessibilityHint("Öffnet die appinterne Zahlentastatur")
+            .accessibilityAddTraits(.isButton)
+        }
+    }
+
+    private var optionalMessageSection: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            panelSectionTitle("NACHRICHT ZUM MATCH · OPTIONAL")
+
+            if !quickMessages.isEmpty {
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 8) {
+                        ForEach(quickMessages, id: \.self) { option in
+                            let isSelected = matchMessage == option
+
+                            Button {
+                                selectQuickMessage(option)
+                            } label: {
+                                HStack(spacing: 7) {
+                                    if isSelected {
+                                        Image(systemName: "checkmark.circle.fill")
+                                    }
+                                    Text(option)
+                                        .lineLimit(1)
+                                }
+                                .font(.system(size: 15, weight: .bold, design: .rounded))
+                                .foregroundStyle(isSelected ? Color.black : Color.white)
+                                .padding(.horizontal, 14)
+                                .frame(minHeight: 42)
+                                .background(
+                                    isSelected
+                                        ? SecretMatchTheme.secondary
+                                        : SecretMatchTheme.surfaceRaised
+                                )
+                                .clipShape(Capsule())
+                                .overlay(
+                                    Capsule()
+                                        .stroke(
+                                            isSelected
+                                                ? SecretMatchTheme.secondary
+                                                : SecretMatchTheme.border,
+                                            lineWidth: isSelected ? 2 : 1
+                                        )
+                                )
+                            }
+                            .buttonStyle(.plain)
+                            .accessibilityAddTraits(isSelected ? .isSelected : [])
+                        }
+                    }
+                }
+            }
+
+            if replacedCustomMessage != nil {
+                HStack(spacing: 10) {
+                    Image(systemName: "arrow.uturn.backward.circle.fill")
+                        .foregroundStyle(SecretMatchTheme.secondary)
+
+                    Text("Text durch Schnelltext ersetzt")
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(.white)
+
+                    Spacer()
+
+                    Button("Rückgängig") {
+                        restoreReplacedMessage()
+                    }
+                    .font(.subheadline.bold())
+                    .foregroundStyle(SecretMatchTheme.secondary)
+                }
+                .padding(.horizontal, 14)
+                .frame(minHeight: 48)
+                .background(SecretMatchTheme.secondary.opacity(0.1))
+                .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                        .stroke(SecretMatchTheme.secondary.opacity(0.35), lineWidth: 1)
+                )
+                .transition(.move(edge: .top).combined(with: .opacity))
+            }
+
+            Button {
+                showKeyboard = false
+                showTextKeyboard = true
+            } label: {
+                HStack(alignment: .top, spacing: 12) {
+                    Image(systemName: "keyboard")
+                        .foregroundStyle(SecretMatchTheme.secondary)
+                    Text(matchMessage.isEmpty ? "Eigene Nachricht schreiben …" : matchMessage)
+                        .font(.system(size: 19, weight: .medium, design: .rounded))
+                        .foregroundStyle(matchMessage.isEmpty ? SecretMatchTheme.muted : .white)
+                        .multilineTextAlignment(.leading)
+                        .frame(maxWidth: .infinity, minHeight: 30, alignment: .topLeading)
+                }
+                .padding(14)
+                .background(SecretMatchTheme.surfaceRaised)
+                .clipShape(RoundedRectangle(cornerRadius: 10))
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel(matchMessage.isEmpty ? "Eigene Match-Nachricht schreiben" : "Match-Nachricht: \(matchMessage)")
+            .accessibilityHint("Öffnet die appinterne Tastatur")
+
+            Text("\(matchMessage.count)/180")
+                .font(.caption.monospacedDigit())
+                .foregroundStyle(SecretMatchTheme.muted)
+                .frame(maxWidth: .infinity, alignment: .trailing)
+        }
     }
 
     @ViewBuilder
     var body: some View {
         Group {
             if fillsAvailableSpace {
-                VStack(spacing: 0) {
-                    ScrollView {
-                        content
-                            .padding(.horizontal, metric(30, 30))
-                            .padding(.top, metric(24, 20))
-                            .padding(.bottom, metric(30, 20))
-                            .frame(
-                                maxWidth: .infinity,
-                                minHeight: max(0, (availableHeight ?? 0) - metric(105, 105)),
-                                alignment: .top
-                            )
-                    }
-
-                    if pinsSendButton {
-                        Divider()
-                            .overlay(SecretMatchTheme.border)
-
-                        sendButton
-                            .padding(.horizontal, metric(30, 30))
-                            .padding(.vertical, metric(12, 12))
-                            .background(SecretMatchTheme.surface.opacity(0.98))
-                    }
+                ScrollView {
+                    content
+                        .padding(.horizontal, metric(30, 30))
+                        .padding(.top, metric(20, 18))
+                        .padding(.bottom, metric(28, 22))
+                        .frame(
+                            maxWidth: .infinity,
+                            minHeight: max(0, (availableHeight ?? 0) - metric(40, 34)),
+                            alignment: .top
+                        )
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else {
                 content
                     .padding(.horizontal, 24)
-                    .secretCard(cornerRadius: 24, padding: 30)
+                    .padding(.vertical, 24)
             }
         }
         .overlay(alignment: .bottom) {
@@ -339,7 +395,7 @@ struct MatchInputBox: View {
         }
         .buttonStyle(SecretPrimaryButtonStyle(
             fontSize: metric(21, 23),
-            minHeight: metric(80, 86)
+            minHeight: metric(68, 74)
         ))
         .disabled(selectedActions.isEmpty || targetNumber.isEmpty)
         .opacity(selectedActions.isEmpty || targetNumber.isEmpty ? 0.5 : 1)
@@ -446,21 +502,21 @@ struct MatchInputBox: View {
                     .font(.system(size: metric(19, 22), weight: .semibold))
             }
             .foregroundColor(usesColorIndependentSelection && isSelected ? .black : .white)
-            .padding(.horizontal, metric(16, 18))
-            .frame(maxWidth: .infinity, minHeight: metric(72, 80))
+            .padding(.horizontal, metric(15, 17))
+            .frame(maxWidth: .infinity, minHeight: metric(66, 72))
             .background(
                 isSelected
                     ? (usesColorIndependentSelection ? Color.white : option.color.opacity(0.9))
                     : (usesColorIndependentSelection ? Color.black : option.color.opacity(0.16))
             )
             .overlay(
-                RoundedRectangle(cornerRadius: 15)
+                RoundedRectangle(cornerRadius: 10)
                     .stroke(
                         isSelected ? Color.white : (usesColorIndependentSelection ? Color.white.opacity(0.9) : option.color.opacity(0.55)),
                         lineWidth: usesColorIndependentSelection ? 2.5 : (isSelected ? 2 : 1.2)
                     )
             )
-            .cornerRadius(15)
+            .cornerRadius(10)
             .shadow(color: isSelected ? option.color.opacity(0.28) : .clear, radius: 12)
         }
         .buttonStyle(.plain)
