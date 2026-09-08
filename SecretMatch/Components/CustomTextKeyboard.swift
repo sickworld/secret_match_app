@@ -10,17 +10,28 @@ struct CustomTextKeyboard: View {
     var allowsNewlines = false
     var obscuresText = false
     var forcesUppercase = false
-    var showsExtendedSymbols = false
     var onActivity: () -> Void = {}
     var onClose: () -> Void = {}
 
     @State private var usesUppercase = true
+    @State private var page: KeyboardPage = .letters
 
-    private let symbolRow = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "0", ":", "-", "⌫"]
     private let letterRows = [
         ["Q", "W", "E", "R", "T", "Z", "U", "I", "O", "P", "Ü"],
-        ["A", "S", "D", "F", "G", "H", "J", "K", "L", "Ö", "Ä"],
-        ["Y", "X", "C", "V", "B", "N", "M", "ß", ",", ".", "?", "!"]
+        ["A", "S", "D", "F", "G", "H", "J", "K", "L", "Ö", "Ä"]
+    ]
+    private let numberRows = [
+        ["1", "2", "3", "4", "5", "6", "7", "8", "9", "0"],
+        ["@", "#", "€", "_", "&", "-", "+", "(", ")", "/"]
+    ]
+    private let symbolRows = [
+        ["[", "]", "{", "}", "#", "%", "^", "*", "+", "="],
+        ["_", "\\", "|", "~", "<", ">", "$", "£", "¥", "•"]
+    ]
+    private let emojiRows = [
+        ["😀", "😂", "😍", "🥰", "😘", "😉", "😊", "😎", "🥳", "🤩"],
+        ["❤️", "🔥", "✨", "🎉", "👍", "👏", "🙌", "🤝", "💃", "🕺"],
+        ["🍻", "🥂", "🍹", "☕️", "🎵", "📍", "⏰", "🚀", "💬", "✅"]
     ]
 
     var body: some View {
@@ -47,42 +58,8 @@ struct CustomTextKeyboard: View {
                     .overlay(Rectangle().stroke(SecretMatchTheme.border, lineWidth: highContrast ? 2 : 1))
             }
 
-            keyboardRow(symbolRow)
-            if showsExtendedSymbols {
-                keyboardRow(["@", "#", "_", "+", "=", "/", "\\", "&", "%", "$", "*", "(", ")"])
-                keyboardRow(["[", "]", "{", "}", "<", ">", "|", "~", "^", ";", "'", "\"", "`"])
-            }
-            ForEach(letterRows, id: \.self) { row in
-                keyboardRow(row)
-            }
-
-            HStack(spacing: 8) {
-                if !forcesUppercase {
-                    keyboardButton("⇧", color: usesUppercase ? SecretMatchTheme.secondary : SecretMatchTheme.surfaceRaised) {
-                        usesUppercase.toggle()
-                        onActivity()
-                    }
-                    .frame(width: 70)
-                    .accessibilityLabel(usesUppercase ? "Kleinschreibung einschalten" : "Großschreibung einschalten")
-                }
-
-                keyboardButton("Leerzeichen", color: SecretMatchTheme.surfaceRaised) {
-                    insert(" ")
-                }
-
-                if allowsNewlines {
-                    keyboardButton("Neue Zeile", color: SecretMatchTheme.surfaceRaised) {
-                        insert("\n")
-                    }
-                    .frame(width: 130)
-                }
-
-                keyboardButton(doneLabel, color: SecretMatchTheme.primary) {
-                    onActivity()
-                    onClose()
-                }
-                .frame(width: 120)
-            }
+            keyboardKeys
+            bottomRow
         }
         .frame(maxWidth: 980)
         .padding(20)
@@ -91,6 +68,93 @@ struct CustomTextKeyboard: View {
         .shadow(color: .black.opacity(0.42), radius: 24, y: 14)
         .onAppear {
             usesUppercase = forcesUppercase || text.isEmpty
+            page = .letters
+        }
+    }
+
+    @ViewBuilder
+    private var keyboardKeys: some View {
+        switch page {
+        case .letters:
+            keyboardRow(letterRows[0])
+            keyboardRow(letterRows[1], horizontalInset: 28)
+            HStack(spacing: 8) {
+                keyboardButton("⇧", color: usesUppercase ? SecretMatchTheme.secondary : SecretMatchTheme.surfaceRaised) {
+                    guard !forcesUppercase else { return }
+                    usesUppercase.toggle()
+                    onActivity()
+                }
+                .frame(width: 72)
+                .accessibilityLabel(
+                    forcesUppercase
+                        ? "Großschreibung fest eingestellt"
+                        : (usesUppercase ? "Kleinschreibung einschalten" : "Großschreibung einschalten")
+                )
+
+                ForEach(["Y", "X", "C", "V", "B", "N", "M", "ß", ",", "."], id: \.self) { key in
+                    characterButton(key)
+                }
+
+                deleteButton
+            }
+        case .numbers:
+            keyboardRow(numberRows[0])
+            keyboardRow(numberRows[1], horizontalInset: 28)
+            HStack(spacing: 8) {
+                keyboardButton("#+=", color: SecretMatchTheme.surfaceRaised) {
+                    switchPage(to: .symbols)
+                }
+                .frame(width: 72)
+                keyboardRowContent([".", ",", "?", "!", "'", "\"", ":", ";", "§"])
+                deleteButton
+            }
+        case .symbols:
+            keyboardRow(symbolRows[0])
+            keyboardRow(symbolRows[1], horizontalInset: 28)
+            HStack(spacing: 8) {
+                keyboardButton("123", color: SecretMatchTheme.surfaceRaised) {
+                    switchPage(to: .numbers)
+                }
+                .frame(width: 72)
+                keyboardRowContent([".", ",", "?", "!", "'", "\"", ":", ";", "`"])
+                deleteButton
+            }
+        case .emoji:
+            ForEach(emojiRows, id: \.self) { row in
+                keyboardRow(row)
+            }
+        }
+    }
+
+    private var bottomRow: some View {
+        HStack(spacing: 8) {
+            keyboardButton(page == .letters ? "123" : "ABC", color: SecretMatchTheme.surfaceRaised) {
+                switchPage(to: page == .letters ? .numbers : .letters)
+            }
+            .frame(width: 82)
+
+            keyboardButton(page == .emoji ? "#+=" : "😊", color: SecretMatchTheme.surfaceRaised) {
+                switchPage(to: page == .emoji ? .symbols : .emoji)
+            }
+            .frame(width: 68)
+            .accessibilityLabel(page == .emoji ? "Sonderzeichen anzeigen" : "Emojis anzeigen")
+
+            keyboardButton("Leerzeichen", color: SecretMatchTheme.surfaceRaised) {
+                insert(" ")
+            }
+
+            if allowsNewlines {
+                keyboardButton("Neue Zeile", color: SecretMatchTheme.surfaceRaised) {
+                    insert("\n")
+                }
+                .frame(width: 132)
+            }
+
+            keyboardButton(doneLabel, color: SecretMatchTheme.primary) {
+                onActivity()
+                onClose()
+            }
+            .frame(width: 132)
         }
     }
 
@@ -99,21 +163,34 @@ struct CustomTextKeyboard: View {
         return obscuresText ? String(repeating: "•", count: text.count) : text
     }
 
-    private func keyboardRow(_ keys: [String]) -> some View {
+    private func keyboardRow(_ keys: [String], horizontalInset: CGFloat = 0) -> some View {
         HStack(spacing: 8) {
-            ForEach(keys, id: \.self) { key in
-                keyboardButton(displayedKey(key), color: SecretMatchTheme.surfaceRaised) {
-                    if key == "⌫" {
-                        deleteLastCharacter()
-                    } else {
-                        insert(typedKey(key))
-                    }
-                }
-                .disabled(key == "⌫" && text.isEmpty)
-                .opacity(key == "⌫" && text.isEmpty ? 0.45 : 1)
-                .accessibilityLabel(key == "⌫" ? "Letztes Zeichen löschen" : displayedKey(key))
-            }
+            keyboardRowContent(keys)
         }
+        .padding(.horizontal, horizontalInset)
+    }
+
+    private func keyboardRowContent(_ keys: [String]) -> some View {
+        ForEach(keys, id: \.self) { key in
+            characterButton(key)
+        }
+    }
+
+    private func characterButton(_ key: String) -> some View {
+        keyboardButton(displayedKey(key), color: SecretMatchTheme.surfaceRaised) {
+            insert(typedKey(key))
+        }
+        .accessibilityLabel(displayedKey(key))
+    }
+
+    private var deleteButton: some View {
+        keyboardButton("⌫", color: SecretMatchTheme.surfaceRaised) {
+            deleteLastCharacter()
+        }
+        .frame(width: 72)
+        .disabled(text.isEmpty)
+        .opacity(text.isEmpty ? 0.45 : 1)
+        .accessibilityLabel("Letztes Zeichen löschen")
     }
 
     private func keyboardButton(
@@ -163,6 +240,18 @@ struct CustomTextKeyboard: View {
         guard !text.isEmpty else { return }
         text.removeLast()
     }
+
+    private func switchPage(to newPage: KeyboardPage) {
+        onActivity()
+        page = newPage
+    }
+
+    private enum KeyboardPage {
+        case letters
+        case numbers
+        case symbols
+        case emoji
+    }
 }
 
 enum AdminKeyboardKind {
@@ -179,7 +268,6 @@ struct AdminKeyboardTextField: View {
     var keyboardTitle: String? = nil
     var isSecure = false
     var forcesUppercase = false
-    var showsExtendedSymbols = false
     var doneLabel = "Fertig"
     var onSubmit: () -> Void = {}
 
@@ -198,7 +286,6 @@ struct AdminKeyboardTextField: View {
                     keyboard: keyboard,
                     isSecure: isSecure,
                     forcesUppercase: forcesUppercase,
-                    showsExtendedSymbols: showsExtendedSymbols,
                     doneLabel: doneLabel,
                     onSubmit: onSubmit
                 )
@@ -306,7 +393,6 @@ private struct AdminKeyboardEntryView: View {
     let keyboard: AdminKeyboardKind
     var isSecure = false
     var forcesUppercase = false
-    var showsExtendedSymbols = false
     var doneLabel = "Fertig"
     var onSubmit: () -> Void = {}
 
@@ -345,7 +431,6 @@ private struct AdminKeyboardEntryView: View {
                         allowsNewlines: allowsNewlines,
                         obscuresText: isSecure,
                         forcesUppercase: forcesUppercase,
-                        showsExtendedSymbols: showsExtendedSymbols,
                         onClose: {
                             onSubmit()
                             dismiss()

@@ -49,7 +49,6 @@ struct AdminLoginView: View {
                             keyboard: .text(maxCharacters: 128),
                             keyboardTitle: "Admin-Passwort eingeben",
                             isSecure: !showPassword,
-                            showsExtendedSymbols: true,
                             doneLabel: "Anmelden",
                             onSubmit: performLogin
                         )
