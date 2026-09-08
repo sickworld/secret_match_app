@@ -22,6 +22,8 @@ Auf dem iPhone öffnet die Kopfleiste das kompakte Admin-Menü. Auf dem iPad nut
 
 Die bestehende dunkle Match&Play-Gestaltung verwendet für Karten, Buttons, Eingaben, Navigationselemente und Admin-Controls zentral `SecretMatchTheme.cornerRadius` mit **8 pt**. Neue Komponenten sollen `secretCard`, `secretInput`, `secretAdminInput`, `SecretPrimaryButtonStyle`, `SecretSecondaryButtonStyle` oder `SecretAdminFeatureButtonStyle` wiederverwenden. Pillenformen sind ausschließlich für kurze Status- und Auswahl-Chips vorgesehen; normale Aktionen und Schließen-Buttons bleiben kompakte, abgerundete Rechtecke. Systembuttons im Admin-Bereich erben dieselbe rechteckige Buttonform und den Produktfarbton.
 
+Das kompakte Menü der iPhone-Admin-App bleibt flächig und neutral. Bereichsfarben erscheinen nur an den Icons sowie dezent am aktiven Eintrag; eine linke Markierung und ein Häkchen kennzeichnen die Auswahl zusätzlich unabhängig von der Farbe. Der Logout bleibt als destruktive Aktion rot.
+
 Diese Funktionen benötigen das WordPress-Modul ab Version `2026.09.08.6`; das Modul muss vor oder zusammen mit diesem App-Build veröffentlicht werden.
 
 ## Eingehende Interessen

@@ -5,6 +5,7 @@ struct SidebarButtonStyle: ButtonStyle {
     var veryCompact = false
     var stabilizedScale: CGFloat?
     var isSelected = false
+    var tint = SecretMatchTheme.primary
 
     private var normalizedScale: CGFloat {
         max(stabilizedScale ?? 1, 1)
@@ -47,18 +48,26 @@ struct SidebarButtonStyle: ButtonStyle {
             .padding(.horizontal, horizontalPadding)
             .background(
                 isSelected
-                    ? SecretMatchTheme.primary.opacity(configuration.isPressed ? 0.30 : 0.20)
-                    : (configuration.isPressed ? SecretMatchTheme.primary.opacity(0.20) : SecretMatchTheme.surfaceRaised)
+                    ? tint.opacity(configuration.isPressed ? 0.28 : 0.17)
+                    : (configuration.isPressed ? tint.opacity(0.14) : SecretMatchTheme.surfaceRaised)
             )
             .foregroundStyle(.white)
             .clipShape(RoundedRectangle(cornerRadius: SecretMatchTheme.cornerRadius, style: .continuous))
             .overlay(
                 RoundedRectangle(cornerRadius: SecretMatchTheme.cornerRadius, style: .continuous)
                     .stroke(
-                        isSelected || configuration.isPressed ? SecretMatchTheme.primary.opacity(0.7) : SecretMatchTheme.border,
+                        isSelected || configuration.isPressed ? tint.opacity(0.7) : SecretMatchTheme.border,
                         lineWidth: 1.2
                     )
             )
+            .overlay(alignment: .leading) {
+                if isSelected {
+                    Rectangle()
+                        .fill(tint)
+                        .frame(width: 4)
+                        .padding(.vertical, 8)
+                }
+            }
             .scaleEffect(configuration.isPressed ? 0.98 : 1)
             .animation(.easeOut(duration: 0.16), value: configuration.isPressed)
     }

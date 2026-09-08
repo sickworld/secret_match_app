@@ -98,9 +98,25 @@ struct AdminSidebarView: View {
             dashboardSection = section
             dismissMenu()
         } label: {
-            Label(title ?? section.title, systemImage: section.systemImage)
+            HStack(spacing: 12) {
+                Image(systemName: section.systemImage)
+                    .foregroundStyle(section.tint)
+                    .frame(width: 24)
+                Text(title ?? section.title)
+                Spacer(minLength: 0)
+                if dashboardSection == section {
+                    Image(systemName: "checkmark")
+                        .font(.caption.bold())
+                        .foregroundStyle(section.tint)
+                        .accessibilityHidden(true)
+                }
+            }
         }
-        .buttonStyle(SidebarButtonStyle(compact: isCompact, isSelected: dashboardSection == section))
+        .buttonStyle(SidebarButtonStyle(
+            compact: isCompact,
+            isSelected: dashboardSection == section,
+            tint: section.tint
+        ))
         .accessibilityAddTraits(dashboardSection == section ? .isSelected : [])
     }
 }
