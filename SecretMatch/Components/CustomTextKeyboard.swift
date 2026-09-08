@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct CustomTextKeyboard: View {
+    @Environment(\.secretMatchHighContrast) private var highContrast
     @Binding var text: String
     var maxCharacters = 180
     var onActivity: () -> Void = {}
@@ -35,8 +36,8 @@ struct CustomTextKeyboard: View {
                     .frame(maxWidth: .infinity, minHeight: 58, alignment: .topLeading)
                     .lineLimit(3)
                     .padding(12)
-                    .background(Color.black.opacity(0.24))
-                    .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                    .background(Color.black.opacity(highContrast ? 1 : 0.3))
+                    .overlay(Rectangle().stroke(SecretMatchTheme.border, lineWidth: highContrast ? 2 : 1))
             }
 
             keyboardRow(symbolRow)
@@ -64,11 +65,10 @@ struct CustomTextKeyboard: View {
             }
         }
         .frame(maxWidth: 980)
-        .secretCard(cornerRadius: 26, padding: 20)
-        .overlay(
-            RoundedRectangle(cornerRadius: 26, style: .continuous)
-                .stroke(Color.white.opacity(0.14), lineWidth: 1)
-        )
+        .padding(20)
+        .background(SecretMatchTheme.surface.opacity(highContrast ? 1 : 0.96))
+        .overlay(Rectangle().stroke(SecretMatchTheme.border, lineWidth: highContrast ? 2 : 1))
+        .shadow(color: .black.opacity(0.42), radius: 24, y: 14)
         .onAppear {
             usesUppercase = text.isEmpty
         }
@@ -102,10 +102,10 @@ struct CustomTextKeyboard: View {
                 .foregroundStyle(.white)
                 .frame(maxWidth: .infinity, minHeight: 50)
                 .background(color)
-                .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+                .clipShape(RoundedRectangle(cornerRadius: 7, style: .continuous))
                 .overlay(
-                    RoundedRectangle(cornerRadius: 10, style: .continuous)
-                        .stroke(Color.white.opacity(0.12), lineWidth: 1)
+                    RoundedRectangle(cornerRadius: 7, style: .continuous)
+                        .stroke(SecretMatchTheme.border, lineWidth: highContrast ? 2 : 1)
                 )
         }
         .buttonStyle(.plain)

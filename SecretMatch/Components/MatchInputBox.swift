@@ -40,6 +40,14 @@ struct MatchInputBox: View {
         ActionOption(type: "ljob", title: "Lick-Job", emoji: "👅", color: Color(hex: "#D65C8D"))
     ]
 
+    private var matchOptions: [ActionOption] {
+        options.filter { $0.type == "normal" || $0.type == "hot" }
+    }
+
+    private var actionOptions: [ActionOption] {
+        options.filter { $0.type != "normal" && $0.type != "hot" }
+    }
+
     private var normalizedScale: CGFloat {
         fillsAvailableSpace ? max(interfaceScale, 1) : 1
     }
@@ -108,7 +116,7 @@ struct MatchInputBox: View {
                 .font(.system(size: metric(32, 37), weight: .bold, design: .rounded))
                 .foregroundStyle(.white)
 
-            Text("Wähle deine Aktionen und anschließend die Zielnummer.")
+            Text("Wähle Match-Wünsche oder Aktionen und anschließend die Zielnummer.")
                 .font(.system(size: metric(16, 18), weight: .medium, design: .rounded))
                 .foregroundStyle(SecretMatchTheme.muted)
                 .multilineTextAlignment(.center)
@@ -117,15 +125,32 @@ struct MatchInputBox: View {
 
     private var actionPanel: some View {
         VStack(spacing: 0) {
-            VStack(alignment: .leading, spacing: metric(10, 10)) {
-                panelSectionTitle("AKTIONEN AUSWÄHLEN")
+            VStack(alignment: .leading, spacing: metric(9, 9)) {
+                panelSectionTitle("MATCH-WÜNSCHE")
 
                 LazyVGrid(
                     columns: [GridItem(.flexible()), GridItem(.flexible())],
                     spacing: metric(9, 10)
                 ) {
-                    ForEach(options) { option in
+                    ForEach(matchOptions) { option in
                         selectionButton(for: option)
+                    }
+                }
+
+                Rectangle()
+                    .fill(SecretMatchTheme.border.opacity(highContrast ? 1 : 0.75))
+                    .frame(height: highContrast ? 2 : 1)
+                    .padding(.vertical, metric(3, 3))
+                    .accessibilityHidden(true)
+
+                panelSectionTitle("AKTIONEN")
+
+                LazyVGrid(
+                    columns: [GridItem(.flexible()), GridItem(.flexible()), GridItem(.flexible())],
+                    spacing: metric(9, 10)
+                ) {
+                    ForEach(actionOptions) { option in
+                        selectionButton(for: option, compact: true)
                     }
                 }
             }
@@ -224,29 +249,29 @@ struct MatchInputBox: View {
     }
 
     private var optionalMessageSection: some View {
-        VStack(alignment: .leading, spacing: 10) {
+        VStack(alignment: .leading, spacing: metric(10, 8)) {
             panelSectionTitle("NACHRICHT ZUM MATCH · OPTIONAL")
 
             if !quickMessages.isEmpty {
                 ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: 8) {
+                    HStack(spacing: metric(8, 8)) {
                         ForEach(quickMessages, id: \.self) { option in
                             let isSelected = matchMessage == option
 
                             Button {
                                 selectQuickMessage(option)
                             } label: {
-                                HStack(spacing: 7) {
+                                HStack(spacing: metric(7, 7)) {
                                     if isSelected {
                                         Image(systemName: "checkmark.circle.fill")
                                     }
                                     Text(option)
                                         .lineLimit(1)
                                 }
-                                .font(.system(size: 15, weight: .bold, design: .rounded))
+                                .font(.system(size: metric(15, 16), weight: .bold, design: .rounded))
                                 .foregroundStyle(isSelected ? Color.black : Color.white)
-                                .padding(.horizontal, 14)
-                                .frame(minHeight: 42)
+                                .padding(.horizontal, metric(14, 14))
+                                .frame(minHeight: metric(42, 42))
                                 .background(
                                     isSelected
                                         ? SecretMatchTheme.secondary
@@ -271,7 +296,7 @@ struct MatchInputBox: View {
             }
 
             if replacedCustomMessage != nil {
-                HStack(spacing: 10) {
+                HStack(spacing: metric(10, 10)) {
                     Image(systemName: "arrow.uturn.backward.circle.fill")
                         .foregroundStyle(SecretMatchTheme.secondary)
 
@@ -287,8 +312,8 @@ struct MatchInputBox: View {
                     .font(.subheadline.bold())
                     .foregroundStyle(SecretMatchTheme.secondary)
                 }
-                .padding(.horizontal, 14)
-                .frame(minHeight: 48)
+                .padding(.horizontal, metric(14, 14))
+                .frame(minHeight: metric(48, 48))
                 .background(SecretMatchTheme.secondary.opacity(0.1))
                 .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
                 .overlay(
@@ -302,25 +327,25 @@ struct MatchInputBox: View {
                 showKeyboard = false
                 showTextKeyboard = true
             } label: {
-                HStack(alignment: .top, spacing: 12) {
+                HStack(alignment: .top, spacing: metric(12, 12)) {
                     Image(systemName: "keyboard")
                         .foregroundStyle(SecretMatchTheme.secondary)
                     Text(matchMessage.isEmpty ? "Eigene Nachricht schreiben …" : matchMessage)
-                        .font(.system(size: 19, weight: .medium, design: .rounded))
+                        .font(.system(size: metric(19, 20), weight: .medium, design: .rounded))
                         .foregroundStyle(matchMessage.isEmpty ? SecretMatchTheme.muted : .white)
                         .multilineTextAlignment(.leading)
-                        .frame(maxWidth: .infinity, minHeight: 30, alignment: .topLeading)
+                        .frame(maxWidth: .infinity, minHeight: metric(30, 32), alignment: .topLeading)
                 }
-                .padding(14)
+                .padding(metric(14, 13))
                 .background(SecretMatchTheme.surfaceRaised)
-                .clipShape(RoundedRectangle(cornerRadius: 10))
+                .overlay(Rectangle().stroke(SecretMatchTheme.border, lineWidth: highContrast ? 2 : 1))
             }
             .buttonStyle(.plain)
             .accessibilityLabel(matchMessage.isEmpty ? "Eigene Match-Nachricht schreiben" : "Match-Nachricht: \(matchMessage)")
             .accessibilityHint("Öffnet die appinterne Tastatur")
 
             Text("\(matchMessage.count)/180")
-                .font(.caption.monospacedDigit())
+                .font(.system(size: metric(12, 13), design: .monospaced).monospacedDigit())
                 .foregroundStyle(SecretMatchTheme.muted)
                 .frame(maxWidth: .infinity, alignment: .trailing)
         }
@@ -388,7 +413,7 @@ struct MatchInputBox: View {
     private var sendButton: some View {
         Button(action: onSend) {
             HStack {
-                Text(selectedActions.count == 1 ? "Aktion senden" : "\(selectedActions.count) Aktionen senden")
+                Text(sendButtonTitle)
                 Spacer()
                 Image(systemName: "paperplane.fill")
             }
@@ -399,6 +424,22 @@ struct MatchInputBox: View {
         ))
         .disabled(selectedActions.isEmpty || targetNumber.isEmpty)
         .opacity(selectedActions.isEmpty || targetNumber.isEmpty ? 0.5 : 1)
+    }
+
+    private var sendButtonTitle: String {
+        let matchCount = selectedActions.filter { $0 == "normal" || $0 == "hot" }.count
+        let actionCount = selectedActions.count - matchCount
+
+        if selectedActions.isEmpty {
+            return "Auswahl senden"
+        }
+        if actionCount == 0 {
+            return matchCount == 1 ? "Match-Wunsch senden" : "\(matchCount) Match-Wünsche senden"
+        }
+        if matchCount == 0 {
+            return actionCount == 1 ? "Aktion senden" : "\(actionCount) Aktionen senden"
+        }
+        return "Auswahl senden"
     }
 
     private var queueFeedback: some View {
@@ -477,7 +518,7 @@ struct MatchInputBox: View {
         .accessibilityElement(children: .combine)
     }
 
-    private func selectionButton(for option: ActionOption) -> some View {
+    private func selectionButton(for option: ActionOption, compact: Bool = false) -> some View {
         let isSelected = selectedActions.contains(option.type)
         let usesColorIndependentSelection = highContrast || differentiateWithoutColor
 
@@ -488,13 +529,13 @@ struct MatchInputBox: View {
                 selectedActions.insert(option.type)
             }
         } label: {
-            HStack(spacing: metric(14, 15)) {
+            HStack(spacing: compact ? metric(8, 8) : metric(14, 15)) {
                 Text(option.emoji)
-                    .font(.system(size: metric(30, 32)))
-                    .frame(width: metric(38, 40))
+                    .font(.system(size: compact ? metric(25, 27) : metric(30, 32)))
+                    .frame(width: compact ? metric(29, 31) : metric(38, 40))
 
                 Text(option.title)
-                    .font(.system(size: metric(17, 20), weight: .bold, design: .rounded))
+                    .font(.system(size: compact ? metric(15, 17) : metric(17, 20), weight: .bold, design: .rounded))
                     .lineLimit(1)
                     .minimumScaleFactor(0.8)
                 Spacer()
@@ -502,7 +543,7 @@ struct MatchInputBox: View {
                     .font(.system(size: metric(19, 22), weight: .semibold))
             }
             .foregroundColor(usesColorIndependentSelection && isSelected ? .black : .white)
-            .padding(.horizontal, metric(15, 17))
+            .padding(.horizontal, compact ? metric(10, 10) : metric(15, 17))
             .frame(maxWidth: .infinity, minHeight: metric(66, 72))
             .background(
                 isSelected

@@ -98,7 +98,6 @@ struct MatchView: View {
                     }
                     .frame(maxWidth: 740)
                     .padding()
-                    .cornerRadius(16)
                     .shadow(radius: 20)
 
                     Spacer()

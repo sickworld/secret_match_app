@@ -82,31 +82,48 @@ struct LoginView: View {
                                     .font(.callout.bold())
                                     .foregroundStyle(SecretMatchTheme.secondary)
                             }
-                            .padding(.horizontal, 18)
+                            .padding(16)
+                            .background(SecretMatchTheme.surfaceRaised.opacity(0.72))
+                            .overlay(Rectangle().stroke(SecretMatchTheme.border, lineWidth: 1))
 
-                            Text(pin.isEmpty ? "Deine 2-stellige PIN" : String(repeating: "•", count: pin.count))
-                                .foregroundStyle(pin.isEmpty ? SecretMatchTheme.muted : SecretMatchTheme.text)
-                                .font(.system(size: 32, weight: .bold, design: .rounded))
-                                .multilineTextAlignment(.center)
-                                .secretInput(highlighted: showKeyboard)
-                                .onTapGesture {
+                            Button {
+                                withAnimation(.easeOut(duration: 0.2)) {
                                     activeField = .pin
                                     showKeyboard = true
                                 }
+                            } label: {
+                                loginEntryField(
+                                    value: pin,
+                                    placeholder: "Deine 2-stellige PIN",
+                                    icon: "lock.fill",
+                                    obscuresText: true
+                                )
+                            }
+                            .buttonStyle(.plain)
+                            .accessibilityElement(children: .ignore)
+                            .accessibilityLabel(pin.isEmpty ? "PIN eingeben" : "PIN, \(pin.count) Stellen eingegeben")
+                            .accessibilityHint("Öffnet die appinterne Zahlentastatur")
+                            .accessibilityAddTraits(.isButton)
                                 .transition(.move(edge: .trailing).combined(with: .opacity))
                         } else {
-                            Text(number.isEmpty ? "Deine Nummer eingeben" : number.displayEventNumber)
-                                .foregroundStyle(number.isEmpty ? SecretMatchTheme.muted : SecretMatchTheme.text)
-                                .font(.system(size: 36, weight: .bold, design: .rounded))
-                                .multilineTextAlignment(.center)
-                                .minimumScaleFactor(0.75)
-                                .secretInput(highlighted: showKeyboard)
-                                .onTapGesture {
-                                    withAnimation(.easeOut(duration: 0.2)) {
-                                        activeField = .number
-                                        showKeyboard = true
-                                    }
+                            Button {
+                                withAnimation(.easeOut(duration: 0.2)) {
+                                    activeField = .number
+                                    showKeyboard = true
                                 }
+                            } label: {
+                                loginEntryField(
+                                    value: number,
+                                    placeholder: "Deine Nummer eingeben",
+                                    icon: "number",
+                                    obscuresText: false
+                                )
+                            }
+                            .buttonStyle(.plain)
+                            .accessibilityElement(children: .ignore)
+                            .accessibilityLabel(number.isEmpty ? "Eventnummer eingeben" : "Eventnummer \(number.displayEventNumber)")
+                            .accessibilityHint("Öffnet die appinterne Zahlentastatur")
+                            .accessibilityAddTraits(.isButton)
                         }
                     }
                     .animation(.easeInOut(duration: 0.22), value: requiresLoginPIN)
@@ -189,7 +206,6 @@ struct LoginView: View {
                             submitLogin()
                         }
                         .frame(maxWidth: 740)
-                        .cornerRadius(16)
                         .shadow(radius: 20)
                     }
                     .padding()
@@ -278,7 +294,7 @@ struct LoginView: View {
                 .foregroundStyle(SecretMatchTheme.secondary)
                 .frame(width: 48, height: 48)
                 .background(SecretMatchTheme.secondary.opacity(0.14))
-                .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+                .overlay(Rectangle().stroke(SecretMatchTheme.secondary.opacity(0.42)))
 
             VStack(alignment: .leading, spacing: 3) {
                 Text("ANMELDUNG · PIN")
@@ -311,10 +327,43 @@ struct LoginView: View {
         .padding(16)
         .frame(maxWidth: 700)
         .background(SecretMatchTheme.surface)
-        .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
-        .overlay(RoundedRectangle(cornerRadius: 20).stroke(SecretMatchTheme.secondary.opacity(0.42)))
+        .overlay(Rectangle().stroke(SecretMatchTheme.secondary.opacity(0.42)))
         .padding(.horizontal, 20)
         .accessibilityElement(children: .contain)
+    }
+
+    private func loginEntryField(
+        value: String,
+        placeholder: String,
+        icon: String,
+        obscuresText: Bool
+    ) -> some View {
+        HStack(spacing: 14) {
+            Image(systemName: icon)
+                .font(.system(size: 20, weight: .bold))
+                .foregroundStyle(SecretMatchTheme.secondary)
+                .frame(width: 26)
+
+            Text(value.isEmpty
+                 ? placeholder
+                 : (obscuresText ? String(repeating: "•", count: value.count) : value.displayEventNumber))
+                .foregroundStyle(value.isEmpty ? SecretMatchTheme.muted : SecretMatchTheme.text)
+                .font(.system(size: obscuresText ? 32 : 36, weight: .bold, design: .rounded))
+                .lineLimit(1)
+                .minimumScaleFactor(0.75)
+
+            Spacer(minLength: 0)
+
+            Image(systemName: "chevron.right")
+                .font(.system(size: 14, weight: .bold))
+                .foregroundStyle(SecretMatchTheme.muted)
+                .accessibilityHidden(true)
+        }
+        .padding(.horizontal, 18)
+        .frame(maxWidth: .infinity, minHeight: 76, alignment: .leading)
+        .background(Color.black.opacity(0.3))
+        .overlay(Rectangle().stroke(showKeyboard ? SecretMatchTheme.primary : SecretMatchTheme.border, lineWidth: showKeyboard ? 1.5 : 1))
+        .contentShape(Rectangle())
     }
 
     private func submitLogin() {
@@ -472,6 +521,7 @@ struct LoginView: View {
 }
 
 private struct ParticipantPINSetupView: View {
+    @Environment(\.secretMatchHighContrast) private var highContrast
     let isSubmitting: Bool
     let errorMessage: String?
     let onCancel: () -> Void
@@ -519,8 +569,7 @@ private struct ParticipantPINSetupView: View {
                         .padding(.horizontal, 14)
                         .frame(minHeight: 44)
                         .background(SecretMatchTheme.surfaceRaised)
-                        .clipShape(Capsule())
-                        .overlay(Capsule().stroke(SecretMatchTheme.border))
+                        .overlay(Rectangle().stroke(SecretMatchTheme.border, lineWidth: highContrast ? 2 : 1))
                 }
                 .buttonStyle(.plain)
                 .disabled(isSubmitting)
@@ -552,7 +601,10 @@ private struct ParticipantPINSetupView: View {
             }
         }
         .frame(maxWidth: 620)
-        .secretCard(cornerRadius: 28, padding: 28)
+        .padding(28)
+        .background(SecretMatchTheme.surface.opacity(highContrast ? 1 : 0.96))
+        .overlay(Rectangle().stroke(SecretMatchTheme.border, lineWidth: highContrast ? 2 : 1))
+        .shadow(color: .black.opacity(0.42), radius: 24, y: 14)
     }
 
     private var numberKeyboard: some View {
@@ -623,10 +675,9 @@ private struct ParticipantPINSetupView: View {
             }
             .padding(16)
             .background(SecretMatchTheme.surfaceRaised)
-            .clipShape(RoundedRectangle(cornerRadius: 14))
             .overlay(
-                RoundedRectangle(cornerRadius: 14)
-                    .stroke(field == activeField ? SecretMatchTheme.secondary : SecretMatchTheme.border, lineWidth: 1.5)
+                Rectangle()
+                    .stroke(field == activeField ? SecretMatchTheme.secondary : SecretMatchTheme.border, lineWidth: highContrast ? 2.5 : 1.5)
             )
         }
         .buttonStyle(.plain)
