@@ -85,7 +85,7 @@ struct ConnectionStatusBanner: View {
         case .offline:
             return "Kein Internet. Deine Wünsche gehen automatisch raus, sobald die Verbindung wieder da ist."
         case .serverUnavailable:
-            return "SecretMatch ist gerade nicht erreichbar. Wir versuchen es automatisch weiter."
+            return "Match&Play ist gerade nicht erreichbar. Wir versuchen es automatisch weiter."
         }
     }
 }

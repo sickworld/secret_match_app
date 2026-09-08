@@ -64,6 +64,17 @@ struct MatchInputBox: View {
         return deliveryStatus
     }
 
+    private var inlineDeliveryStatus: InteractionDeliveryStatus? {
+        guard let status = visibleDeliveryStatus else { return nil }
+        if case .failed = status { return nil }
+        return status
+    }
+
+    private var floatingErrorStatus: InteractionDeliveryStatus? {
+        guard let status = visibleDeliveryStatus, case .failed = status else { return nil }
+        return status
+    }
+
     private var content: some View {
         VStack(spacing: 0) {
             VStack(spacing: 6) {
@@ -252,7 +263,7 @@ struct MatchInputBox: View {
                 .overlay(RoundedRectangle(cornerRadius: 14).stroke(SecretMatchTheme.secondary.opacity(0.35)))
             }
 
-            if let deliveryStatus = visibleDeliveryStatus {
+            if let deliveryStatus = inlineDeliveryStatus {
                 Spacer(minLength: 20)
                     .transition(.opacity)
                 deliveryFeedback(deliveryStatus)
@@ -302,6 +313,17 @@ struct MatchInputBox: View {
                     .secretCard(cornerRadius: 24, padding: 30)
             }
         }
+        .overlay(alignment: .top) {
+            if let errorStatus = floatingErrorStatus {
+                deliveryFeedback(errorStatus)
+                    .padding(.horizontal, fillsAvailableSpace ? metric(30, 30) : 24)
+                    .padding(.top, metric(18, 18))
+                    .shadow(color: .black.opacity(0.55), radius: 18, y: 8)
+                    .allowsHitTesting(false)
+                    .transition(.move(edge: .top).combined(with: .opacity))
+            }
+        }
+        .animation(.easeOut(duration: 0.22), value: floatingErrorStatus != nil)
         .task(id: deliveryStatus) {
             hidesDeliveredFeedback = false
 

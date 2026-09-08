@@ -142,7 +142,7 @@ struct AdminEventLogView: View {
 
                 ShareLink(
                     item: csvText,
-                    subject: Text("SecretMatch Eventprotokoll"),
+                    subject: Text("Match&Play Eventprotokoll"),
                     message: Text("CSV-Export aus der Admin-App")
                 ) {
                     Label("CSV exportieren", systemImage: "square.and.arrow.up")

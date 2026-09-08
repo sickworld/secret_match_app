@@ -20,7 +20,7 @@ struct AdminShareSheet: UIViewControllerRepresentable {
 enum AdminReportExporter {
     static func csv(for statistics: AdminEventStatistics, eventName: String) throws -> URL {
         var rows = [
-            ["SecretMatch Eventbericht", eventName],
+            ["Match&Play Eventbericht", eventName],
             ["Erstellt", statistics.generatedAt],
             ["Zeitraum", statistics.startedAt, statistics.completedAt ?? statistics.endedAt],
             [],
@@ -85,7 +85,7 @@ enum AdminReportExporter {
 
             beginPage()
             draw("MATCH&PLAY", font: .boldSystemFont(ofSize: 12), color: UIColor(red: 0.95, green: 0.66, blue: 0.26, alpha: 1), height: 22)
-            draw("SecretMatch Eventbericht", font: .boldSystemFont(ofSize: 28), height: 42)
+            draw("Match&Play Eventbericht", font: .boldSystemFont(ofSize: 28), height: 42)
             draw(eventName, font: .boldSystemFont(ofSize: 18), color: UIColor(white: 0.82, alpha: 1), height: 30)
             draw("Erstellt: \(statistics.generatedAt)", font: .systemFont(ofSize: 10), color: UIColor(white: 0.62, alpha: 1), height: 24)
             y += 10
@@ -160,7 +160,7 @@ enum AdminReportExporter {
     private static func temporaryURL(eventName: String, extension fileExtension: String) -> URL {
         let name = eventName.lowercased().replacingOccurrences(of: " ", with: "-")
         return FileManager.default.temporaryDirectory
-            .appendingPathComponent("secretmatch-\(name)-bericht")
+            .appendingPathComponent("match-and-play-\(name)-bericht")
             .appendingPathExtension(fileExtension)
     }
 
