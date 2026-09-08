@@ -50,6 +50,7 @@ struct AdminLoginView: View {
                             keyboardTitle: "Admin-Passwort eingeben",
                             isSecure: !showPassword,
                             showsExtendedSymbols: true,
+                            doneLabel: "Anmelden",
                             onSubmit: performLogin
                         )
                         .font(.system(size: 20, weight: .semibold, design: .rounded))

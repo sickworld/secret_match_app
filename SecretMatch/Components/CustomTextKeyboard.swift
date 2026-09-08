@@ -180,6 +180,7 @@ struct AdminKeyboardTextField: View {
     var isSecure = false
     var forcesUppercase = false
     var showsExtendedSymbols = false
+    var doneLabel = "Fertig"
     var onSubmit: () -> Void = {}
 
     @State private var showsKeyboard = false
@@ -198,6 +199,7 @@ struct AdminKeyboardTextField: View {
                     isSecure: isSecure,
                     forcesUppercase: forcesUppercase,
                     showsExtendedSymbols: showsExtendedSymbols,
+                    doneLabel: doneLabel,
                     onSubmit: onSubmit
                 )
             }
@@ -255,6 +257,7 @@ struct AdminKeyboardTextEditor: View {
     @Binding var text: String
     var maxCharacters: Int
     var allowsNewlines = false
+    var doneLabel = "Fertig"
 
     @State private var showsKeyboard = false
 
@@ -286,7 +289,8 @@ struct AdminKeyboardTextEditor: View {
                 text: $text,
                 title: title,
                 placeholder: title,
-                keyboard: .text(maxCharacters: maxCharacters, allowsNewlines: allowsNewlines)
+                keyboard: .text(maxCharacters: maxCharacters, allowsNewlines: allowsNewlines),
+                doneLabel: doneLabel
             )
         }
 #endif
@@ -303,62 +307,41 @@ private struct AdminKeyboardEntryView: View {
     var isSecure = false
     var forcesUppercase = false
     var showsExtendedSymbols = false
+    var doneLabel = "Fertig"
     var onSubmit: () -> Void = {}
 
     var body: some View {
         ZStack {
-            BrandBackground()
+            Color.black.opacity(backgroundOpacity)
+                .ignoresSafeArea()
+                .onTapGesture { dismiss() }
 
-            VStack(spacing: 18) {
-                HStack(spacing: 14) {
-                    VStack(alignment: .leading, spacing: 3) {
-                        Text("ADMIN-EINGABE")
-                            .font(.caption.bold())
-                            .tracking(1.5)
-                            .foregroundStyle(SecretMatchTheme.secondary)
-                        Text(title)
-                            .font(.title2.bold())
-                            .foregroundStyle(.white)
-                    }
-                    Spacer()
-                    Button {
-                        dismiss()
-                    } label: {
-                        Image(systemName: "xmark")
-                            .font(.headline.bold())
-                            .foregroundStyle(.white)
-                            .frame(width: 48, height: 48)
-                            .background(SecretMatchTheme.surfaceRaised)
-                            .clipShape(RoundedRectangle(cornerRadius: SecretMatchTheme.cornerRadius))
-                    }
-                    .accessibilityLabel("Tastatur schließen")
-                }
-                .padding(.horizontal, 28)
-                .padding(.top, 20)
-
-                Spacer(minLength: 0)
+            VStack {
+                Spacer(minLength: 12)
 
                 switch keyboard {
                 case .number(let maxDigits):
                     CustomNumberKeyboard(
                         text: $text,
-                        doneLabel: "Übernehmen",
+                        doneLabel: doneLabel,
                         placeholder: placeholder,
                         maxDigits: maxDigits,
                         obscuresText: isSecure,
-                        showsCloseButton: false
+                        onClose: { dismiss() }
                     ) {
                         onSubmit()
                         dismiss()
                     }
-                    .padding(.bottom, 24)
+                    .frame(maxWidth: 740)
+                    .padding()
+                    .shadow(radius: 20)
                 case .text(let maxCharacters, let allowsNewlines):
                     CustomTextKeyboard(
                         text: $text,
                         title: title,
                         placeholder: placeholder,
                         maxCharacters: maxCharacters,
-                        doneLabel: "Übernehmen",
+                        doneLabel: doneLabel,
                         allowsNewlines: allowsNewlines,
                         obscuresText: isSecure,
                         forcesUppercase: forcesUppercase,
@@ -368,13 +351,21 @@ private struct AdminKeyboardEntryView: View {
                             dismiss()
                         }
                     )
-                    .padding(.horizontal, 18)
-                    .padding(.bottom, 24)
+                    .padding(18)
                 }
+
+                Spacer(minLength: 12)
             }
+            .transition(.scale(scale: 0.94).combined(with: .opacity))
         }
+        .presentationBackground(.clear)
         .buttonBorderShape(.roundedRectangle(radius: SecretMatchTheme.cornerRadius))
         .tint(SecretMatchTheme.primary)
+    }
+
+    private var backgroundOpacity: Double {
+        if case .text = keyboard { return 0.72 }
+        return 0.6
     }
 }
 #endif
