@@ -20,6 +20,19 @@ enum SecretMatchTheme {
     }
 }
 
+struct SecretBinaryStatusIcon: View {
+    let isPositive: Bool
+    var size: CGFloat = 15
+
+    var body: some View {
+        Image(systemName: isPositive ? "checkmark.circle.fill" : "xmark.octagon.fill")
+            .font(.system(size: size, weight: .bold))
+            .foregroundStyle(isPositive ? Color.green : Color.red)
+            .frame(width: size, height: size)
+            .accessibilityHidden(true)
+    }
+}
+
 struct SecretCardModifier: ViewModifier {
     @Environment(\.secretMatchHighContrast) private var highContrast
     var cornerRadius: CGFloat = 20

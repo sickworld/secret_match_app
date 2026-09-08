@@ -12,6 +12,7 @@ private struct ActionOption: Identifiable {
 struct MatchInputBox: View {
     @Environment(\.secretMatchInterfaceScale) private var interfaceScale
     @Environment(\.secretMatchHighContrast) private var highContrast
+    @Environment(\.accessibilityDifferentiateWithoutColor) private var differentiateWithoutColor
     @State private var replacedCustomMessage: String?
     @State private var undoMessageTask: Task<Void, Never>?
     @State private var hidesDeliveredFeedback = false
@@ -422,6 +423,7 @@ struct MatchInputBox: View {
 
     private func selectionButton(for option: ActionOption) -> some View {
         let isSelected = selectedActions.contains(option.type)
+        let usesColorIndependentSelection = highContrast || differentiateWithoutColor
 
         return Button {
             if isSelected {
@@ -443,25 +445,27 @@ struct MatchInputBox: View {
                 Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
                     .font(.system(size: metric(19, 22), weight: .semibold))
             }
-            .foregroundColor(highContrast && isSelected ? .black : .white)
+            .foregroundColor(usesColorIndependentSelection && isSelected ? .black : .white)
             .padding(.horizontal, metric(16, 18))
             .frame(maxWidth: .infinity, minHeight: metric(72, 80))
             .background(
                 isSelected
-                    ? (highContrast ? Color.white : option.color.opacity(0.9))
-                    : (highContrast ? Color.black : option.color.opacity(0.16))
+                    ? (usesColorIndependentSelection ? Color.white : option.color.opacity(0.9))
+                    : (usesColorIndependentSelection ? Color.black : option.color.opacity(0.16))
             )
             .overlay(
                 RoundedRectangle(cornerRadius: 15)
                     .stroke(
-                        isSelected ? Color.white : (highContrast ? Color.white.opacity(0.9) : option.color.opacity(0.55)),
-                        lineWidth: highContrast ? 2.5 : (isSelected ? 2 : 1.2)
+                        isSelected ? Color.white : (usesColorIndependentSelection ? Color.white.opacity(0.9) : option.color.opacity(0.55)),
+                        lineWidth: usesColorIndependentSelection ? 2.5 : (isSelected ? 2 : 1.2)
                     )
             )
             .cornerRadius(15)
             .shadow(color: isSelected ? option.color.opacity(0.28) : .clear, radius: 12)
         }
         .buttonStyle(.plain)
+        .accessibilityLabel("\(option.title), \(isSelected ? "ausgewählt" : "nicht ausgewählt")")
+        .accessibilityAddTraits(isSelected ? .isSelected : [])
         .animation(.easeOut(duration: 0.18), value: isSelected)
     }
 

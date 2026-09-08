@@ -15,6 +15,8 @@ struct ParticipantOverviewView: View {
     }
 
     @EnvironmentObject private var api: APIService
+    @Environment(\.secretMatchHighContrast) private var highContrast
+    @Environment(\.accessibilityDifferentiateWithoutColor) private var differentiateWithoutColor
     @Binding var isPresented: Bool
     @State private var matches: [Match] = []
     @State private var interests: [IncomingInterest] = []
@@ -97,7 +99,8 @@ struct ParticipantOverviewView: View {
                 count: interests.count,
                 systemImage: "heart.text.square.fill",
                 section: .interests,
-                color: SecretMatchTheme.secondary
+                color: SecretMatchTheme.secondary,
+                selectedForegroundColor: .black
             )
             sectionButton(
                 title: "Aktionen",
@@ -105,7 +108,8 @@ struct ParticipantOverviewView: View {
                 count: actions.count,
                 systemImage: "paperplane.fill",
                 section: .actions,
-                color: Color(hex: "#3E9ED6")
+                color: Color(hex: "#3E9ED6"),
+                selectedForegroundColor: .black
             )
         }
         .accessibilityElement(children: .contain)
@@ -118,9 +122,11 @@ struct ParticipantOverviewView: View {
         count: Int,
         systemImage: String,
         section: ParticipantOverviewSection,
-        color: Color
+        color: Color,
+        selectedForegroundColor: Color = .white
     ) -> some View {
         let isSelected = selectedSection == section
+        let usesColorIndependentSelection = highContrast || differentiateWithoutColor
 
         return Button {
             withAnimation(.easeOut(duration: 0.18)) {
@@ -137,18 +143,37 @@ struct ParticipantOverviewView: View {
                         .font(.system(size: 18, weight: .bold, design: .rounded))
                     Text(explanation)
                         .font(.caption.weight(.semibold))
-                        .foregroundStyle(isSelected ? Color.white.opacity(0.86) : SecretMatchTheme.muted)
+                        .foregroundStyle(
+                            isSelected && usesColorIndependentSelection
+                                ? Color.black.opacity(0.76)
+                                : (isSelected ? selectedForegroundColor.opacity(0.82) : SecretMatchTheme.muted)
+                        )
                 }
                 Spacer(minLength: 0)
+                Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
+                    .font(.system(size: 20, weight: .bold))
+                    .frame(width: 22, height: 22)
+                    .accessibilityHidden(true)
             }
-            .foregroundStyle(.white)
+            .foregroundStyle(
+                isSelected
+                    ? (usesColorIndependentSelection ? Color.black : selectedForegroundColor)
+                    : Color.white
+            )
             .padding(.horizontal, 15)
             .frame(maxWidth: .infinity, minHeight: 66)
-            .background(isSelected ? color.opacity(0.9) : color.opacity(0.14))
+            .background(
+                usesColorIndependentSelection
+                    ? (isSelected ? Color.white : Color.black)
+                    : (isSelected ? color.opacity(0.9) : color.opacity(0.14))
+            )
             .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
             .overlay(
                 RoundedRectangle(cornerRadius: 16, style: .continuous)
-                    .stroke(color.opacity(isSelected ? 1 : 0.5), lineWidth: isSelected ? 2 : 1)
+                    .stroke(
+                        usesColorIndependentSelection ? Color.white : color.opacity(isSelected ? 1 : 0.5),
+                        lineWidth: isSelected ? 2 : 1
+                    )
             )
         }
         .buttonStyle(.plain)
@@ -160,7 +185,12 @@ struct ParticipantOverviewView: View {
         VStack(spacing: 12) {
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 10) {
-                    filterButton("Alle \(activeEntries.count)", type: "all", color: SecretMatchTheme.secondary)
+                    filterButton(
+                        "Alle \(activeEntries.count)",
+                        type: "all",
+                        color: SecretMatchTheme.secondary,
+                        selectedForegroundColor: .black
+                    )
                     filterButton("❤️ Hot \(count(for: "normal"))", type: "normal", color: Color(hex: "#E83E8C"))
                     filterButton("🍆 Fuck \(count(for: "hot"))", type: "hot", color: Color(hex: "#8E63D2"))
                     if selectedSection == .actions {
@@ -226,24 +256,50 @@ struct ParticipantOverviewView: View {
         }
     }
 
-    private func filterButton(_ title: String, type: String, color: Color) -> some View {
+    private func filterButton(
+        _ title: String,
+        type: String,
+        color: Color,
+        selectedForegroundColor: Color = .white
+    ) -> some View {
         let isSelected = selectedType == type
+        let usesColorIndependentSelection = highContrast || differentiateWithoutColor
 
         return Button {
             withAnimation(.easeOut(duration: 0.18)) {
                 selectedType = type
             }
         } label: {
-            Text(title)
+            HStack(spacing: 8) {
+                Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
+                    .font(.system(size: 17, weight: .bold))
+                    .frame(width: 19, height: 19)
+                    .accessibilityHidden(true)
+                Text(title)
+            }
                 .font(.system(size: 18, weight: .bold, design: .rounded))
-                .foregroundStyle(.white)
+                .foregroundStyle(
+                    isSelected
+                        ? (usesColorIndependentSelection ? Color.black : selectedForegroundColor)
+                        : Color.white
+                )
                 .padding(.horizontal, 18)
                 .frame(minHeight: 52)
-                .background(isSelected ? color.opacity(0.9) : color.opacity(0.14))
+                .background(
+                    usesColorIndependentSelection
+                        ? (isSelected ? Color.white : Color.black)
+                        : (isSelected ? color.opacity(0.9) : color.opacity(0.14))
+                )
                 .clipShape(Capsule())
-                .overlay(Capsule().stroke(color.opacity(isSelected ? 1 : 0.5), lineWidth: isSelected ? 2 : 1))
+                .overlay(
+                    Capsule().stroke(
+                        usesColorIndependentSelection ? Color.white : color.opacity(isSelected ? 1 : 0.5),
+                        lineWidth: isSelected ? 2 : 1
+                    )
+                )
         }
         .buttonStyle(.plain)
+        .accessibilityLabel("\(title), \(isSelected ? "ausgewählt" : "nicht ausgewählt")")
         .accessibilityAddTraits(isSelected ? .isSelected : [])
     }
 
@@ -273,10 +329,10 @@ struct ParticipantOverviewView: View {
 
                 Text(typeTitle(for: entry.type))
                     .font(.system(size: 15, weight: .bold, design: .rounded))
-                    .foregroundStyle(.white)
+                    .foregroundStyle(highContrast || differentiateWithoutColor ? Color.black : Color.white)
                     .padding(.horizontal, 12)
                     .padding(.vertical, 8)
-                    .background(color.opacity(0.72))
+                    .background(highContrast || differentiateWithoutColor ? Color.white : color.opacity(0.72))
                     .clipShape(Capsule())
             }
 

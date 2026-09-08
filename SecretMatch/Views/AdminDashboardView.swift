@@ -648,9 +648,7 @@ struct AdminDashboardView: View {
             } else {
                 ForEach(api.adminDashboard?.devices ?? []) { device in
                     HStack(spacing: 12) {
-                        Circle()
-                            .fill(device.isOnline ? Color.green : Color.red)
-                            .frame(width: 13, height: 13)
+                        SecretBinaryStatusIcon(isPositive: device.isOnline, size: 17)
                         VStack(alignment: .leading, spacing: 2) {
                             Text(device.name ?? "iPad")
                                 .font(.title3.bold().monospacedDigit())
@@ -734,8 +732,13 @@ struct AdminDashboardView: View {
     private func billboardStatusRow(_ billboard: AdminBillboardStatus) -> some View {
         let testMode = api.adminDashboard?.topTestActive == true && billboard.online
         let color: Color = billboard.online ? (testMode ? .yellow : .green) : .red
+        let statusIcon = billboard.online ? (testMode ? "testtube.2" : "checkmark.circle.fill") : "xmark.octagon.fill"
         return HStack(spacing: 12) {
-            Circle().fill(color).frame(width: 13, height: 13)
+            Image(systemName: statusIcon)
+                .font(.system(size: 17, weight: .bold))
+                .foregroundStyle(color)
+                .frame(width: 17, height: 17)
+                .accessibilityHidden(true)
             VStack(alignment: .leading, spacing: 3) {
                 Text(billboard.name)
                     .font(.title3.bold())
@@ -1111,7 +1114,7 @@ struct AdminDashboardView: View {
             Text(label).foregroundStyle(SecretMatchTheme.muted)
             Spacer()
             if let good {
-                Circle().fill(good ? Color.green : Color.red).frame(width: 9, height: 9)
+                SecretBinaryStatusIcon(isPositive: good, size: 14)
             }
             Text(value).foregroundStyle(.white).multilineTextAlignment(.trailing)
         }

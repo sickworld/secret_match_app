@@ -149,7 +149,7 @@ struct AdminNumberLookupView: View {
                 VStack(spacing: 10) {
                     ForEach(overview.devices) { device in
                         HStack(spacing: 12) {
-                            Circle().fill(device.isOnline ? Color.green : Color.red).frame(width: 10, height: 10)
+                            SecretBinaryStatusIcon(isPositive: device.isOnline, size: 15)
                             VStack(alignment: .leading, spacing: 3) {
                                 Text(device.name ?? "iPad").font(.headline).foregroundStyle(.white)
                                 Text("\(device.lastSeenDescription) · Akku \(device.batteryLevel) % · " + ((device.queuedSendCount ?? 0) == 0 ? "Queue frei" : device.queueSummary))
@@ -206,10 +206,13 @@ struct AdminNumberLookupView: View {
                 VStack(spacing: 10) {
                     ForEach(overview.recentLogs.prefix(12)) { entry in
                         HStack(alignment: .top, spacing: 10) {
-                            Circle()
-                                .fill(entry.severity == "error" || entry.severity == "critical" ? Color.red : Color.green)
-                                .frame(width: 8, height: 8)
+                            let isError = entry.severity == "error" || entry.severity == "critical"
+                            Image(systemName: isError ? "exclamationmark.octagon.fill" : "checkmark.circle.fill")
+                                .font(.system(size: 13, weight: .bold))
+                                .foregroundStyle(isError ? Color.red : Color.green)
+                                .frame(width: 14, height: 14)
                                 .padding(.top, 6)
+                                .accessibilityLabel(isError ? "Fehler" : "In Ordnung")
                             VStack(alignment: .leading, spacing: 2) {
                                 Text(entry.title).font(.subheadline.bold()).foregroundStyle(.white)
                                 Text(entry.occurredAt).font(.caption).foregroundStyle(SecretMatchTheme.muted)
