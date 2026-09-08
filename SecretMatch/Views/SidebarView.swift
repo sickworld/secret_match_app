@@ -226,30 +226,27 @@ struct SidebarView: View {
         .accessibilityHint("Öffnet direkt den Bereich \(title)")
     }
 
-    @ViewBuilder
     private var utilityLinks: some View {
-        if isCompact {
-            HStack(spacing: 0) {
-                utilityLink("So funktioniert's") { showGuideOverlay = true }
-                utilityLink("Spielregeln") { showRulesOverlay = true }
-                utilityLink("Info & Support") { showInfoOverlay = true }
-                    .accessibilityHint("Öffnet Feedback, Datenschutz und Impressum")
-            }
-        } else {
-            VStack(spacing: 0) {
-                HStack(spacing: 0) {
-                    utilityLink("So funktioniert's") { showGuideOverlay = true }
-                    Text("·")
-                        .font(.system(size: metric(14, 15), weight: .bold, design: .rounded))
-                        .foregroundStyle(SecretMatchTheme.muted)
-                        .accessibilityHidden(true)
-                    utilityLink("Spielregeln") { showRulesOverlay = true }
-                }
-
-                utilityLink("Info & Support") { showInfoOverlay = true }
-                    .accessibilityHint("Öffnet Feedback, Datenschutz und Impressum")
-            }
+        HStack(spacing: isCompact ? 4 : metric(3, 4)) {
+            utilityLink("So funktioniert's") { showGuideOverlay = true }
+            utilityLinkSeparator
+            utilityLink("Spielregeln") { showRulesOverlay = true }
+            utilityLinkSeparator
+            utilityLink("Info & Support") { showInfoOverlay = true }
+                .accessibilityHint("Öffnet Feedback, Datenschutz und Impressum")
         }
+        .frame(maxWidth: .infinity)
+    }
+
+    private var utilityLinkSeparator: some View {
+        Text("·")
+            .font(.system(
+                size: isCompact ? 13 : metric(12.5, 13.5),
+                weight: .bold,
+                design: .rounded
+            ))
+            .foregroundStyle(SecretMatchTheme.muted)
+            .accessibilityHidden(true)
     }
 
     private func utilityLink(_ title: String, action: @escaping () -> Void) -> some View {
@@ -259,11 +256,13 @@ struct SidebarView: View {
         } label: {
             Text(title)
                 .font(.system(
-                    size: isCompact ? 14 : metric(14, 15),
+                    size: isCompact ? 13 : metric(12.5, 13.5),
                     weight: .bold,
                     design: .rounded
                 ))
-                .frame(maxWidth: .infinity, minHeight: isCompact ? 44 : metric(44, 44))
+                .lineLimit(1)
+                .minimumScaleFactor(0.85)
+                .frame(minHeight: isCompact ? 44 : metric(44, 44))
                 .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
