@@ -13,6 +13,7 @@ struct MatchInputBox: View {
     @Environment(\.secretMatchInterfaceScale) private var interfaceScale
     @State private var replacedCustomMessage: String?
     @State private var undoMessageTask: Task<Void, Never>?
+    @State private var hidesDeliveredFeedback = false
     @Binding var targetNumber: String
     @Binding var showKeyboard: Bool
     @Binding var showTextKeyboard: Bool
@@ -51,6 +52,16 @@ struct MatchInputBox: View {
 
     private var pinsSendButton: Bool {
         fillsAvailableSpace
+    }
+
+    private var visibleDeliveryStatus: InteractionDeliveryStatus? {
+        guard let deliveryStatus else { return nil }
+
+        if hidesDeliveredFeedback, case .delivered = deliveryStatus {
+            return nil
+        }
+
+        return deliveryStatus
     }
 
     private var content: some View {
@@ -241,9 +252,11 @@ struct MatchInputBox: View {
                 .overlay(RoundedRectangle(cornerRadius: 14).stroke(SecretMatchTheme.secondary.opacity(0.35)))
             }
 
-            if let deliveryStatus {
+            if let deliveryStatus = visibleDeliveryStatus {
                 Spacer(minLength: 20)
+                    .transition(.opacity)
                 deliveryFeedback(deliveryStatus)
+                    .transition(.opacity.combined(with: .scale(scale: 0.98)))
             }
         }
         .frame(
@@ -257,35 +270,53 @@ struct MatchInputBox: View {
 
     @ViewBuilder
     var body: some View {
-        if fillsAvailableSpace {
-            VStack(spacing: 0) {
-                ScrollView {
-                    content
-                        .padding(.horizontal, metric(30, 30))
-                        .padding(.top, metric(24, 20))
-                        .padding(.bottom, metric(30, 20))
-                        .frame(
-                            maxWidth: .infinity,
-                            minHeight: max(0, (availableHeight ?? 0) - metric(105, 105)),
-                            alignment: .top
-                        )
-                }
+        Group {
+            if fillsAvailableSpace {
+                VStack(spacing: 0) {
+                    ScrollView {
+                        content
+                            .padding(.horizontal, metric(30, 30))
+                            .padding(.top, metric(24, 20))
+                            .padding(.bottom, metric(30, 20))
+                            .frame(
+                                maxWidth: .infinity,
+                                minHeight: max(0, (availableHeight ?? 0) - metric(105, 105)),
+                                alignment: .top
+                            )
+                    }
 
-                if pinsSendButton {
-                    Divider()
-                        .overlay(SecretMatchTheme.border)
+                    if pinsSendButton {
+                        Divider()
+                            .overlay(SecretMatchTheme.border)
 
-                    sendButton
-                        .padding(.horizontal, metric(30, 30))
-                        .padding(.vertical, metric(12, 12))
-                        .background(SecretMatchTheme.surface.opacity(0.98))
+                        sendButton
+                            .padding(.horizontal, metric(30, 30))
+                            .padding(.vertical, metric(12, 12))
+                            .background(SecretMatchTheme.surface.opacity(0.98))
+                    }
                 }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+            } else {
+                content
+                    .padding(.horizontal, 24)
+                    .secretCard(cornerRadius: 24, padding: 30)
             }
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
-        } else {
-            content
-                .padding(.horizontal, 24)
-                .secretCard(cornerRadius: 24, padding: 30)
+        }
+        .task(id: deliveryStatus) {
+            hidesDeliveredFeedback = false
+
+            guard let deliveryStatus, case .delivered = deliveryStatus else { return }
+
+            do {
+                try await Task.sleep(for: .seconds(4))
+            } catch {
+                return
+            }
+
+            guard !Task.isCancelled else { return }
+            withAnimation(.easeOut(duration: 0.25)) {
+                hidesDeliveredFeedback = true
+            }
         }
     }
 
@@ -308,7 +339,7 @@ struct MatchInputBox: View {
     private func deliveryFeedback(_ status: InteractionDeliveryStatus) -> some View {
         let presentation: (title: String, detail: String, icon: String, color: Color) = switch status {
         case .delivered(let count):
-            ("Erfolgreich gesendet", count == 1 ? "Der Server hat die Sendung bestätigt." : "Der Server hat alle \(count) Sendungen bestätigt.", "checkmark.circle.fill", .green)
+            (count == 1 ? "Ist raus! 💚" : "Alles ist raus! 💚", count == 1 ? "Dein Wunsch wurde verschickt." : "Deine Wünsche wurden verschickt.", "checkmark.circle.fill", .green)
         case .queued(let count):
             ("Sicher vorgemerkt", count == 1 ? "Die Sendung wird bei verfügbarer Verbindung automatisch zugestellt." : "\(count) Sendungen werden bei verfügbarer Verbindung automatisch zugestellt.", "wifi.exclamationmark", .orange)
         case .partiallyDelivered(let delivered, let queued):

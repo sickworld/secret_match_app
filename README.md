@@ -8,7 +8,7 @@ iPads und Billboards besitzen ebenfalls eine vollständige Verwaltung für ihre 
 
 Das zentrale Protokoll benennt jede schreibende Admin-Aktion verständlich, einschließlich Änderungen an Aktionen, Matches, Requests, Teilnehmern, PIN/Gender, Geräten, Billboards, Schnelltexten und Testdaten. Auch Änderungen aus dem WordPress-Backend erscheinen in der Admin-App; Passwörter, PINs, Tokens und Nachrichteninhalte werden nicht protokolliert. Ein erfolgreicher Event-Reset erzeugt absichtlich keinen neuen Eintrag, da er weiterhin sämtliche Logs vollständig entfernt.
 
-Die Admin-App bietet zusätzlich eine globale Nummernakte mit bestätigtem PIN- und Gender-Reset, einen Event-Startcheck und eine Request-ID-basierte Sendungsdiagnose. Die Statistik lässt sich ohne Eventnummern, Nachrichten, PINs oder Gerätekennungen als PDF beziehungsweise CSV teilen. Auf dem iPad unterscheidet die Versandbestätigung sichtbar zwischen zugestellt, sicher vorgemerkt, teilweise zugestellt und fehlgeschlagen.
+Die Admin-App bietet zusätzlich eine globale Nummernakte mit bestätigtem PIN- und Gender-Reset, einen Event-Startcheck und eine Request-ID-basierte Sendungsdiagnose. Die Statistik lässt sich ohne Eventnummern, Nachrichten, PINs oder Gerätekennungen als PDF beziehungsweise CSV teilen. Auf dem iPad unterscheidet die Versandbestätigung sichtbar zwischen zugestellt, sicher vorgemerkt, teilweise zugestellt und fehlgeschlagen. Die grüne Bestätigung spricht bewusst in kurzer Event-Sprache und blendet sich nach vier Sekunden weich aus; Hinweise zu Queue, Teilzustellung und Fehlern bleiben sichtbar.
 
 Diese Funktionen benötigen das WordPress-Modul ab Version `2026.09.08.4`; das Modul muss vor oder zusammen mit diesem App-Build veröffentlicht werden.
 
