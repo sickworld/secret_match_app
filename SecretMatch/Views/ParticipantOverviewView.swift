@@ -191,12 +191,13 @@ struct ParticipantOverviewView: View {
                         color: SecretMatchTheme.secondary,
                         selectedForegroundColor: .black
                     )
-                    filterButton("❤️ Hot \(count(for: "normal"))", type: "normal", color: Color(hex: "#E83E8C"))
-                    filterButton("🍆 Fuck \(count(for: "hot"))", type: "hot", color: Color(hex: "#8E63D2"))
                     if selectedSection == .actions {
                         filterButton("👄 Blow-Job \(count(for: "bjob"))", type: "bjob", color: Color(hex: "#3E9ED6"))
                         filterButton("✋ Hand-Job \(count(for: "hjob"))", type: "hjob", color: Color(hex: "#E6923E"))
                         filterButton("👅 Lick-Job \(count(for: "ljob"))", type: "ljob", color: Color(hex: "#D65C8D"))
+                    } else {
+                        filterButton("❤️ Hot \(count(for: "normal"))", type: "normal", color: Color(hex: "#E83E8C"))
+                        filterButton("🍆 Fuck \(count(for: "hot"))", type: "hot", color: Color(hex: "#8E63D2"))
                     }
                 }
             }
