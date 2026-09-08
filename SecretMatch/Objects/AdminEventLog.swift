@@ -59,6 +59,77 @@ struct AdminEventLogEntry: Identifiable, Decodable {
         if let title = titles[eventType] {
             return title
         }
+        let resultSuffix = eventType.hasSuffix("_failed") ? "_failed" : "_success"
+        let baseType = eventType.hasSuffix(resultSuffix)
+            ? String(eventType.dropLast(resultSuffix.count))
+            : eventType
+        let adminTitles = [
+            "admin_action_created": "Admin: Aktion angelegt",
+            "admin_action_updated": "Admin: Aktion bearbeitet",
+            "admin_action_deleted": "Admin: Aktion gelöscht",
+            "admin_match_created": "Admin: Match angelegt",
+            "admin_match_updated": "Admin: Match bearbeitet",
+            "admin_match_deleted": "Admin: Match gelöscht",
+            "admin_match_request_updated": "Admin: Match-Request bearbeitet",
+            "admin_match_request_deleted": "Admin: Match-Request gelöscht",
+            "admin_feedback_deleted": "Admin: Feedback gelöscht",
+            "admin_billboard_created": "Admin: Billboard angelegt",
+            "admin_billboard_renamed": "Admin: Billboard umbenannt",
+            "admin_billboard_deleted": "Admin: Billboard gelöscht",
+            "admin_device_renamed": "Admin: iPad umbenannt",
+            "admin_device_deleted": "Admin: iPad entfernt",
+            "admin_participant_created": "Admin: Nummer freigegeben",
+            "admin_participant_range_updated": "Admin: Nummernbereich geändert",
+            "admin_participant_logged_out": "Admin: Teilnehmer abgemeldet",
+            "admin_participant_deleted": "Admin: Teilnehmer gesperrt",
+            "admin_participant_pin_reset": "Admin: PIN zurückgesetzt",
+            "admin_participant_pin_updated": "Admin: PIN geändert",
+            "admin_participant_gender_reset": "Admin: Gender zurückgesetzt",
+            "admin_participant_gender_updated": "Admin: Gender geändert",
+            "admin_participant_updated": "Admin: Teilnehmer geändert",
+            "admin_quick_messages_updated": "Admin: Schnelltexte gespeichert",
+            "admin_push_device_registered": "Admin-Gerät für Push registriert",
+            "admin_push_device_unregistered": "Admin-Gerät von Push abgemeldet",
+            "admin_event_log_examples_created": "Admin: Testprotokolle angelegt",
+            "admin_event_reset": "Admin: Event-Reset",
+            "admin_dummy_data_created": "Admin: Testdaten angelegt",
+            "admin_dummy_data_deleted": "Admin: Testdaten gelöscht",
+            "admin_billboard_top_test_started": "Admin: Billboard-Test gestartet",
+            "admin_billboard_normal_mode_started": "Admin: Normalbetrieb gestartet",
+            "admin_billboard_interval_updated": "Admin: Billboard-Intervall geändert",
+            "admin_billboard_access_revoked": "Admin: Billboard-Zugänge widerrufen",
+            "admin_billboard_control_updated": "Admin: Billboard-Steuerung geändert",
+            "wp_admin_numbers_generated": "WordPress: Nummern erzeugt",
+            "wp_admin_numbers_deleted": "WordPress: Nummern gelöscht",
+            "wp_admin_dummy_data_created": "WordPress: Testdaten angelegt",
+            "wp_admin_dummy_data_deleted": "WordPress: Testdaten gelöscht",
+            "wp_admin_callmebot_updated": "WordPress: CallMeBot geändert",
+            "wp_admin_telegram_fuck_test_sent": "WordPress: Fuck-Match-Test gesendet",
+            "wp_admin_telegram_hot_test_sent": "WordPress: Hot-Match-Test gesendet",
+            "wp_admin_apns_test_sent": "WordPress: Push-Test gesendet",
+            "wp_admin_telegram_settings_updated": "WordPress: Telegram geändert",
+            "wp_admin_telegram_settings_deleted": "WordPress: Telegram gelöscht",
+            "wp_admin_password_updated": "WordPress: Admin-Passwort geändert",
+            "wp_admin_session_settings_updated": "WordPress: Laufzeiten geändert",
+            "wp_admin_quick_messages_updated": "WordPress: Schnelltexte gespeichert",
+            "wp_admin_billboard_access_revoked": "WordPress: Billboard-Zugänge widerrufen",
+            "wp_admin_billboard_top_test_started": "WordPress: Billboard-Test gestartet",
+            "wp_admin_billboard_top_test_stopped": "WordPress: Billboard-Test beendet",
+            "wp_admin_billboard_settings_updated": "WordPress: Billboard-Einstellungen geändert",
+            "wp_admin_match_created": "WordPress: Match angelegt",
+            "wp_admin_match_deleted": "WordPress: Match gelöscht",
+            "wp_admin_all_matches_deleted": "WordPress: Alle Matches gelöscht",
+            "wp_admin_all_match_requests_deleted": "WordPress: Alle Match-Requests gelöscht",
+            "wp_admin_action_created": "WordPress: Aktion angelegt",
+            "wp_admin_action_deleted": "WordPress: Aktion gelöscht",
+            "wp_admin_all_actions_deleted": "WordPress: Alle Aktionen gelöscht",
+            "wp_admin_feedback_deleted": "WordPress: Feedback gelöscht",
+            "wp_admin_all_feedback_deleted": "WordPress: Alle Feedbacks gelöscht",
+            "wp_admin_event_reset": "WordPress: Event-Reset",
+        ]
+        if let title = adminTitles[baseType] {
+            return eventType.hasSuffix("_failed") ? "\(title) – fehlgeschlagen" : title
+        }
         if eventType.hasPrefix("admin_") {
             return eventType.hasSuffix("_failed") ? "Admin-Aktion fehlgeschlagen" : "Admin-Änderung gespeichert"
         }
