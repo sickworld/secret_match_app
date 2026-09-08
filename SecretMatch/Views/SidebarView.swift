@@ -133,8 +133,11 @@ struct SidebarView: View {
 
             utilityLinks
 
-            Spacer()
-                .frame(height: isCompact ? 18 : metric(18, 14))
+            if !isCompact {
+                Spacer(minLength: metric(28, 12))
+            } else {
+                Spacer(minLength: 18)
+            }
 
             Button {
                 logout()
@@ -146,12 +149,8 @@ struct SidebarView: View {
                 stabilizedScale: isCompact ? nil : normalizedScale
             ))
 
-            if !isCompact {
-                Spacer(minLength: metric(10, 10))
-            } else {
-                Spacer()
-                    .frame(height: 14)
-            }
+            Spacer()
+                .frame(height: isCompact ? 14 : metric(10, 10))
 
             HStack {
                 if isCompact {
