@@ -33,76 +33,19 @@ struct SidebarView: View {
             Image("logo")
                 .resizable()
                 .scaledToFit()
-                .frame(maxWidth: isCompact ? 132 : metric(156, 170))
-                .frame(height: isCompact ? 86 : metric(110, 120))
+                .frame(maxWidth: isCompact ? 126 : metric(150, 164))
+                .frame(height: isCompact ? 82 : metric(104, 112))
                 .frame(maxWidth: .infinity, alignment: .center)
                 .shadow(color: SecretMatchTheme.primary.opacity(0.16), radius: 18)
 
             Spacer()
-                .frame(height: isCompact ? 14 : metric(12, 10))
+                .frame(height: isCompact ? 8 : metric(8, 6))
 
-            HStack(spacing: isCompact ? 10 : metric(10, 11)) {
-                Circle()
-                    .fill(secondsRemaining <= 10 ? SecretMatchTheme.secondary : SecretMatchTheme.primary)
-                    .frame(
-                        width: isCompact ? 10 : metric(10, 11),
-                        height: isCompact ? 10 : metric(10, 11)
-                    )
-                    .shadow(
-                        color: (secondsRemaining <= 10 ? SecretMatchTheme.secondary : SecretMatchTheme.primary).opacity(0.5),
-                        radius: 6
-                    )
+            sidebarDivider
 
-                Text("Auto-Logout in \(secondsRemaining)s")
-                    .font(.system(size: 17, weight: .bold, design: .rounded))
-                    .foregroundStyle(.white)
-                    .monospacedDigit()
-            }
-            .padding(.horizontal, isCompact ? 16 : metric(16, 16))
-            .frame(maxWidth: .infinity, minHeight: isCompact ? 48 : metric(48, 52))
-            .background(
-                (secondsRemaining <= 10 ? SecretMatchTheme.secondary : SecretMatchTheme.primary)
-                    .opacity(0.14)
-            )
-            .clipShape(Capsule())
-            .overlay(
-                Capsule()
-                    .stroke(
-                        (secondsRemaining <= 10 ? SecretMatchTheme.secondary : SecretMatchTheme.primary)
-                            .opacity(0.55),
-                        lineWidth: 1.2
-                    )
-            )
-            .accessibilityLabel("Automatischer Logout in \(secondsRemaining) Sekunden")
+            eventPass
 
-            Spacer()
-                .frame(height: isCompact ? 18 : metric(18, 14))
-
-            VStack(alignment: .leading, spacing: isCompact ? 8 : metric(8, 8)) {
-                Text("DEIN EVENT PASS")
-                    .font(.caption2.bold())
-                    .tracking(1.3)
-                    .foregroundStyle(SecretMatchTheme.secondary)
-
-                HStack(spacing: isCompact ? 8 : metric(8, 9)) {
-                    Image(systemName: "ticket.fill")
-                        .foregroundStyle(SecretMatchTheme.primary)
-                    Text(api.number.displayEventNumber)
-                        .font(.system(size: 28, weight: .heavy, design: .rounded))
-                        .foregroundStyle(.white)
-                }
-                .padding(.horizontal, isCompact ? 14 : metric(19, 20))
-                .frame(maxWidth: .infinity, minHeight: isCompact ? 58 : metric(58, 62), alignment: .leading)
-                .background(SecretMatchTheme.surfaceRaised)
-                .clipShape(RoundedRectangle(cornerRadius: isCompact ? 16 : metric(16, 18), style: .continuous))
-                .overlay(
-                    RoundedRectangle(cornerRadius: isCompact ? 16 : metric(16, 18))
-                        .stroke(SecretMatchTheme.border)
-                )
-            }
-
-            Spacer()
-                .frame(height: isCompact ? 18 : metric(18, 14))
+            sidebarDivider
 
             overviewButton(
                 "Matches",
@@ -110,8 +53,7 @@ struct SidebarView: View {
                 section: .matches
             )
 
-            Spacer()
-                .frame(height: isCompact ? 12 : metric(10, 10))
+            sidebarDivider
 
             overviewButton(
                 "Interesse",
@@ -119,83 +61,75 @@ struct SidebarView: View {
                 section: .interests
             )
 
-            Spacer()
-                .frame(height: isCompact ? 12 : metric(10, 10))
+            sidebarDivider
 
             overviewButton(
-                "Aktionen",
-                systemImage: "paperplane.fill",
+                "Erhaltene Aktionen",
+                systemImage: "tray.and.arrow.down.fill",
                 section: .actions
             )
 
-            if !isCompact {
-                Spacer(minLength: metric(28, 12))
-            } else {
-                Spacer(minLength: 18)
+            sidebarDivider
+
+            utilityButton(
+                "So geht's",
+                systemImage: "questionmark.circle.fill",
+                accessibilityLabel: "So funktioniert's"
+            ) {
+                showGuideOverlay = true
             }
 
-            utilityLinks
+            sidebarDivider
 
-            Spacer()
-                .frame(height: isCompact ? 8 : metric(8, 7))
+            utilityButton(
+                "Regeln",
+                systemImage: "book.closed.fill",
+                accessibilityLabel: "Spielregeln"
+            ) {
+                showRulesOverlay = true
+            }
+
+            sidebarDivider
+
+            utilityButton(
+                "Info",
+                systemImage: "info.circle.fill",
+                accessibilityLabel: "Info und Support"
+            ) {
+                showInfoOverlay = true
+            }
+            .accessibilityHint("Öffnet Feedback, Datenschutz und Impressum")
+
+            sidebarDivider
+
+            Spacer(minLength: isCompact ? 8 : metric(14, 8))
+
+            logoutStatus
+
+            sidebarDivider
 
             Button {
                 logout()
             } label: {
-                Label("Abmelden", systemImage: "rectangle.portrait.and.arrow.right")
+                HStack(spacing: isCompact ? 12 : metric(12, 13)) {
+                    Image(systemName: "rectangle.portrait.and.arrow.right")
+                        .font(.system(size: isCompact ? 18 : metric(18, 20), weight: .bold))
+                        .frame(width: isCompact ? 24 : metric(24, 26))
+
+                    Text("Abmelden")
+
+                    Spacer(minLength: 0)
+                }
+                .foregroundStyle(SecretMatchTheme.danger)
             }
-            .buttonStyle(LogoutButtonStyle(
-                compact: isCompact,
-                stabilizedScale: isCompact ? nil : normalizedScale
-            ))
+            .buttonStyle(flatRowStyle(tint: SecretMatchTheme.danger))
 
-            Spacer()
-                .frame(height: isCompact ? 14 : metric(10, 10))
+            sidebarDivider
 
-            HStack {
-                if isCompact {
-                    Spacer()
-                }
-                HStack(alignment: .center, spacing: isCompact ? 4 : metric(5, 5)) {
-                    Image("hot-chili")
-                        .resizable()
-                        .scaledToFit()
-                        .frame(
-                            width: isCompact ? 58 : metric(64, 64),
-                            height: isCompact ? 42 : metric(48, 46)
-                        )
-                        .shadow(color: SecretMatchTheme.primary.opacity(0.18), radius: 12)
-                        .accessibilityLabel("Hot Chili Events")
-
-                    Image("ficken-logo")
-                        .resizable()
-                        .scaledToFit()
-                        .frame(
-                            width: isCompact ? 62 : metric(68, 68),
-                            height: isCompact ? 34 : metric(38, 36)
-                        )
-                        .padding(.horizontal, isCompact ? 6 : metric(6, 6))
-                        .padding(.vertical, isCompact ? 4 : metric(4, 4))
-                        .background(Color.white.opacity(0.94))
-                        .clipShape(RoundedRectangle(cornerRadius: isCompact ? 8 : metric(8, 8)))
-                        .accessibilityLabel("FICKEN Likör")
-
-                    Image("club2020")
-                        .resizable()
-                        .scaledToFit()
-                        .frame(
-                            width: isCompact ? 112 : metric(98, 94),
-                            height: isCompact ? 76 : metric(68, 64)
-                        )
-                        .accessibilityLabel("Club 2020")
-                }
-                .frame(maxWidth: .infinity, alignment: .center)
-                if isCompact {
-                    Spacer()
-                }
-            }
+            partnerLogos
         }
-        .padding(isCompact ? 16 : metric(16, 12))
+        .padding(.horizontal, isCompact ? 16 : metric(16, 12))
+        .padding(.vertical, isCompact ? 12 : metric(16, 12))
         .frame(width: isCompact ? nil : metric(304, 336))
         .frame(maxWidth: isCompact ? .infinity : nil)
         .background(SecretMatchTheme.surface.opacity(0.97))
@@ -204,6 +138,116 @@ struct SidebarView: View {
                 .fill(SecretMatchTheme.border)
                 .frame(width: isCompact ? nil : 1, height: isCompact ? 1 : nil)
         }
+    }
+
+    private var logoutStatus: some View {
+        HStack(spacing: isCompact ? 11 : metric(11, 12)) {
+            Circle()
+                .fill(secondsRemaining <= 10 ? SecretMatchTheme.secondary : SecretMatchTheme.primary)
+                .frame(
+                    width: isCompact ? 10 : metric(10, 11),
+                    height: isCompact ? 10 : metric(10, 11)
+                )
+                .shadow(
+                    color: (secondsRemaining <= 10 ? SecretMatchTheme.secondary : SecretMatchTheme.primary).opacity(0.45),
+                    radius: 5
+                )
+
+            Text("Auto-Logout in \(secondsRemaining)s")
+                .font(.system(
+                    size: isCompact ? 16 : metric(16, 18),
+                    weight: secondsRemaining <= 10 ? .heavy : .semibold,
+                    design: .rounded
+                ))
+                .foregroundStyle(secondsRemaining <= 10 ? SecretMatchTheme.secondary : SecretMatchTheme.muted)
+                .monospacedDigit()
+
+            Spacer(minLength: 0)
+        }
+        .padding(.horizontal, isCompact ? 12 : metric(12, 13))
+        .frame(minHeight: isCompact ? 46 : metric(46, 46))
+        .accessibilityLabel("Automatischer Logout in \(secondsRemaining) Sekunden")
+    }
+
+    private var eventPass: some View {
+        HStack(spacing: isCompact ? 12 : metric(12, 13)) {
+            VStack(alignment: .leading, spacing: 4) {
+                Text("DEIN EVENT PASS")
+                    .font(.caption2.bold())
+                    .tracking(1.3)
+                    .foregroundStyle(SecretMatchTheme.secondary)
+
+                Text(api.number.displayEventNumber)
+                    .font(.system(
+                        size: isCompact ? 28 : metric(28, 31),
+                        weight: .heavy,
+                        design: .rounded
+                    ))
+                    .foregroundStyle(.white)
+            }
+
+            Spacer(minLength: 0)
+
+            Image(systemName: "ticket.fill")
+                .font(.system(size: isCompact ? 22 : metric(22, 24), weight: .bold))
+                .foregroundStyle(SecretMatchTheme.primary)
+                .accessibilityHidden(true)
+        }
+        .padding(.horizontal, isCompact ? 12 : metric(12, 13))
+        .frame(minHeight: isCompact ? 68 : metric(70, 72))
+    }
+
+    private var partnerLogos: some View {
+        HStack(alignment: .center, spacing: isCompact ? 4 : metric(5, 5)) {
+            Image("hot-chili")
+                .resizable()
+                .scaledToFit()
+                .frame(
+                    width: isCompact ? 58 : metric(64, 64),
+                    height: isCompact ? 42 : metric(48, 46)
+                )
+                .shadow(color: SecretMatchTheme.primary.opacity(0.18), radius: 12)
+                .accessibilityLabel("Hot Chili Events")
+
+            Image("ficken-logo")
+                .resizable()
+                .scaledToFit()
+                .frame(
+                    width: isCompact ? 62 : metric(68, 68),
+                    height: isCompact ? 34 : metric(38, 36)
+                )
+                .padding(.horizontal, isCompact ? 6 : metric(6, 6))
+                .padding(.vertical, isCompact ? 4 : metric(4, 4))
+                .background(Color.white.opacity(0.94))
+                .clipShape(RoundedRectangle(cornerRadius: isCompact ? 6 : metric(6, 6)))
+                .accessibilityLabel("FICKEN Likör")
+
+            Image("club2020")
+                .resizable()
+                .scaledToFit()
+                .frame(
+                    width: isCompact ? 112 : metric(98, 94),
+                    height: isCompact ? 76 : metric(68, 64)
+                )
+                .accessibilityLabel("Club 2020")
+        }
+        .frame(maxWidth: .infinity, minHeight: isCompact ? 66 : metric(62, 58), alignment: .center)
+    }
+
+    private var sidebarDivider: some View {
+        Rectangle()
+            .fill(SecretMatchTheme.border.opacity(0.9))
+            .frame(height: 1)
+            .accessibilityHidden(true)
+    }
+
+    private func flatRowStyle(tint: Color = SecretMatchTheme.primary) -> FlatSidebarRowStyle {
+        FlatSidebarRowStyle(
+            fontSize: isCompact ? 18 : metric(18, 20),
+            minHeight: isCompact ? 56 : metric(56, 58),
+            horizontalPadding: isCompact ? 12 : metric(12, 13),
+            tint: tint
+        )
     }
 
     private func overviewButton(
@@ -216,55 +260,61 @@ struct SidebarView: View {
             selectedOverviewSection = section
             showOverviewOverlay = true
         } label: {
-            Label(title, systemImage: systemImage)
+            sidebarRowLabel(title, systemImage: systemImage)
         }
-        .buttonStyle(SidebarButtonStyle(
-            compact: isCompact,
-            stabilizedScale: isCompact ? nil : normalizedScale
-        ))
+        .buttonStyle(flatRowStyle())
         .accessibilityHint("Öffnet direkt den Bereich \(title)")
     }
 
-    private var utilityLinks: some View {
-        HStack(spacing: isCompact ? 4 : metric(3, 4)) {
-            utilityLink("So funktioniert's") { showGuideOverlay = true }
-            utilityLinkSeparator
-            utilityLink("Spielregeln") { showRulesOverlay = true }
-            utilityLinkSeparator
-            utilityLink("Info & Support") { showInfoOverlay = true }
-                .accessibilityHint("Öffnet Feedback, Datenschutz und Impressum")
-        }
-        .frame(maxWidth: .infinity)
-    }
-
-    private var utilityLinkSeparator: some View {
-        Text("·")
-            .font(.system(
-                size: isCompact ? 13 : metric(12.5, 13.5),
-                weight: .bold,
-                design: .rounded
-            ))
-            .foregroundStyle(SecretMatchTheme.muted)
-            .accessibilityHidden(true)
-    }
-
-    private func utilityLink(_ title: String, action: @escaping () -> Void) -> some View {
+    private func utilityButton(
+        _ title: String,
+        systemImage: String,
+        accessibilityLabel: String,
+        action: @escaping () -> Void
+    ) -> some View {
         Button {
             registerActivity()
             action()
         } label: {
-            Text(title)
-                .font(.system(
-                    size: isCompact ? 13 : metric(12.5, 13.5),
-                    weight: .bold,
-                    design: .rounded
-                ))
-                .lineLimit(1)
-                .minimumScaleFactor(0.85)
-                .frame(minHeight: isCompact ? 44 : metric(44, 44))
-                .contentShape(Rectangle())
+            sidebarRowLabel(title, systemImage: systemImage)
         }
-        .buttonStyle(.plain)
-        .foregroundStyle(SecretMatchTheme.secondary)
+        .buttonStyle(flatRowStyle(tint: SecretMatchTheme.secondary))
+        .accessibilityLabel(accessibilityLabel)
+    }
+
+    private func sidebarRowLabel(_ title: String, systemImage: String) -> some View {
+        HStack(spacing: isCompact ? 10 : metric(10, 11)) {
+            Image(systemName: systemImage)
+                .font(.system(size: isCompact ? 19 : metric(19, 21), weight: .bold))
+                .foregroundStyle(SecretMatchTheme.secondary)
+                .frame(width: isCompact ? 24 : metric(24, 26))
+
+            Text(title)
+
+            Spacer(minLength: 0)
+
+            Image(systemName: "chevron.right")
+                .font(.system(size: isCompact ? 13 : metric(13, 14), weight: .bold))
+                .foregroundStyle(SecretMatchTheme.muted)
+                .accessibilityHidden(true)
+        }
+    }
+}
+
+private struct FlatSidebarRowStyle: ButtonStyle {
+    let fontSize: CGFloat
+    let minHeight: CGFloat
+    let horizontalPadding: CGFloat
+    let tint: Color
+
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .font(.system(size: fontSize, weight: .bold, design: .rounded))
+            .padding(.horizontal, horizontalPadding)
+            .frame(maxWidth: .infinity, minHeight: minHeight, alignment: .leading)
+            .contentShape(Rectangle())
+            .background(configuration.isPressed ? tint.opacity(0.13) : Color.clear)
+            .foregroundStyle(.white)
+            .opacity(configuration.isPressed ? 0.78 : 1)
     }
 }
