@@ -66,7 +66,7 @@ Während modale Ansichten oder die appinternen Tastaturen geöffnet sind, wird d
 
 Auswahlzustände werden nicht nur über Farbe, sondern zusätzlich mit Kreis- und Häkchensymbolen dargestellt. Aktiviert das iPad **Ohne Farben differenzieren**, verwendet die App für wichtige Auswahlen automatisch eine kontrastreiche Schwarz-Weiß-Darstellung. Geräte- und Billboard-Zustände unterscheiden Online und Offline zusätzlich durch Häkchen beziehungsweise ein achteckiges X-Symbol.
 
-Freie Match-Nachrichten werden über eine appinterne QWERTZ-Tastatur mit Umlauten, Zahlen und Satzzeichen eingegeben. Die Schnelltexte lassen sich sowohl in der Admin-App unter **Steuerung → Match-Schnelltexte** als auch im WordPress-Backend unter **SecretMatch → Einstellungen** pflegen; beide Oberflächen bearbeiten dieselbe Liste.
+Freie Match-Nachrichten werden über eine appinterne QWERTZ-Tastatur mit Umlauten, Zahlen und Satzzeichen eingegeben. Auch der gemeinsame Eventnummernfilter in **Matches**, **Interesse** und **Aktionen** nutzt die große appinterne Zahlentastatur. Die Schnelltexte lassen sich sowohl in der Admin-App unter **Steuerung → Match-Schnelltexte** als auch im WordPress-Backend unter **SecretMatch → Einstellungen** pflegen; beide Oberflächen bearbeiten dieselbe Liste.
 
 ## Sende-Warteschlange
 

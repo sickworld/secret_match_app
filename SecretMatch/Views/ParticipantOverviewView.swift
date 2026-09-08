@@ -106,8 +106,12 @@ struct ParticipantOverviewView: View {
             HStack(spacing: 10) {
                 Image(systemName: "number")
                     .foregroundStyle(SecretMatchTheme.secondary)
-                TextField("Nach Eventnummer filtern", text: $numberQuery)
-                    .keyboardType(.numberPad)
+                AdminKeyboardTextField(
+                    title: "Nach Eventnummer filtern",
+                    text: $numberQuery,
+                    keyboard: .number(maxDigits: 10),
+                    keyboardTitle: "Übersicht nach Eventnummer filtern"
+                )
                     .font(.system(size: 18, weight: .semibold, design: .rounded))
                     .foregroundStyle(.white)
                 if !numberQuery.isEmpty {
