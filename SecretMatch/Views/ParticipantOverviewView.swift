@@ -437,7 +437,7 @@ struct ParticipantOverviewView: View {
         switch selectedSection {
         case .matches: return nil
         case .interests: return "Wartet auf deine Antwort"
-        case .actions: return "Direkt an dich gesendet"
+        case .actions: return nil
         }
     }
 
