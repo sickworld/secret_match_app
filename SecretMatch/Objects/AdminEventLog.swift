@@ -229,6 +229,8 @@ struct AdminEventStatistics: Decodable {
     let retryCount: Int
     let deliveryCount: Int
     let errorCount: Int
+    let adminActionCount: Int?
+    let adminFailureCount: Int?
     let requestTypes: [AdminStatisticCount]
     let actionTypes: [AdminStatisticCount]
     let topParticipants: [AdminParticipantStatistic]?
@@ -247,6 +249,8 @@ struct AdminEventStatistics: Decodable {
         case retryCount = "retry_count"
         case deliveryCount = "delivery_count"
         case errorCount = "error_count"
+        case adminActionCount = "admin_action_count"
+        case adminFailureCount = "admin_failure_count"
         case requestTypes = "request_types"
         case actionTypes = "action_types"
         case topParticipants = "top_participants"

@@ -5,6 +5,8 @@ struct AdminStatisticsView: View {
     @State private var showsLastEvent = false
     @State private var isLoading = false
     @State private var errorMessage: String?
+    @State private var exportArtifact: AdminExportArtifact?
+    @State private var exportError: String?
 
     private var statistics: AdminEventStatistics? {
         showsLastEvent ? api.adminStatistics?.lastEvent : api.adminStatistics?.current
@@ -58,6 +60,17 @@ struct AdminStatisticsView: View {
             .frame(maxWidth: .infinity)
         }
         .background(BrandBackground())
+        .sheet(item: $exportArtifact) { artifact in
+            AdminShareSheet(url: artifact.url)
+        }
+        .alert("Export fehlgeschlagen", isPresented: Binding(
+            get: { exportError != nil },
+            set: { if !$0 { exportError = nil } }
+        )) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text(exportError ?? "Der Bericht konnte nicht erstellt werden.")
+        }
         .task {
             await load()
             while !Task.isCancelled {
@@ -68,26 +81,46 @@ struct AdminStatisticsView: View {
     }
 
     private var header: some View {
-        HStack(alignment: .top, spacing: 16) {
-            VStack(alignment: .leading, spacing: 5) {
-                Text("EVENT-AUSWERTUNG")
-                    .font(.caption.bold())
-                    .tracking(1.8)
-                    .foregroundStyle(SecretMatchTheme.secondary)
-                Text("Statistik")
-                    .font(.system(size: 34, weight: .bold, design: .rounded))
-                    .foregroundStyle(.white)
-                Text(showsLastEvent ? "Anonyme Abschlusswerte des letzten Events." : "Live-Auswertung des laufenden Events.")
-                    .font(.subheadline.weight(.medium))
-                    .foregroundStyle(SecretMatchTheme.muted)
+        VStack(alignment: .leading, spacing: 14) {
+            HStack(alignment: .top, spacing: 12) {
+                VStack(alignment: .leading, spacing: 5) {
+                    Text("EVENT-AUSWERTUNG")
+                        .font(.caption.bold())
+                        .tracking(1.8)
+                        .foregroundStyle(SecretMatchTheme.secondary)
+                    Text("Statistik")
+                        .font(.system(size: 34, weight: .bold, design: .rounded))
+                        .foregroundStyle(.white)
+                    Text(showsLastEvent ? "Anonyme Abschlusswerte des letzten Events." : "Live-Auswertung des laufenden Events.")
+                        .font(.subheadline.weight(.medium))
+                        .foregroundStyle(SecretMatchTheme.muted)
+                }
+                Spacer()
+                Menu {
+                    Button {
+                        export(format: "pdf")
+                    } label: {
+                        Label("Als PDF teilen", systemImage: "doc.richtext")
+                    }
+                    Button {
+                        export(format: "csv")
+                    } label: {
+                        Label("Als CSV teilen", systemImage: "tablecells")
+                    }
+                } label: {
+                    Label("Bericht exportieren", systemImage: "square.and.arrow.up")
+                }
+                .buttonStyle(.borderedProminent)
+                .tint(SecretMatchTheme.primary)
+                .disabled(statistics == nil)
             }
-            Spacer()
+
             Picker("Zeitraum", selection: $showsLastEvent) {
                 Text("Aktuelles Event").tag(false)
                 Text("Letztes Event").tag(true)
             }
             .pickerStyle(.segmented)
-            .frame(maxWidth: 360)
+            .frame(maxWidth: 420)
         }
     }
 
@@ -104,6 +137,8 @@ struct AdminStatisticsView: View {
                 metric("Zugestellt", stats.deliveryCount, color: .green)
                 metric("Retries", stats.retryCount, color: stats.retryCount > 0 ? .orange : .green)
                 metric("Technische Fehler", stats.errorCount, color: stats.errorCount > 0 ? .red : .green)
+                metric("Admin-Aktionen", stats.adminActionCount ?? 0, color: SecretMatchTheme.secondary)
+                metric("Admin-Fehler", stats.adminFailureCount ?? 0, color: (stats.adminFailureCount ?? 0) > 0 ? .orange : .green)
                 percentageMetric("Match-Quote", stats.matchRatePercent, color: SecretMatchTheme.primary)
             }
 
@@ -408,6 +443,21 @@ struct AdminStatisticsView: View {
             errorMessage = nil
         } catch {
             if !quietly { errorMessage = "Die Event-Auswertung konnte nicht geladen werden." }
+        }
+    }
+
+    private func export(format: String) {
+        guard let statistics else { return }
+        do {
+            let name = showsLastEvent ? "letztes-event" : "aktuelles-event"
+            let url = if format == "pdf" {
+                try AdminReportExporter.pdf(for: statistics, eventName: name)
+            } else {
+                try AdminReportExporter.csv(for: statistics, eventName: name)
+            }
+            exportArtifact = AdminExportArtifact(url: url)
+        } catch {
+            exportError = "Der \(format.uppercased())-Bericht konnte nicht erstellt werden."
         }
     }
 }

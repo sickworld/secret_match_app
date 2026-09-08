@@ -17,12 +17,13 @@ struct MatchInputBox: View {
     @Binding var showKeyboard: Bool
     @Binding var showTextKeyboard: Bool
     @Binding var selectedActions: Set<String>
-    @Binding var responseMessage: String
     @Binding var matchMessage: String
     let quickMessages: [String]
     let onSend: () -> Void
     var queuedSendCount = 0
     var isRetryingQueuedSends = false
+    var deliveryStatus: InteractionDeliveryStatus?
+    var deliveryErrorMessage: String?
     var onRetryQueuedSends: () -> Void = {}
     var fillsAvailableSpace = false
     var availableHeight: CGFloat?
@@ -240,18 +241,9 @@ struct MatchInputBox: View {
                 .overlay(RoundedRectangle(cornerRadius: 14).stroke(SecretMatchTheme.secondary.opacity(0.35)))
             }
 
-            if !responseMessage.isEmpty {
+            if let deliveryStatus {
                 Spacer(minLength: 20)
-
-                Text(responseMessage)
-                    .font(.subheadline.weight(.semibold))
-                    .foregroundStyle(.white)
-                    .multilineTextAlignment(.center)
-                    .padding(14)
-                    .frame(maxWidth: .infinity)
-                    .background(SecretMatchTheme.primary.opacity(0.12))
-                    .clipShape(RoundedRectangle(cornerRadius: 14))
-                    .overlay(RoundedRectangle(cornerRadius: 14).stroke(SecretMatchTheme.primary.opacity(0.3)))
+                deliveryFeedback(deliveryStatus)
             }
         }
         .frame(
@@ -311,6 +303,41 @@ struct MatchInputBox: View {
         ))
         .disabled(selectedActions.isEmpty || targetNumber.isEmpty)
         .opacity(selectedActions.isEmpty || targetNumber.isEmpty ? 0.5 : 1)
+    }
+
+    private func deliveryFeedback(_ status: InteractionDeliveryStatus) -> some View {
+        let presentation: (title: String, detail: String, icon: String, color: Color) = switch status {
+        case .delivered(let count):
+            ("Erfolgreich gesendet", count == 1 ? "Der Server hat die Sendung bestätigt." : "Der Server hat alle \(count) Sendungen bestätigt.", "checkmark.circle.fill", .green)
+        case .queued(let count):
+            ("Sicher vorgemerkt", count == 1 ? "Die Sendung wird bei verfügbarer Verbindung automatisch zugestellt." : "\(count) Sendungen werden bei verfügbarer Verbindung automatisch zugestellt.", "wifi.exclamationmark", .orange)
+        case .partiallyDelivered(let delivered, let queued):
+            ("Teilweise gesendet", "\(delivered) bestätigt · \(queued) weiterhin sicher vorgemerkt.", "arrow.trianglehead.2.clockwise.rotate.90", SecretMatchTheme.secondary)
+        case .failed:
+            ("Nicht vorgemerkt", deliveryErrorMessage ?? "Mindestens eine Sendung wurde abgelehnt. Bitte Eingaben prüfen und erneut versuchen.", "exclamationmark.triangle.fill", .red)
+        }
+
+        return HStack(alignment: .top, spacing: 12) {
+            Image(systemName: presentation.icon)
+                .font(.title2.bold())
+                .foregroundStyle(presentation.color)
+
+            VStack(alignment: .leading, spacing: 4) {
+                Text(presentation.title)
+                    .font(.headline.bold())
+                    .foregroundStyle(.white)
+                Text(presentation.detail)
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(SecretMatchTheme.muted)
+            }
+            Spacer()
+        }
+        .padding(14)
+        .frame(maxWidth: .infinity)
+        .background(presentation.color.opacity(0.12))
+        .clipShape(RoundedRectangle(cornerRadius: 14))
+        .overlay(RoundedRectangle(cornerRadius: 14).stroke(presentation.color.opacity(0.4)))
+        .accessibilityElement(children: .combine)
     }
 
     private func selectionButton(for option: ActionOption) -> some View {

@@ -47,6 +47,22 @@ struct AdminSidebarView: View {
             .buttonStyle(SidebarButtonStyle())
 
             Button {
+                dashboardSection = .readiness
+                dismissMenu()
+            } label: {
+                Label("Event-Check", systemImage: "checkmark.seal.fill")
+            }
+            .buttonStyle(SidebarButtonStyle())
+
+            Button {
+                dashboardSection = .diagnostics
+                dismissMenu()
+            } label: {
+                Label("Sendungsdiagnose", systemImage: "waveform.path.ecg.rectangle")
+            }
+            .buttonStyle(SidebarButtonStyle())
+
+            Button {
                 dashboardSection = .eventLog
                 dismissMenu()
             } label: {

@@ -11,6 +11,7 @@ struct MatchView: View {
     @State private var selectedActions: Set<String> = []
     @State private var responseMessage = ""
     @State private var matchMessage = ""
+    @State private var submissionFailed = false
 
 
     // Inactivity / Auto-Logout
@@ -204,12 +205,13 @@ struct MatchView: View {
                         showKeyboard: $showKeyboard,
                         showTextKeyboard: $showTextKeyboard,
                         selectedActions: $selectedActions,
-                        responseMessage: $responseMessage,
                         matchMessage: $matchMessage,
                         quickMessages: api.matchMessageOptions,
                         onSend: sendInteractions,
                         queuedSendCount: api.queuedSendCount,
                         isRetryingQueuedSends: api.isRetryingQueuedSends,
+                        deliveryStatus: submissionFailed ? .failed : api.interactionDeliveryStatus,
+                        deliveryErrorMessage: submissionFailed ? responseMessage : nil,
                         onRetryQueuedSends: retryQueuedSends
                     )
                     .padding(18)
@@ -226,12 +228,13 @@ struct MatchView: View {
                     showKeyboard: $showKeyboard,
                     showTextKeyboard: $showTextKeyboard,
                     selectedActions: $selectedActions,
-                    responseMessage: $responseMessage,
                     matchMessage: $matchMessage,
                     quickMessages: api.matchMessageOptions,
                     onSend: sendInteractions,
                     queuedSendCount: api.queuedSendCount,
                     isRetryingQueuedSends: api.isRetryingQueuedSends,
+                    deliveryStatus: submissionFailed ? .failed : api.interactionDeliveryStatus,
+                    deliveryErrorMessage: submissionFailed ? responseMessage : nil,
                     onRetryQueuedSends: retryQueuedSends,
                     fillsAvailableSpace: true,
                     availableHeight: availableHeight
@@ -260,6 +263,7 @@ struct MatchView: View {
     func sendInteractions() {
         Task {
             guard !targetNumber.isEmpty, !selectedActions.isEmpty else { return }
+            submissionFailed = false
             pauseInactivityTimer()
             isLoading = true
 
@@ -274,6 +278,7 @@ struct MatchView: View {
 
             if targetNumber.normalizedEventNumber == api.number.normalizedEventNumber {
                 responseMessage = "Du kannst keine Aktion an dich selbst senden 😅"
+                submissionFailed = true
                 return
             }
 
@@ -289,12 +294,14 @@ struct MatchView: View {
                 matchMessage = ""
             } catch {
                 responseMessage = "Die Aktionen konnten nicht vorgemerkt werden. Bitte versuche es erneut."
+                submissionFailed = true
             }
         }
     }
 
     private func retryQueuedSends() {
         Task {
+            submissionFailed = false
             pauseInactivityTimer()
             await api.retryPendingSends()
             resetInactivityTimer()

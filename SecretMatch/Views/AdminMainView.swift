@@ -9,6 +9,7 @@ struct AdminMainView: View {
     @State private var showBillboard = false
     @State private var showAdminMenu = false
     @State private var showLiveFeed = false
+    @State private var showNumberLookup = false
     @State private var dashboardSection: AdminDashboardSection = .overview
 
     var body: some View {
@@ -31,6 +32,12 @@ struct AdminMainView: View {
             .background(SecretMatchTheme.surface)
             .presentationDetents([.medium, .large])
             .presentationDragIndicator(.visible)
+        }
+        .sheet(isPresented: $showNumberLookup) {
+            AdminNumberLookupView()
+                .environmentObject(api)
+                .presentationDetents([.large])
+                .presentationDragIndicator(.visible)
         }
         .onChange(of: dashboardSection) { _, _ in
             showAdminMenu = false
@@ -94,6 +101,19 @@ struct AdminMainView: View {
                 }
 
                 Spacer()
+
+                Button {
+                    showNumberLookup = true
+                } label: {
+                    Label("Nummer suchen", systemImage: "magnifyingglass")
+                        .font(.headline.bold())
+                        .foregroundStyle(.white)
+                        .padding(.horizontal, 15)
+                        .frame(height: 48)
+                        .background(SecretMatchTheme.primary)
+                        .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+                }
+                .accessibilityHint("Öffnet die globale Suche nach einer Eventnummer")
             }
             .padding(.horizontal, 18)
             .padding(.vertical, 10)
@@ -134,6 +154,12 @@ struct AdminMainView: View {
     @ViewBuilder
     private var adminPage: some View {
         switch dashboardSection {
+        case .readiness:
+            AdminEventCheckView()
+                .environmentObject(api)
+        case .diagnostics:
+            AdminDeliveryDiagnosticsView()
+                .environmentObject(api)
         case .liveFeed:
             AdminLiveFeedView(isPresented: .constant(true), isEmbedded: true)
                 .environmentObject(api)

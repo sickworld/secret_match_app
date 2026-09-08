@@ -47,6 +47,7 @@ class APIService: ObservableObject {
     @Published var adminParticipants = AdminParticipants(allowed: [], active: [])
     @Published private(set) var queuedSendCount = 0
     @Published private(set) var isRetryingQueuedSends = false
+    @Published private(set) var interactionDeliveryStatus: InteractionDeliveryStatus?
     @Published private(set) var connectionState: ConnectionState = .checking
     @Published private(set) var isCheckingConnection = false
     @Published private(set) var matchMessageOptions: [String] = []
@@ -197,6 +198,7 @@ class APIService: ObservableObject {
         pendingInteractions.append(contentsOf: interactions)
         persistPendingInteractions()
         updateQueuedSendCount()
+        interactionDeliveryStatus = .queued(count: interactions.count)
         for interaction in interactions {
             recordTelemetry(
                 severity: "info",
@@ -215,7 +217,15 @@ class APIService: ObservableObject {
         let messages = await processSendQueue(for: senderNumber, collecting: Set(interactions.map(\.id)))
         let queuedCount = pendingInteractions.filter { $0.batchID == batchID }.count
         guard queuedCount > 0 || messages.count == interactions.count else {
+            interactionDeliveryStatus = .failed
             throw InteractionSendError.rejected
+        }
+        if queuedCount == 0 {
+            interactionDeliveryStatus = .delivered(count: interactions.count)
+        } else if messages.isEmpty {
+            interactionDeliveryStatus = .queued(count: queuedCount)
+        } else {
+            interactionDeliveryStatus = .partiallyDelivered(delivered: messages.count, queued: queuedCount)
         }
         return InteractionSubmissionResult(messages: messages, queuedCount: queuedCount)
     }
@@ -621,6 +631,39 @@ class APIService: ObservableObject {
         adminDashboard = try JSONDecoder().decode(AdminDashboard.self, from: data)
     }
 
+    func loadAdminNumberOverview(number: String) async throws -> AdminNumberOverview {
+        var components = URLComponents(
+            url: baseURL.appendingPathComponent("admin/number-overview"),
+            resolvingAgainstBaseURL: false
+        )
+        components?.queryItems = [
+            URLQueryItem(name: "number", value: number.normalizedEventNumber)
+        ]
+        guard let url = components?.url else { throw URLError(.badURL) }
+        let (data, response) = try await URLSession.shared.data(for: adminRequest(url: url))
+        try validateAdminResponse(response)
+        return try JSONDecoder().decode(AdminNumberOverview.self, from: data)
+    }
+
+    func loadDeliveryDiagnostics(sourceNumber: String, targetNumber: String) async throws -> [AdminDeliveryDiagnostic] {
+        var components = URLComponents(
+            url: baseURL.appendingPathComponent("admin/delivery-diagnostics"),
+            resolvingAgainstBaseURL: false
+        )
+        var queryItems = [
+            URLQueryItem(name: "source_number", value: sourceNumber.normalizedEventNumber)
+        ]
+        let target = targetNumber.normalizedEventNumber
+        if !target.isEmpty {
+            queryItems.append(URLQueryItem(name: "target_number", value: target))
+        }
+        components?.queryItems = queryItems
+        guard let url = components?.url else { throw URLError(.badURL) }
+        let (data, response) = try await URLSession.shared.data(for: adminRequest(url: url))
+        try validateAdminResponse(response)
+        return try JSONDecoder().decode([AdminDeliveryDiagnostic].self, from: data)
+    }
+
     func loadAdminEventLog(
         severity: String? = nil,
         category: String? = nil,
@@ -983,6 +1026,7 @@ class APIService: ObservableObject {
         self.adminMatchRequests = []
         self.adminFeedback = []
         self.isAdmin = false
+        interactionDeliveryStatus = nil
     }
 
     func cancelParticipantLogin() async {
@@ -1187,6 +1231,8 @@ class APIService: ObservableObject {
         }
 
         var messages: [String] = []
+        var deliveredDuringRun = 0
+        var rejectedDuringRun = 0
 
         while (allowsLoggedOutSession || (isLoggedIn && number.normalizedEventNumber == senderNumber)),
               let index = nextPendingInteractionIndex(for: senderNumber) {
@@ -1214,6 +1260,7 @@ class APIService: ObservableObject {
 
                 pendingInteractions.remove(at: index)
                 persistPendingInteractions()
+                deliveredDuringRun += 1
                 markSuccessfulSync()
                 recordTelemetry(
                     severity: "info",
@@ -1253,6 +1300,7 @@ class APIService: ObservableObject {
 
                 pendingInteractions.remove(at: index)
                 persistPendingInteractions()
+                rejectedDuringRun += 1
                 recordTelemetry(
                     severity: "error",
                     category: "queue",
@@ -1268,6 +1316,17 @@ class APIService: ObservableObject {
                 )
                 throwAwayInvalidBatchIfNeeded(batchID: interaction.batchID, senderNumber: senderNumber)
             }
+        }
+
+        let remaining = pendingInteractions.filter { $0.senderNumber == senderNumber }.count
+        if rejectedDuringRun > 0 {
+            interactionDeliveryStatus = .failed
+        } else if remaining > 0 {
+            interactionDeliveryStatus = deliveredDuringRun > 0
+                ? .partiallyDelivered(delivered: deliveredDuringRun, queued: remaining)
+                : .queued(count: remaining)
+        } else if deliveredDuringRun > 0 {
+            interactionDeliveryStatus = .delivered(count: deliveredDuringRun)
         }
 
         await flushTelemetryEvents()
@@ -1527,6 +1586,7 @@ class APIService: ObservableObject {
 
         pendingInteractions.removeAll()
         pendingTelemetryEvents.removeAll()
+        interactionDeliveryStatus = nil
         persistPendingInteractions()
         persistPendingTelemetryEvents()
         defaults.removeObject(forKey: Self.lastSuccessfulSyncKey)
