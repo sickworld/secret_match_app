@@ -83,9 +83,9 @@ struct ConnectionStatusBanner: View {
         case .online:
             return "Verbunden"
         case .offline:
-            return "Keine Internetverbindung. Sendungen werden zwischengespeichert."
+            return "Kein Internet. Deine Wünsche gehen automatisch raus, sobald die Verbindung wieder da ist."
         case .serverUnavailable:
-            return "SecretMatch-Server nicht erreichbar. Wir versuchen es automatisch erneut."
+            return "SecretMatch ist gerade nicht erreichbar. Wir versuchen es automatisch weiter."
         }
     }
 }

@@ -341,11 +341,11 @@ struct MatchInputBox: View {
         case .delivered(let count):
             (count == 1 ? "Ist raus! 💚" : "Alles ist raus! 💚", count == 1 ? "Dein Wunsch wurde verschickt." : "Deine Wünsche wurden verschickt.", "checkmark.circle.fill", .green)
         case .queued(let count):
-            ("Sicher vorgemerkt", count == 1 ? "Die Sendung wird bei verfügbarer Verbindung automatisch zugestellt." : "\(count) Sendungen werden bei verfügbarer Verbindung automatisch zugestellt.", "wifi.exclamationmark", .orange)
+            ("Kein Netz – kein Problem", count == 1 ? "Dein Wunsch wartet sicher und geht automatisch raus, sobald die Verbindung wieder da ist." : "Deine \(count) Wünsche warten sicher und gehen automatisch raus, sobald die Verbindung wieder da ist.", "wifi.exclamationmark", .orange)
         case .partiallyDelivered(let delivered, let queued):
-            ("Teilweise gesendet", "\(delivered) bestätigt · \(queued) weiterhin sicher vorgemerkt.", "arrow.trianglehead.2.clockwise.rotate.90", SecretMatchTheme.secondary)
+            ("Ein Teil ist schon raus", "\(delivered) verschickt · \(queued) warten noch auf Verbindung.", "arrow.trianglehead.2.clockwise.rotate.90", SecretMatchTheme.secondary)
         case .failed:
-            ("Nicht vorgemerkt", deliveryErrorMessage ?? "Mindestens eine Sendung wurde abgelehnt. Bitte Eingaben prüfen und erneut versuchen.", "exclamationmark.triangle.fill", .red)
+            ("Bitte kurz prüfen", deliveryErrorMessage ?? "Das hat gerade nicht geklappt. Bitte prüfe deine Eingaben und versuche es noch einmal.", "exclamationmark.triangle.fill", .red)
         }
 
         return HStack(alignment: .top, spacing: 12) {

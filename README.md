@@ -18,7 +18,7 @@ Die Reiter **Matches** und **Interesse** in der Teilnehmerübersicht unterscheid
 
 ## Verbindungsstatus
 
-Die App überwacht den Netzwerkpfad und prüft zusätzlich über `GET /wp-json/secretmatch/v1/status`, ob der SecretMatch-Server tatsächlich erreichbar ist. Bei fehlendem Internet oder einem nicht erreichbaren Server erscheint appweit ein schwebender Hinweis mit manueller Neuprüfung. Das Overlay belegt keinen Platz im eigentlichen Layout und verschiebt dadurch insbesondere den Senden-Button nicht. Solange die App aktiv ist, wird der Status außerdem alle 15 Sekunden aktualisiert. Ein erfolgreicher Check stößt offene Einträge der Sende-Warteschlange erneut an.
+Die App überwacht den Netzwerkpfad und prüft zusätzlich über `GET /wp-json/secretmatch/v1/status`, ob der SecretMatch-Server tatsächlich erreichbar ist. Bei fehlendem Internet oder einem nicht erreichbaren Server erscheint appweit ein schwebender Hinweis mit manueller Neuprüfung. Das Overlay belegt keinen Platz im eigentlichen Layout und verschiebt dadurch insbesondere den Senden-Button nicht. Alle Hinweise verwenden kurze Event-Sprache; bei einer nicht vorhandenen Zielnummer nennt die App die eingegebene Nummer und fordert direkt zur Prüfung auf. Solange die App aktiv ist, wird der Status außerdem alle 15 Sekunden aktualisiert. Ein erfolgreicher Check stößt offene Einträge der Sende-Warteschlange erneut an.
 
 Im Admin-Dashboard stehen Billboard und iPads direkt am Anfang der Übersicht. Bekannte iPads bleiben auch offline sichtbar. Das WordPress-Modul sendet über die bestehende Telegram-Konfiguration einmalige Warnungen und Entwarnungen, wenn Heartbeats länger ausbleiben beziehungsweise zurückkehren.
 

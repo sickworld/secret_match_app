@@ -48,6 +48,7 @@ class APIService: ObservableObject {
     @Published private(set) var queuedSendCount = 0
     @Published private(set) var isRetryingQueuedSends = false
     @Published private(set) var interactionDeliveryStatus: InteractionDeliveryStatus?
+    @Published private(set) var interactionDeliveryErrorMessage: String?
     @Published private(set) var connectionState: ConnectionState = .checking
     @Published private(set) var isCheckingConnection = false
     @Published private(set) var matchMessageOptions: [String] = []
@@ -166,6 +167,7 @@ class APIService: ObservableObject {
     }
 
     func submitInteractions(targetNumber: String, types: [String], message: String = "") async throws -> InteractionSubmissionResult {
+        interactionDeliveryErrorMessage = nil
         let senderNumber = number.normalizedEventNumber
         let normalizedTargetNumber = targetNumber.normalizedEventNumber
         let supportedTypes = Set(["normal", "hot", "bjob", "hjob", "ljob"])
@@ -323,7 +325,11 @@ class APIService: ObservableObject {
             throw InteractionSendError.invalidResponse
         }
         guard http.statusCode == 200 else {
-            throw InteractionSendError.httpStatus(http.statusCode)
+            throw interactionSendError(
+                responseData: data,
+                statusCode: http.statusCode,
+                targetNumber: interaction.targetNumber
+            )
         }
 
         let decoded = try JSONDecoder().decode(MatchResponse.self, from: data)
@@ -394,7 +400,11 @@ class APIService: ObservableObject {
         }
 
         if http.statusCode != 200 {
-            throw InteractionSendError.httpStatus(http.statusCode)
+            throw interactionSendError(
+                responseData: data,
+                statusCode: http.statusCode,
+                targetNumber: interaction.targetNumber
+            )
         }
 
         let json = try JSONSerialization.jsonObject(with: data) as? [String: Any]
@@ -1032,6 +1042,7 @@ class APIService: ObservableObject {
         self.adminFeedback = []
         self.isAdmin = false
         interactionDeliveryStatus = nil
+        interactionDeliveryErrorMessage = nil
         startDeviceHeartbeat()
     }
 
@@ -1232,6 +1243,7 @@ class APIService: ObservableObject {
 
         isProcessingSendQueue = true
         isRetryingQueuedSends = true
+        interactionDeliveryErrorMessage = nil
         retryTask?.cancel()
         defer {
             isProcessingSendQueue = false
@@ -1311,6 +1323,10 @@ class APIService: ObservableObject {
                 pendingInteractions.remove(at: index)
                 persistPendingInteractions()
                 rejectedDuringRun += 1
+                interactionDeliveryErrorMessage = interactionUserMessage(
+                    for: error,
+                    targetNumber: interaction.targetNumber
+                )
                 recordTelemetry(
                     severity: "error",
                     category: "queue",
@@ -1379,7 +1395,7 @@ class APIService: ObservableObject {
                     || statusCode == 425
                     || statusCode == 429
                     || statusCode >= 500
-            case .rejected:
+            case .invalidTarget, .invalidInput, .messageTooLong, .requestConflict, .rejected:
                 return false
             }
         }
@@ -1597,6 +1613,7 @@ class APIService: ObservableObject {
         pendingInteractions.removeAll()
         pendingTelemetryEvents.removeAll()
         interactionDeliveryStatus = nil
+        interactionDeliveryErrorMessage = nil
         persistPendingInteractions()
         persistPendingTelemetryEvents()
         defaults.removeObject(forKey: Self.lastSuccessfulSyncKey)
@@ -1628,6 +1645,10 @@ class APIService: ObservableObject {
             switch sendError {
             case .invalidResponse: return "invalid_response"
             case .httpStatus(let status): return "http_\(status)"
+            case .invalidTarget: return "invalid_target"
+            case .invalidInput: return "invalid_input"
+            case .messageTooLong: return "message_too_long"
+            case .requestConflict: return "request_conflict"
             case .rejected: return "rejected"
             }
         }
@@ -1638,6 +1659,46 @@ class APIService: ObservableObject {
             return "decoding"
         }
         return "unknown"
+    }
+
+    private func interactionSendError(
+        responseData: Data,
+        statusCode: Int,
+        targetNumber: String
+    ) -> InteractionSendError {
+        let responseError = try? JSONDecoder().decode(InteractionAPIErrorResponse.self, from: responseData)
+
+        switch responseError?.code {
+        case "invalid_target":
+            return .invalidTarget(targetNumber)
+        case "invalid", "invalid_number":
+            return .invalidInput
+        case "message_too_long":
+            return .messageTooLong
+        case "invalid_request_id", "request_id_conflict":
+            return .requestConflict
+        default:
+            return .httpStatus(statusCode)
+        }
+    }
+
+    private func interactionUserMessage(for error: Error, targetNumber: String) -> String {
+        guard let sendError = error as? InteractionSendError else {
+            return "Das hat gerade nicht geklappt. Bitte versuche es noch einmal."
+        }
+
+        switch sendError {
+        case .invalidTarget(let number):
+            return "Die Nummer \(number.displayEventNumber) gibt es bei diesem Event nicht. Bitte prüfe die Zielnummer."
+        case .invalidInput:
+            return "Bitte prüfe die Zielnummer und deine Auswahl."
+        case .messageTooLong:
+            return "Deine Nachricht ist zu lang. Bitte kürze sie auf höchstens 180 Zeichen."
+        case .requestConflict:
+            return "Diese Sendung konnte nicht eindeutig zugeordnet werden. Bitte sende sie noch einmal."
+        case .invalidResponse, .httpStatus, .rejected:
+            return "Das hat gerade nicht geklappt. Bitte prüfe die Nummer \(targetNumber.displayEventNumber) und versuche es noch einmal."
+        }
     }
 
     private static func iso8601String(_ date: Date) -> String {
@@ -1664,7 +1725,15 @@ private struct TelemetryEnvelope: Encodable {
 private enum InteractionSendError: Error {
     case invalidResponse
     case httpStatus(Int)
+    case invalidTarget(String)
+    case invalidInput
+    case messageTooLong
+    case requestConflict
     case rejected
+}
+
+private struct InteractionAPIErrorResponse: Decodable {
+    let code: String
 }
 
 private struct AdminMutationResponseError: Decodable {

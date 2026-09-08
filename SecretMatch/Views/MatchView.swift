@@ -211,7 +211,7 @@ struct MatchView: View {
                         queuedSendCount: api.queuedSendCount,
                         isRetryingQueuedSends: api.isRetryingQueuedSends,
                         deliveryStatus: submissionFailed ? .failed : api.interactionDeliveryStatus,
-                        deliveryErrorMessage: submissionFailed ? responseMessage : nil,
+                        deliveryErrorMessage: submissionFailed ? responseMessage : api.interactionDeliveryErrorMessage,
                         onRetryQueuedSends: retryQueuedSends
                     )
                     .padding(18)
@@ -234,7 +234,7 @@ struct MatchView: View {
                     queuedSendCount: api.queuedSendCount,
                     isRetryingQueuedSends: api.isRetryingQueuedSends,
                     deliveryStatus: submissionFailed ? .failed : api.interactionDeliveryStatus,
-                    deliveryErrorMessage: submissionFailed ? responseMessage : nil,
+                    deliveryErrorMessage: submissionFailed ? responseMessage : api.interactionDeliveryErrorMessage,
                     onRetryQueuedSends: retryQueuedSends,
                     fillsAvailableSpace: true,
                     availableHeight: availableHeight
@@ -293,7 +293,8 @@ struct MatchView: View {
                 responseMessage = result.userMessage
                 matchMessage = ""
             } catch {
-                responseMessage = "Die Aktionen konnten nicht vorgemerkt werden. Bitte versuche es erneut."
+                responseMessage = api.interactionDeliveryErrorMessage
+                    ?? "Das hat gerade nicht geklappt. Bitte prüfe deine Eingaben und versuche es noch einmal."
                 submissionFailed = true
             }
         }
