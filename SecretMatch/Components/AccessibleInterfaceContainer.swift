@@ -92,7 +92,7 @@ struct AccessibleInterfaceContainer<Content: View>: View {
                     .onPreferenceChange(SecretMatchScaleControlsHiddenPreferenceKey.self) { hidden in
                         hidesScaleControls = hidden
                         if hidden {
-                            resetScaleToStandard()
+                            resetAccessibilityToDefaults()
                         }
                     }
 
@@ -173,14 +173,15 @@ struct AccessibleInterfaceContainer<Content: View>: View {
     }
 
     @MainActor
-    private func resetScaleToStandard() {
-        guard storedLevel != InterfaceScaleLevel.standard.rawValue else { return }
+    private func resetAccessibilityToDefaults() {
+        guard storedLevel != InterfaceScaleLevel.standard.rawValue || highContrastEnabled else { return }
 
         scaleChangeTask?.cancel()
         var transaction = Transaction()
         transaction.disablesAnimations = true
         withTransaction(transaction) {
             storedLevel = InterfaceScaleLevel.standard.rawValue
+            highContrastEnabled = false
             contentOpacity = 1
             isChangingScale = false
         }

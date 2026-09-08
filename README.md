@@ -42,9 +42,9 @@ Die PIN-Erstanlage kann jederzeit über **Abbrechen** verlassen werden. Dabei ve
 
 ## Barrierearme Darstellung
 
-Die dauerhaft eingeblendeten Schaltflächen **A−** und **A+** wechseln zwischen 100 %, 115 % und 130 % Darstellungsgröße. Direkt daneben aktiviert **Kontrast** einen dauerhaft gespeicherten High-Contrast-Modus mit schwarzem Hintergrund, helleren Sekundärtexten, kräftigeren Farben und klareren Begrenzungen. Die App respektiert zusätzlich die iPad-Systemeinstellung für erhöhten Kontrast. Beim Bildschirmschoner bleibt die gesamte Bedienleiste verborgen.
+Die dauerhaft eingeblendeten Schaltflächen **A−** und **A+** wechseln zwischen 100 %, 115 % und 130 % Darstellungsgröße. Direkt daneben aktiviert **Kontrast** einen dauerhaft gespeicherten High-Contrast-Modus mit schwarzem Hintergrund, helleren Sekundärtexten, kräftigeren Farben und klareren Begrenzungen. Die App respektiert zusätzlich die iPad-Systemeinstellung für erhöhten Kontrast. Beim Start des Bildschirmschoners wird die gesamte Bedienleiste verborgen und die manuelle Darstellung auf 100 % ohne High Contrast zurückgesetzt. Ein durch die iPad-Systemeinstellung erzwungener erhöhter Kontrast bleibt aktiv.
 
-Beim Zoomen werden Texte, Bedienelemente und Abstände gemeinsam skaliert; responsive Ansichten brechen bei Bedarf um oder werden scrollbar. Zoom und Kontrast werden unabhängig voneinander pro App und Gerät gespeichert.
+Beim Zoomen werden Texte, Bedienelemente und Abstände gemeinsam skaliert; responsive Ansichten brechen bei Bedarf um oder werden scrollbar. Zoom und Kontrast werden unabhängig voneinander pro App und Gerät gespeichert, bis der Bildschirmschoner beide manuellen Einstellungen zurücksetzt.
 
 Freie Match-Nachrichten werden über eine appinterne QWERTZ-Tastatur mit Umlauten, Zahlen und Satzzeichen eingegeben. Die Schnelltexte lassen sich sowohl in der Admin-App unter **Steuerung → Match-Schnelltexte** als auch im WordPress-Backend unter **SecretMatch → Einstellungen** pflegen; beide Oberflächen bearbeiten dieselbe Liste.
 
