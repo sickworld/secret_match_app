@@ -46,6 +46,7 @@ class APIService: ObservableObject {
     @Published var adminDashboard: AdminDashboard?
     @Published var adminParticipants = AdminParticipants(allowed: [], active: [])
     @Published private(set) var queuedSendCount = 0
+    @Published private(set) var queuedBatchCount = 0
     @Published private(set) var isRetryingQueuedSends = false
     @Published private(set) var interactionDeliveryStatus: InteractionDeliveryStatus?
     @Published private(set) var interactionDeliveryErrorMessage: String?
@@ -1190,6 +1191,7 @@ class APIService: ObservableObject {
         }
         let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? ""
         let devicePending = pendingInteractions
+        let queuedBatchCount = Set(devicePending.map(\.batchID)).count
         let oldestPendingSeconds = devicePending.map {
             max(0, Int(Date().timeIntervalSince($0.createdAt)))
         }.max() ?? 0
@@ -1203,6 +1205,7 @@ class APIService: ObservableObject {
             "battery_state": state,
             "app_version": version,
             "queued_send_count": devicePending.count,
+            "queued_batch_count": queuedBatchCount,
             "oldest_pending_seconds": oldestPendingSeconds,
             "last_successful_sync_at": lastSync.map(Self.iso8601String) ?? "",
             "connection_state": telemetryValue(for: connectionState),
@@ -1479,7 +1482,9 @@ class APIService: ObservableObject {
 
     private func updateQueuedSendCount() {
         let senderNumber = number.normalizedEventNumber
-        queuedSendCount = pendingInteractions.filter { $0.senderNumber == senderNumber }.count
+        let participantPending = pendingInteractions.filter { $0.senderNumber == senderNumber }
+        queuedBatchCount = Set(participantPending.map(\.batchID)).count
+        queuedSendCount = participantPending.count
     }
 
     private func persistPendingInteractions() {

@@ -22,6 +22,7 @@ struct MatchInputBox: View {
     let quickMessages: [String]
     let onSend: () -> Void
     var queuedSendCount = 0
+    var queuedBatchCount = 0
     var isRetryingQueuedSends = false
     var deliveryStatus: InteractionDeliveryStatus?
     var deliveryErrorMessage: String?
@@ -349,7 +350,10 @@ struct MatchInputBox: View {
                 .foregroundStyle(SecretMatchTheme.secondary)
 
             VStack(alignment: .leading, spacing: 3) {
-                Text(queuedSendCount == 1 ? "1 Wunsch wartet sicher" : "\(queuedSendCount) Wünsche warten sicher")
+                Text(InteractionQueueWording.waitingDescription(
+                    reportedShipmentCount: queuedBatchCount,
+                    actionCount: queuedSendCount
+                ))
                     .font(.headline.bold())
                     .foregroundStyle(.white)
                 Text("Geht automatisch raus, sobald die Verbindung wieder da ist.")
@@ -380,11 +384,11 @@ struct MatchInputBox: View {
     private func deliveryFeedback(_ status: InteractionDeliveryStatus) -> some View {
         let presentation: (title: String, detail: String, icon: String, color: Color) = switch status {
         case .delivered(let count):
-            (count == 1 ? "Ist raus! 💚" : "Alles ist raus! 💚", count == 1 ? "Dein Wunsch wurde verschickt." : "Deine Wünsche wurden verschickt.", "checkmark.circle.fill", .green)
+            (count == 1 ? "Ist raus! 💚" : "Alles ist raus! 💚", count == 1 ? "Deine Aktion wurde verschickt." : "Deine \(count) Aktionen wurden verschickt.", "checkmark.circle.fill", .green)
         case .queued(let count):
-            ("Kein Netz – kein Problem", count == 1 ? "Dein Wunsch wartet sicher und geht automatisch raus, sobald die Verbindung wieder da ist." : "Deine \(count) Wünsche warten sicher und gehen automatisch raus, sobald die Verbindung wieder da ist.", "wifi.exclamationmark", .orange)
+            ("Kein Netz – kein Problem", InteractionQueueWording.waitingDescription(reportedShipmentCount: 1, actionCount: count) + " sicher und geht automatisch raus, sobald die Verbindung wieder da ist.", "wifi.exclamationmark", .orange)
         case .partiallyDelivered(let delivered, let queued):
-            ("Ein Teil ist schon raus", "\(delivered) verschickt · \(queued) warten noch auf Verbindung.", "arrow.trianglehead.2.clockwise.rotate.90", SecretMatchTheme.secondary)
+            ("Ein Teil ist schon raus", "\(delivered) Aktionen verschickt · \(queued) Aktionen warten noch auf Verbindung.", "arrow.trianglehead.2.clockwise.rotate.90", SecretMatchTheme.secondary)
         case .failed:
             ("Bitte kurz prüfen", deliveryErrorMessage ?? "Das hat gerade nicht geklappt. Bitte prüfe deine Eingaben und versuche es noch einmal.", "exclamationmark.triangle.fill", .red)
         }

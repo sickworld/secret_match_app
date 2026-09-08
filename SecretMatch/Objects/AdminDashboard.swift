@@ -121,6 +121,7 @@ struct AdminDeviceStatus: Decodable, Identifiable {
     let lastSeen: Int
     let online: Bool?
     let queuedSendCount: Int?
+    let queuedBatchCount: Int?
     let oldestPendingSeconds: Int?
     let lastSuccessfulSyncAt: String?
     let connectionState: String?
@@ -138,6 +139,20 @@ struct AdminDeviceStatus: Decodable, Identifiable {
         return "vor \(seconds / 3600) Std."
     }
 
+    var queueSummary: String {
+        InteractionQueueWording.summary(
+            reportedShipmentCount: queuedBatchCount,
+            actionCount: queuedSendCount ?? 0
+        )
+    }
+
+    var queueWaitingDescription: String {
+        InteractionQueueWording.waitingDescription(
+            reportedShipmentCount: queuedBatchCount,
+            actionCount: queuedSendCount ?? 0
+        )
+    }
+
     private enum CodingKeys: String, CodingKey {
         case deviceID = "device_id"
         case name
@@ -148,6 +163,7 @@ struct AdminDeviceStatus: Decodable, Identifiable {
         case lastSeen = "last_seen"
         case online
         case queuedSendCount = "queued_send_count"
+        case queuedBatchCount = "queued_batch_count"
         case oldestPendingSeconds = "oldest_pending_seconds"
         case lastSuccessfulSyncAt = "last_successful_sync_at"
         case connectionState = "connection_state"

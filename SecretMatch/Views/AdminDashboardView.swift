@@ -661,7 +661,7 @@ struct AdminDashboardView: View {
                                 .font(.caption.bold())
                                 .foregroundStyle(device.isOnline ? Color.green : Color.red)
                             if let queueCount = device.queuedSendCount, queueCount > 0 {
-                                Text("\(queueCount) Sendung(en) warten · älteste seit \(device.oldestPendingSeconds ?? 0) Sek.")
+                                Text("\(device.queueWaitingDescription) · älteste Aktion seit \(device.oldestPendingSeconds ?? 0) Sek.")
                                     .font(.caption.bold())
                                     .foregroundStyle(.orange)
                             } else if let lastSync = device.lastSuccessfulSyncAt, !lastSync.isEmpty {

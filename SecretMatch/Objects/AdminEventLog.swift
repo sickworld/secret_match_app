@@ -17,11 +17,11 @@ struct AdminEventLogEntry: Identifiable, Decodable {
 
     var title: String {
         let titles = [
-            "interaction_queued": "Sendung eingereiht",
-            "interaction_send_started": "Sendeversuch gestartet",
+            "interaction_queued": "Aktion eingereiht",
+            "interaction_send_started": "Aktion wird gesendet",
             "interaction_retry_scheduled": "Erneuter Versuch geplant",
-            "interaction_delivered": "Sendung zugestellt",
-            "interaction_rejected": "Sendung abgelehnt",
+            "interaction_delivered": "Aktion zugestellt",
+            "interaction_rejected": "Aktion abgelehnt",
             "queue_backlog_detected": "Warteschlange erkannt",
             "queue_stalled": "Warteschlange hängt",
             "queue_cleared": "Warteschlange abgearbeitet",

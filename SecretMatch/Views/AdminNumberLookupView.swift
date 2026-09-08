@@ -152,7 +152,7 @@ struct AdminNumberLookupView: View {
                             Circle().fill(device.isOnline ? Color.green : Color.red).frame(width: 10, height: 10)
                             VStack(alignment: .leading, spacing: 3) {
                                 Text(device.name ?? "iPad").font(.headline).foregroundStyle(.white)
-                                Text("\(device.lastSeenDescription) · Akku \(device.batteryLevel) % · Queue \(device.queuedSendCount ?? 0)")
+                                Text("\(device.lastSeenDescription) · Akku \(device.batteryLevel) % · " + ((device.queuedSendCount ?? 0) == 0 ? "Queue frei" : device.queueSummary))
                                     .font(.caption.weight(.semibold))
                                     .foregroundStyle(SecretMatchTheme.muted)
                             }

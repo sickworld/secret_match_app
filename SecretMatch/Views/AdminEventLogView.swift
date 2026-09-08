@@ -164,7 +164,7 @@ struct AdminEventLogView: View {
 
         return LazyVGrid(columns: [GridItem(.adaptive(minimum: 150), spacing: 12)], spacing: 12) {
             summaryCard("Offline", value: offline, icon: "wifi.slash", color: offline > 0 ? .red : .green)
-            summaryCard("In Queue", value: queued, icon: "tray.full.fill", color: queued > 0 ? .orange : .green)
+            summaryCard("Aktionen in Queue", value: queued, icon: "tray.full.fill", color: queued > 0 ? .orange : .green)
             summaryCard("Akkuwarnungen", value: lowBattery, icon: "battery.25percent", color: lowBattery > 0 ? .orange : .green)
             summaryCard("Fehler im Filter", value: errors, icon: "exclamationmark.triangle.fill", color: errors > 0 ? .red : .green)
         }

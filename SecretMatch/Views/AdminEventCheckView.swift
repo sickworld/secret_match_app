@@ -145,19 +145,37 @@ struct AdminEventCheckView: View {
         let devices = dashboard.devices ?? []
         let onlineDevices = devices.filter(\.isOnline)
         let offlineDevices = devices.count - onlineDevices.count
-        let queued = devices.reduce(0) { $0 + ($1.queuedSendCount ?? 0) }
+        let queuedActions = devices.reduce(0) { $0 + ($1.queuedSendCount ?? 0) }
+        let queuedShipments = devices.reduce(0) {
+            $0 + InteractionQueueWording.shipmentCount(
+                reportedShipmentCount: $1.queuedBatchCount,
+                actionCount: $1.queuedSendCount ?? 0
+            )
+        }
         let lowBattery = devices.filter { $0.batteryLevel < 30 }.count
         let billboards = dashboard.billboards ?? []
         let onlineBillboards = billboards.filter(\.online).count
         let quickMessages = dashboard.matchMessageOptions ?? []
-        let moduleCurrent = dashboard.pluginVersion.compare("2026.09.08.4", options: .numeric) != .orderedAscending
+        let moduleCurrent = dashboard.pluginVersion.compare("2026.09.08.6", options: .numeric) != .orderedAscending
 
         return [
             CheckItem(id: "api", title: "Server & API", detail: dashboard.apiOK ? "WordPress antwortet · Modul \(dashboard.pluginVersion)" : "Die API meldet einen Fehler.", passed: dashboard.apiOK, importance: .required, icon: "server.rack"),
-            CheckItem(id: "module", title: "WordPress-Modul", detail: moduleCurrent ? "Version \(dashboard.pluginVersion) unterstützt alle Admin-Werkzeuge." : "Bitte mindestens Version 2026.09.08.4 installieren.", passed: moduleCurrent, importance: .required, icon: "shippingbox.fill"),
+            CheckItem(id: "module", title: "WordPress-Modul", detail: moduleCurrent ? "Version \(dashboard.pluginVersion) unterstützt alle Admin-Werkzeuge." : "Bitte mindestens Version 2026.09.08.6 installieren.", passed: moduleCurrent, importance: .required, icon: "shippingbox.fill"),
             CheckItem(id: "numbers", title: "Eventnummern", detail: dashboard.allowedParticipants > 0 ? "\(dashboard.allowedParticipants) Nummern sind freigegeben." : "Es sind keine Nummern freigegeben.", passed: dashboard.allowedParticipants > 0, importance: .required, icon: "number"),
             CheckItem(id: "ipads", title: "iPads erreichbar", detail: devices.isEmpty ? "Noch kein iPad registriert." : "\(onlineDevices.count) von \(devices.count) iPads sind online.", passed: !devices.isEmpty && offlineDevices == 0, importance: .required, icon: "ipad"),
-            CheckItem(id: "queue", title: "Sendewarteschlangen", detail: queued == 0 ? "Keine wartenden Sendungen." : "\(queued) Sendungen warten noch auf Zustellung.", passed: queued == 0, importance: .required, icon: "tray.full"),
+            CheckItem(
+                id: "queue",
+                title: "Sendewarteschlangen",
+                detail: queuedActions == 0
+                    ? "Keine wartenden Versandvorgänge."
+                    : InteractionQueueWording.waitingDescription(
+                        reportedShipmentCount: queuedShipments,
+                        actionCount: queuedActions
+                    ) + " noch auf Zustellung.",
+                passed: queuedActions == 0,
+                importance: .required,
+                icon: "tray.full"
+            ),
             CheckItem(id: "battery", title: "Akkustände", detail: devices.isEmpty ? "Noch keine Akkudaten vorhanden." : (lowBattery == 0 ? "Alle iPads haben mindestens 30 %." : "\(lowBattery) iPads liegen unter 30 %."), passed: !devices.isEmpty && lowBattery == 0, importance: .recommended, icon: "battery.75percent"),
             CheckItem(id: "billboard", title: "Billboards", detail: billboards.isEmpty ? "Noch kein Billboard angelegt." : "\(onlineBillboards) von \(billboards.count) Billboards sind online.", passed: !billboards.isEmpty && onlineBillboards == billboards.count, importance: .recommended, icon: "tv"),
             CheckItem(id: "apns", title: "Admin-Push", detail: dashboard.apnsConfigured == true ? "APNs ist konfiguriert; \(dashboard.adminPushDevices ?? 0) Geräte registriert." : "APNs ist nicht vollständig konfiguriert.", passed: dashboard.apnsConfigured == true && (dashboard.adminPushDevices ?? 0) > 0, importance: .recommended, icon: "bell.badge"),

@@ -264,8 +264,9 @@ struct AdminStatisticsView: View {
                                 Text("Akku \(device.batteryLevel) %")
                                     .font(.caption.bold().monospacedDigit())
                                 Spacer()
-                                Text("Queue \(device.queuedSendCount ?? 0)")
+                                Text((device.queuedSendCount ?? 0) == 0 ? "Queue frei" : device.queueSummary)
                                     .font(.caption.bold().monospacedDigit())
+                                    .multilineTextAlignment(.trailing)
                             }
                             .foregroundStyle(SecretMatchTheme.muted)
                             GeometryReader { proxy in
