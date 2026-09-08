@@ -16,7 +16,7 @@ Die Admin-App bietet zusätzlich eine globale Nummernakte mit bestätigtem PIN- 
 
 Der iPhone-Admin-Target und der im Event-iPad integrierte Admin-Modus verwenden dieselben SwiftUI-Views, Models und Methoden aus `APIService`. `AdminDashboardSection` ist die zentrale Quelle für Titel, Icons, Farben, Reihenfolge und Ziele aller Admin-Werkzeuge. Neue Admin-Funktionen werden dort einmal registriert und anschließend über `AdminMainView` auf beiden Gerätegrößen geöffnet; eigene API- oder View-Model-Implementierungen pro Target sind zu vermeiden.
 
-Auf dem iPhone öffnet die Kopfleiste das kompakte Admin-Menü. Auf dem iPad bleibt die permanente Admin-Navigation bewusst auf den Eintrag **Aktionen** beschränkt. Dahinter liegt eine adaptive Werkzeugübersicht mit Livefeed, Aktionen-, Request- und Match-CRUD, Teilnehmerverwaltung, Eventsteuerung, Event-Check, Sendungsdiagnose, Protokoll, Statistik, Feedback sowie System und Reset. Detailseiten erhalten auf dem iPad einen direkten Rückweg zu **Aktionen**. Die Inhalte nutzen adaptive Grids, statt das iPhone-Layout lediglich zu verbreitern.
+Auf dem iPhone öffnet die Kopfleiste das kompakte Admin-Menü. Auf dem iPad nutzt der Adminbereich die volle Breite ohne permanente Sidebar; alle Funktionen liegen in der adaptiven Übersicht **Aktionen**. Sie enthält Livefeed, Aktionen-, Request- und Match-CRUD, Teilnehmerverwaltung, Eventsteuerung, Event-Check, Sendungsdiagnose, Protokoll, Statistik, Feedback sowie System und Reset. Nummernsuche und Admin-Logout bleiben direkt in der Kopfzeile erreichbar, Detailseiten erhalten einen Rückweg zu **Aktionen**. Die Inhalte nutzen adaptive Grids, statt das iPhone-Layout lediglich zu verbreitern.
 
 ## UI-Konventionen
 

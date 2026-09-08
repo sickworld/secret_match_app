@@ -9,15 +9,7 @@ struct AdminMainView: View {
     @State private var dashboardSection: AdminDashboardSection = .overview
 
     var body: some View {
-        GeometryReader { proxy in
-#if ADMIN_APP
-            let isCompact = true
-#else
-            let isCompact = proxy.size.width < 760
-#endif
-
-            content(isCompact: isCompact)
-        }
+        content(isCompact: usesCompactNavigation)
         .fullScreenCover(isPresented: $showBillboard) {
             AdminBillboardView(isPresented: $showBillboard)
                 .environmentObject(api)
@@ -68,17 +60,11 @@ struct AdminMainView: View {
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
         } else {
-            HStack(spacing: 0) {
-                sidebar(isCompact: false)
+            VStack(spacing: 0) {
+                adminToolbar(showsMenu: false)
 
-                Divider().background(Color.white.opacity(0.3))
-
-                VStack(spacing: 0) {
-                    adminToolbar(showsMenu: false)
-
-                    adminPage
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
-                }
+                adminPage
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
         }
     }
@@ -177,6 +163,25 @@ struct AdminMainView: View {
             }
             .accessibilityLabel("Nummer suchen")
             .accessibilityHint("Öffnet die globale Suche nach einer Eventnummer")
+
+            if !showsMenu {
+                Button {
+                    api.logout()
+                } label: {
+                    Label("Admin Logout", systemImage: "rectangle.portrait.and.arrow.right")
+                        .font(.headline.bold())
+                        .foregroundStyle(SecretMatchTheme.danger)
+                        .padding(.horizontal, 15)
+                        .frame(height: 48)
+                        .background(SecretMatchTheme.danger.opacity(0.12))
+                        .clipShape(RoundedRectangle(cornerRadius: SecretMatchTheme.cornerRadius, style: .continuous))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: SecretMatchTheme.cornerRadius, style: .continuous)
+                                .stroke(SecretMatchTheme.danger.opacity(0.6), lineWidth: 1)
+                        )
+                }
+                .accessibilityHint("Beendet die Admin-Sitzung und kehrt zum Teilnehmer-Login zurück")
+            }
         }
         .padding(.horizontal, 18)
         .padding(.vertical, 10)
@@ -197,6 +202,14 @@ struct AdminMainView: View {
             isCompact: isCompact
         )
         .environmentObject(api)
+    }
+
+    private var usesCompactNavigation: Bool {
+#if ADMIN_APP
+        true
+#else
+        false
+#endif
     }
 
 }
