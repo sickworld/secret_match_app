@@ -91,7 +91,7 @@ struct SidebarView: View {
                         .foregroundStyle(.white)
                 }
                 .padding(.horizontal, isCompact ? 14 : metric(19, 20))
-                .frame(maxWidth: .infinity, minHeight: isCompact ? 58 : metric(58, 62), alignment: .leading)
+                .frame(maxWidth: .infinity, minHeight: isCompact ? 52 : metric(66, 70), alignment: .leading)
                 .background(SecretMatchTheme.surfaceRaised)
                 .clipShape(RoundedRectangle(cornerRadius: isCompact ? 16 : metric(16, 18), style: .continuous))
                 .overlay(
