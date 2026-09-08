@@ -18,10 +18,10 @@ struct ParticipantOverviewView: View {
     @Environment(\.secretMatchHighContrast) private var highContrast
     @Environment(\.accessibilityDifferentiateWithoutColor) private var differentiateWithoutColor
     @Binding var isPresented: Bool
+    @Binding var selectedSection: ParticipantOverviewSection
     @State private var matches: [Match] = []
     @State private var interests: [IncomingInterest] = []
     @State private var actions: [SecretAction] = []
-    @State private var selectedSection: ParticipantOverviewSection = .matches
     @State private var selectedType = "all"
     @State private var numberQuery = ""
     @State private var matchesLoadErrorMessage: String?

@@ -4,6 +4,7 @@ struct MatchView: View {
     @EnvironmentObject var api: APIService
     
     @State private var showOverviewOverlay = false
+    @State private var selectedOverviewSection: ParticipantOverviewSection = .matches
     @State private var showGuideOverlay = false
     @State private var showRulesOverlay = false
     @State private var showInfoOverlay = false
@@ -138,7 +139,10 @@ struct MatchView: View {
                 }
             
             if showOverviewOverlay {
-                ParticipantOverviewView(isPresented: $showOverviewOverlay)
+                ParticipantOverviewView(
+                    isPresented: $showOverviewOverlay,
+                    selectedSection: $selectedOverviewSection
+                )
                     .environmentObject(api)
                     .zIndex(5)
             }
@@ -262,6 +266,7 @@ struct MatchView: View {
             registerActivity: resetInactivityTimer,
             logout: { api.logout() },
             showOverviewOverlay: $showOverviewOverlay,
+            selectedOverviewSection: $selectedOverviewSection,
             showGuideOverlay: $showGuideOverlay,
             showRulesOverlay: $showRulesOverlay,
             showInfoOverlay: $showInfoOverlay,

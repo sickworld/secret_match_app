@@ -7,6 +7,7 @@ struct SidebarView: View {
     var registerActivity: () -> Void
     var logout: () -> Void
     @Binding var showOverviewOverlay: Bool
+    @Binding var selectedOverviewSection: ParticipantOverviewSection
     @Binding var showGuideOverlay: Bool
     @Binding var showRulesOverlay: Bool
     @Binding var showInfoOverlay: Bool
@@ -103,74 +104,34 @@ struct SidebarView: View {
             Spacer()
                 .frame(height: isCompact ? 18 : metric(18, 14))
 
-            Button {
-                registerActivity()
-                showOverviewOverlay = true
-            } label: {
-                HStack(spacing: isCompact ? 12 : metric(12, 10)) {
-                    Image(systemName: "rectangle.grid.1x2.fill")
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text("Deine Übersicht")
-                            .lineLimit(1)
-                        Text("Matches · Interesse · Aktionen")
-                            .font(.system(
-                                size: isCompact ? 12 : metric(11, 12),
-                                weight: .semibold,
-                                design: .rounded
-                            ))
-                            .foregroundStyle(SecretMatchTheme.muted)
-                            .lineLimit(1)
-                    }
-                }
-            }
-            .buttonStyle(SidebarButtonStyle(
-                compact: isCompact,
-                stabilizedScale: isCompact ? nil : normalizedScale
-            ))
-            .accessibilityLabel("Deine Übersicht: Matches, Interesse und Aktionen")
+            overviewButton(
+                "Matches",
+                systemImage: "sparkles",
+                section: .matches
+            )
 
             Spacer()
                 .frame(height: isCompact ? 12 : metric(10, 10))
 
-            Button {
-                registerActivity()
-                showGuideOverlay = true
-            } label: {
-                Label("So funktioniert's", systemImage: "questionmark.circle.fill")
-            }
-            .buttonStyle(SidebarButtonStyle(
-                compact: isCompact,
-                stabilizedScale: isCompact ? nil : normalizedScale
-            ))
+            overviewButton(
+                "Interesse",
+                systemImage: "heart.text.square.fill",
+                section: .interests
+            )
 
             Spacer()
                 .frame(height: isCompact ? 12 : metric(10, 10))
 
-            Button {
-                registerActivity()
-                showRulesOverlay = true
-            } label: {
-                Label("Spielregeln", systemImage: "list.bullet.clipboard.fill")
-            }
-            .buttonStyle(SidebarButtonStyle(
-                compact: isCompact,
-                stabilizedScale: isCompact ? nil : normalizedScale
-            ))
+            overviewButton(
+                "Aktionen",
+                systemImage: "paperplane.fill",
+                section: .actions
+            )
 
             Spacer()
-                .frame(height: isCompact ? 12 : metric(10, 10))
+                .frame(height: isCompact ? 8 : metric(8, 7))
 
-            Button {
-                registerActivity()
-                showInfoOverlay = true
-            } label: {
-                Label("Info & Support", systemImage: "info.circle.fill")
-            }
-            .buttonStyle(SidebarButtonStyle(
-                compact: isCompact,
-                stabilizedScale: isCompact ? nil : normalizedScale
-            ))
-            .accessibilityHint("Öffnet Feedback, Datenschutz und Impressum")
+            utilityLinks
 
             Spacer()
                 .frame(height: isCompact ? 18 : metric(18, 14))
@@ -244,5 +205,68 @@ struct SidebarView: View {
                 .fill(SecretMatchTheme.border)
                 .frame(width: isCompact ? nil : 1, height: isCompact ? 1 : nil)
         }
+    }
+
+    private func overviewButton(
+        _ title: String,
+        systemImage: String,
+        section: ParticipantOverviewSection
+    ) -> some View {
+        Button {
+            registerActivity()
+            selectedOverviewSection = section
+            showOverviewOverlay = true
+        } label: {
+            Label(title, systemImage: systemImage)
+        }
+        .buttonStyle(SidebarButtonStyle(
+            compact: isCompact,
+            stabilizedScale: isCompact ? nil : normalizedScale
+        ))
+        .accessibilityHint("Öffnet direkt den Bereich \(title)")
+    }
+
+    @ViewBuilder
+    private var utilityLinks: some View {
+        if isCompact {
+            HStack(spacing: 0) {
+                utilityLink("So funktioniert's") { showGuideOverlay = true }
+                utilityLink("Spielregeln") { showRulesOverlay = true }
+                utilityLink("Info & Support") { showInfoOverlay = true }
+                    .accessibilityHint("Öffnet Feedback, Datenschutz und Impressum")
+            }
+        } else {
+            VStack(spacing: 0) {
+                HStack(spacing: 0) {
+                    utilityLink("So funktioniert's") { showGuideOverlay = true }
+                    Text("·")
+                        .font(.system(size: metric(14, 15), weight: .bold, design: .rounded))
+                        .foregroundStyle(SecretMatchTheme.muted)
+                        .accessibilityHidden(true)
+                    utilityLink("Spielregeln") { showRulesOverlay = true }
+                }
+
+                utilityLink("Info & Support") { showInfoOverlay = true }
+                    .accessibilityHint("Öffnet Feedback, Datenschutz und Impressum")
+            }
+        }
+    }
+
+    private func utilityLink(_ title: String, action: @escaping () -> Void) -> some View {
+        Button {
+            registerActivity()
+            action()
+        } label: {
+            Text(title)
+                .font(.system(
+                    size: isCompact ? 14 : metric(14, 15),
+                    weight: .bold,
+                    design: .rounded
+                ))
+                .frame(maxWidth: .infinity, minHeight: isCompact ? 44 : metric(44, 44))
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .foregroundStyle(SecretMatchTheme.secondary)
     }
 }
