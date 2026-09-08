@@ -53,7 +53,7 @@ struct SecretMatchApp: App {
         }
         .environmentObject(api)
         .preferredColorScheme(.dark)
-        .safeAreaInset(edge: .top, spacing: 0) {
+        .overlay(alignment: .top) {
             ConnectionStatusBanner(
                 state: api.connectionState,
                 isChecking: api.isCheckingConnection,
@@ -63,6 +63,7 @@ struct SecretMatchApp: App {
                     }
                 }
             )
+            .zIndex(100)
             .animation(.easeInOut(duration: 0.2), value: api.connectionState)
         }
         .task {
