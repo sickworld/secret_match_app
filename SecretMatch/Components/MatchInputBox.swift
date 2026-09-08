@@ -11,6 +11,7 @@ private struct ActionOption: Identifiable {
 
 struct MatchInputBox: View {
     @Environment(\.secretMatchInterfaceScale) private var interfaceScale
+    @Environment(\.secretMatchHighContrast) private var highContrast
     @State private var replacedCustomMessage: String?
     @State private var undoMessageTask: Task<Void, Never>?
     @State private var hidesDeliveredFeedback = false
@@ -442,17 +443,20 @@ struct MatchInputBox: View {
                 Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
                     .font(.system(size: metric(19, 22), weight: .semibold))
             }
-            .foregroundColor(.white)
+            .foregroundColor(highContrast && isSelected ? .black : .white)
             .padding(.horizontal, metric(16, 18))
             .frame(maxWidth: .infinity, minHeight: metric(72, 80))
             .background(
                 isSelected
-                    ? option.color.opacity(0.9)
-                    : option.color.opacity(0.16)
+                    ? (highContrast ? Color.white : option.color.opacity(0.9))
+                    : (highContrast ? Color.black : option.color.opacity(0.16))
             )
             .overlay(
                 RoundedRectangle(cornerRadius: 15)
-                    .stroke(option.color.opacity(isSelected ? 1 : 0.55), lineWidth: isSelected ? 2 : 1.2)
+                    .stroke(
+                        isSelected ? Color.white : (highContrast ? Color.white.opacity(0.9) : option.color.opacity(0.55)),
+                        lineWidth: highContrast ? 2.5 : (isSelected ? 2 : 1.2)
+                    )
             )
             .cornerRadius(15)
             .shadow(color: isSelected ? option.color.opacity(0.28) : .clear, radius: 12)
