@@ -501,7 +501,7 @@ struct AdminDashboardView: View {
 
     private var controls: some View {
         LazyVGrid(columns: [GridItem(.adaptive(minimum: 330), spacing: 16)], spacing: 16) {
-            controlCard(title: "🖼️ Bildschirmschoner & Sponsoren", subtitle: "Bilder, Texte, Sichtbarkeit und Reihenfolge gemeinsam pflegen") {
+            controlCard(title: "🖼️ Bildschirmschoner & Sponsoren", subtitle: "Startzeit, Bilder, Texte und Sichtbarkeit gemeinsam pflegen") {
                 Text(api.adminScreensaverItems.isEmpty
                      ? "Standardbilder sind aktiv."
                      : "\(api.adminScreensaverItems.count) eigene Medien im Katalog.")

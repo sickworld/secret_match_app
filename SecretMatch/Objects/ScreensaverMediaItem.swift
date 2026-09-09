@@ -50,6 +50,14 @@ struct ScreensaverMediaItem: Codable, Identifiable, Equatable, Sendable {
     }
 }
 
+struct ScreensaverSettingsResponse: Codable, Equatable, Sendable {
+    let idleSeconds: Int
+
+    private enum CodingKeys: String, CodingKey {
+        case idleSeconds = "idle_seconds"
+    }
+}
+
 private struct ManagedMediaBackdropModifier: ViewModifier {
     let enabled: Bool
     let insets: EdgeInsets
@@ -78,6 +86,16 @@ extension View {
 
 enum ScreensaverMediaCache {
     private static let catalogKey = "secretmatch.screensaver-media-catalog.v1"
+    private static let idleSecondsKey = "secretmatch.screensaver-idle-seconds.v1"
+
+    static func loadIdleSeconds() -> Int {
+        guard UserDefaults.standard.object(forKey: idleSecondsKey) != nil else { return 60 }
+        return max(15, min(600, UserDefaults.standard.integer(forKey: idleSecondsKey)))
+    }
+
+    static func storeIdleSeconds(_ seconds: Int) {
+        UserDefaults.standard.set(max(15, min(600, seconds)), forKey: idleSecondsKey)
+    }
 
     static func loadCatalog() -> [ScreensaverMediaItem] {
         guard let data = UserDefaults.standard.data(forKey: catalogKey),

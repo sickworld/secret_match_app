@@ -274,6 +274,7 @@ struct LoginView: View {
         .onChange(of: showInfoSupport) { _, _ in restartScreensaverTimer() }
         .onChange(of: showGenderChoice) { _, _ in restartScreensaverTimer() }
         .onChange(of: showPINSetup) { _, _ in restartScreensaverTimer() }
+        .onChange(of: api.screensaverIdleSeconds) { _, _ in restartScreensaverTimer() }
         .onChange(of: showAdminLogin) { _, isPresented in
             if isPresented {
                 suspendScreensaver()
@@ -503,7 +504,7 @@ struct LoginView: View {
 
         screensaverTask = Task { @MainActor in
             do {
-                try await Task.sleep(for: .seconds(60))
+                try await Task.sleep(for: .seconds(api.screensaverIdleSeconds))
             } catch {
                 return
             }

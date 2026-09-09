@@ -26,6 +26,8 @@ struct AdminScreensaverMediaView: View {
     @State private var editSortOrder = 0
     @State private var editErrorMessage: String?
     @State private var isWorking = false
+    @State private var isSavingIdleTime = false
+    @State private var idleSeconds = 60
     @State private var statusMessage: String?
     @State private var errorMessage: String?
 
@@ -34,6 +36,7 @@ struct AdminScreensaverMediaView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 20) {
                     feedback
+                    screensaverTiming
                     existingItems
                     addItem
                 }
@@ -74,6 +77,48 @@ struct AdminScreensaverMediaView: View {
         } message: {
             Text("Der Eintrag verschwindet von den iPads. Die Originaldatei bleibt in der WordPress-Mediathek erhalten.")
         }
+    }
+
+    private var screensaverTiming: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            Text("Automatischer Start")
+                .font(.title2.bold())
+                .foregroundStyle(.white)
+            Text("So lange wartet die Loginseite nach der letzten Bedienung.")
+                .foregroundStyle(SecretMatchTheme.muted)
+
+            Stepper(value: $idleSeconds, in: 15...600, step: 5) {
+                HStack {
+                    Text("Bildschirmschoner starten nach")
+                    Spacer()
+                    Text(formattedIdleTime)
+                        .font(.body.bold().monospacedDigit())
+                        .foregroundStyle(SecretMatchTheme.secondary)
+                }
+            }
+            .foregroundStyle(.white)
+
+            Button {
+                Task { await saveIdleTime() }
+            } label: {
+                if isSavingIdleTime {
+                    ProgressView().tint(.white)
+                } else {
+                    Label("Startzeit speichern", systemImage: "timer")
+                }
+            }
+            .buttonStyle(SecretPrimaryButtonStyle())
+            .disabled(isSavingIdleTime)
+        }
+        .secretCard(padding: 20)
+    }
+
+    private var formattedIdleTime: String {
+        let minutes = idleSeconds / 60
+        let seconds = idleSeconds % 60
+        if minutes == 0 { return "\(seconds) Sek." }
+        if seconds == 0 { return minutes == 1 ? "1 Minute" : "\(minutes) Minuten" }
+        return "\(minutes) Min. \(seconds) Sek."
     }
 
     @ViewBuilder
@@ -381,10 +426,26 @@ struct AdminScreensaverMediaView: View {
     private func loadItems() async {
         do {
             try await api.loadAdminScreensaverContent()
+            idleSeconds = api.screensaverIdleSeconds
             errorMessage = nil
         } catch {
             errorMessage = "Medien konnten nicht geladen werden."
         }
+    }
+
+    @MainActor
+    private func saveIdleTime() async {
+        isSavingIdleTime = true
+        statusMessage = nil
+        do {
+            try await api.updateAdminScreensaverSettings(idleSeconds: idleSeconds)
+            idleSeconds = api.screensaverIdleSeconds
+            statusMessage = "Startzeit des Bildschirmschoners wurde gespeichert."
+            errorMessage = nil
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+        isSavingIdleTime = false
     }
 
     @MainActor

@@ -22,6 +22,7 @@ class APIService: ObservableObject {
         pendingInteractions = Self.loadPendingInteractions()
         pendingTelemetryEvents = Self.loadPendingTelemetryEvents()
         screensaverItems = ScreensaverMediaCache.loadCatalog()
+        screensaverIdleSeconds = ScreensaverMediaCache.loadIdleSeconds()
         removeExpiredPendingInteractions()
         removeExpiredTelemetryEvents()
 
@@ -60,6 +61,7 @@ class APIService: ObservableObject {
     @Published private(set) var isCheckingConnection = false
     @Published private(set) var matchMessageOptions: [String] = []
     @Published private(set) var screensaverItems: [ScreensaverMediaItem]
+    @Published private(set) var screensaverIdleSeconds: Int
     @Published private(set) var adminScreensaverItems: [ScreensaverMediaItem] = []
     private var adminToken: String?
     private let baseURL = URL(string: "https://secret-match.de/wp-json/secretmatch/v1")!
@@ -1219,6 +1221,8 @@ class APIService: ObservableObject {
         lastScreensaverContentRefreshAt = Date()
         defer { isLoadingScreensaverContent = false }
 
+        await loadScreensaverSettings()
+
         do {
             let url = baseURL.appendingPathComponent("screensaver-content")
             var request = URLRequest(url: url)
@@ -1259,6 +1263,22 @@ class APIService: ObservableObject {
         }
     }
 
+    func loadScreensaverSettings() async {
+        guard isNetworkAvailable else { return }
+        do {
+            var request = URLRequest(url: baseURL.appendingPathComponent("screensaver-settings"))
+            request.timeoutInterval = 5
+            let (data, response) = try await Self.performTimedRequest(request, hardTimeout: 5)
+            guard let http = response as? HTTPURLResponse, http.statusCode == 200 else { return }
+            let settings = try JSONDecoder().decode(ScreensaverSettingsResponse.self, from: data)
+            let normalized = max(15, min(600, settings.idleSeconds))
+            screensaverIdleSeconds = normalized
+            ScreensaverMediaCache.storeIdleSeconds(normalized)
+        } catch {
+            // Keep the last server setting; a fresh install defaults to 60 seconds.
+        }
+    }
+
     func cachedScreensaverImage(for item: ScreensaverMediaItem) -> UIImage? {
         ScreensaverMediaCache.image(for: item)
     }
@@ -1268,6 +1288,26 @@ class APIService: ObservableObject {
         let (data, response) = try await URLSession.shared.data(for: adminRequest(url: url))
         try validateAdminResponse(response)
         adminScreensaverItems = try JSONDecoder().decode([ScreensaverMediaItem].self, from: data)
+        try? await loadAdminScreensaverSettings()
+    }
+
+    func loadAdminScreensaverSettings() async throws {
+        let url = baseURL.appendingPathComponent("admin/screensaver-settings")
+        let (data, response) = try await URLSession.shared.data(for: adminRequest(url: url))
+        try validateAdminResponse(response)
+        let settings = try JSONDecoder().decode(ScreensaverSettingsResponse.self, from: data)
+        let normalized = max(15, min(600, settings.idleSeconds))
+        screensaverIdleSeconds = normalized
+        ScreensaverMediaCache.storeIdleSeconds(normalized)
+    }
+
+    func updateAdminScreensaverSettings(idleSeconds: Int) async throws {
+        try await mutateAdminResource(
+            path: ["admin", "screensaver-settings"],
+            method: "PATCH",
+            body: ["idle_seconds": max(15, min(600, idleSeconds))]
+        )
+        try await loadAdminScreensaverSettings()
     }
 
     func uploadAdminScreensaverImage(
