@@ -93,6 +93,10 @@ struct LoginScreensaverView: View {
                 .resizable()
                 .scaledToFit()
                 .frame(maxWidth: 620, maxHeight: 420)
+                .managedMediaBackdrop(
+                    item.useLightBackground,
+                    insets: EdgeInsets(top: 28, leading: 34, bottom: 28, trailing: 34)
+                )
                 .shadow(color: SecretMatchTheme.primary.opacity(0.24), radius: 28)
                 .accessibilityLabel(item.title.isEmpty ? "Sponsorbild" : item.title)
         } else {

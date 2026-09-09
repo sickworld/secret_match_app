@@ -9,6 +9,7 @@ struct AdminScreensaverMediaView: View {
     @State private var title = ""
     @State private var showInScreensaver = true
     @State private var showAsSponsor = true
+    @State private var useLightBackground = false
     @State private var displaySeconds = 6
     @State private var enabled = true
     @State private var selectedPhoto: PhotosPickerItem?
@@ -19,6 +20,7 @@ struct AdminScreensaverMediaView: View {
     @State private var editTitle = ""
     @State private var editShowInScreensaver = true
     @State private var editShowAsSponsor = true
+    @State private var editUseLightBackground = false
     @State private var editDisplaySeconds = 6
     @State private var editEnabled = true
     @State private var editSortOrder = 0
@@ -121,6 +123,10 @@ struct AdminScreensaverMediaView: View {
         VStack(alignment: .leading, spacing: 12) {
             mediaPreview(item)
                 .frame(maxWidth: .infinity)
+                .managedMediaBackdrop(
+                    item.useLightBackground,
+                    insets: EdgeInsets(top: 10, leading: 12, bottom: 10, trailing: 12)
+                )
                 .frame(height: 150)
                 .background(SecretMatchTheme.surface)
                 .clipShape(RoundedRectangle(cornerRadius: SecretMatchTheme.cornerRadius))
@@ -130,7 +136,11 @@ struct AdminScreensaverMediaView: View {
                 .foregroundStyle(.white)
                 .lineLimit(2)
 
-            HStack(spacing: 7) {
+            LazyVGrid(
+                columns: [GridItem(.adaptive(minimum: 76), alignment: .leading)],
+                alignment: .leading,
+                spacing: 7
+            ) {
                 if item.enabled {
                     statusChip("Aktiv", icon: "checkmark.circle.fill", color: .green)
                 } else {
@@ -141,6 +151,9 @@ struct AdminScreensaverMediaView: View {
                 }
                 if item.showAsSponsor {
                     statusChip("Sponsor", icon: "rectangle.bottomthird.inset.filled", color: SecretMatchTheme.secondary)
+                }
+                if item.useLightBackground {
+                    statusChip("Hell", icon: "sun.max.fill", color: .yellow)
                 }
             }
 
@@ -176,6 +189,10 @@ struct AdminScreensaverMediaView: View {
                     .resizable()
                     .scaledToFit()
                     .frame(maxWidth: .infinity)
+                    .managedMediaBackdrop(
+                        useLightBackground,
+                        insets: EdgeInsets(top: 10, leading: 12, bottom: 10, trailing: 12)
+                    )
                     .frame(height: 180)
                     .background(SecretMatchTheme.surface)
                     .clipShape(RoundedRectangle(cornerRadius: SecretMatchTheme.cornerRadius))
@@ -207,6 +224,7 @@ struct AdminScreensaverMediaView: View {
             mediaSettings(
                 showInScreensaver: $showInScreensaver,
                 showAsSponsor: $showAsSponsor,
+                useLightBackground: $useLightBackground,
                 displaySeconds: $displaySeconds,
                 enabled: $enabled
             )
@@ -236,6 +254,18 @@ struct AdminScreensaverMediaView: View {
                             .foregroundStyle(.red)
                     }
 
+                    if let editingItem {
+                        mediaPreview(editingItem)
+                            .frame(maxWidth: .infinity)
+                            .managedMediaBackdrop(
+                                editUseLightBackground,
+                                insets: EdgeInsets(top: 10, leading: 12, bottom: 10, trailing: 12)
+                            )
+                            .frame(height: 180)
+                            .background(SecretMatchTheme.surface)
+                            .clipShape(RoundedRectangle(cornerRadius: SecretMatchTheme.cornerRadius))
+                    }
+
                     AdminKeyboardTextField(
                         title: "Begleittext",
                         text: $editTitle,
@@ -248,6 +278,7 @@ struct AdminScreensaverMediaView: View {
                     mediaSettings(
                         showInScreensaver: $editShowInScreensaver,
                         showAsSponsor: $editShowAsSponsor,
+                        useLightBackground: $editUseLightBackground,
                         displaySeconds: $editDisplaySeconds,
                         enabled: $editEnabled
                     )
@@ -283,6 +314,7 @@ struct AdminScreensaverMediaView: View {
     private func mediaSettings(
         showInScreensaver: Binding<Bool>,
         showAsSponsor: Binding<Bool>,
+        useLightBackground: Binding<Bool>,
         displaySeconds: Binding<Int>,
         enabled: Binding<Bool>
     ) -> some View {
@@ -290,6 +322,10 @@ struct AdminScreensaverMediaView: View {
             Toggle("Aktiv", isOn: enabled)
             Toggle("Im Bildschirmschoner", isOn: showInScreensaver)
             Toggle("In der Sponsorleiste", isOn: showAsSponsor)
+            Toggle("Heller Hintergrund", isOn: useLightBackground)
+            Text("Für dunkle oder schwarze Logos auf dem dunklen App-Hintergrund.")
+                .font(.caption)
+                .foregroundStyle(SecretMatchTheme.muted)
             Stepper("Je Bild \(displaySeconds.wrappedValue) Sekunden", value: displaySeconds, in: 3...30)
         }
         .foregroundStyle(.white)
@@ -333,6 +369,7 @@ struct AdminScreensaverMediaView: View {
         editTitle = item.title
         editShowInScreensaver = item.showInScreensaver
         editShowAsSponsor = item.showAsSponsor
+        editUseLightBackground = item.useLightBackground
         editDisplaySeconds = item.displaySeconds
         editEnabled = item.enabled
         editSortOrder = item.sortOrder
@@ -391,6 +428,7 @@ struct AdminScreensaverMediaView: View {
                 title: title.trimmingCharacters(in: .whitespacesAndNewlines),
                 showInScreensaver: showInScreensaver,
                 showAsSponsor: showAsSponsor,
+                useLightBackground: useLightBackground,
                 displaySeconds: displaySeconds,
                 enabled: enabled,
                 sortOrder: min(999, (api.adminScreensaverItems.map(\.sortOrder).max() ?? -1) + 1)
@@ -398,6 +436,7 @@ struct AdminScreensaverMediaView: View {
             self.selectedImageData = nil
             selectedPhoto = nil
             title = ""
+            useLightBackground = false
             displaySeconds = 6
             statusMessage = "Bild wurde gespeichert und wird an die iPads verteilt."
             errorMessage = nil
@@ -417,6 +456,7 @@ struct AdminScreensaverMediaView: View {
                 title: editTitle.trimmingCharacters(in: .whitespacesAndNewlines),
                 showInScreensaver: editShowInScreensaver,
                 showAsSponsor: editShowAsSponsor,
+                useLightBackground: editUseLightBackground,
                 displaySeconds: editDisplaySeconds,
                 enabled: editEnabled,
                 sortOrder: editSortOrder

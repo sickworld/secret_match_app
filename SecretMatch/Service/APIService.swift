@@ -1275,6 +1275,7 @@ class APIService: ObservableObject {
         title: String,
         showInScreensaver: Bool,
         showAsSponsor: Bool,
+        useLightBackground: Bool,
         displaySeconds: Int,
         enabled: Bool,
         sortOrder: Int
@@ -1294,6 +1295,7 @@ class APIService: ObservableObject {
         appendField("title", title)
         appendField("show_in_screensaver", showInScreensaver ? "1" : "0")
         appendField("show_as_sponsor", showAsSponsor ? "1" : "0")
+        appendField("use_light_background", useLightBackground ? "1" : "0")
         appendField("display_seconds", String(displaySeconds))
         appendField("enabled", enabled ? "1" : "0")
         appendField("sort_order", String(sortOrder))
@@ -1319,6 +1321,7 @@ class APIService: ObservableObject {
         title: String,
         showInScreensaver: Bool,
         showAsSponsor: Bool,
+        useLightBackground: Bool,
         displaySeconds: Int,
         enabled: Bool,
         sortOrder: Int
@@ -1330,6 +1333,7 @@ class APIService: ObservableObject {
                 "title": title,
                 "show_in_screensaver": showInScreensaver,
                 "show_as_sponsor": showAsSponsor,
+                "use_light_background": useLightBackground,
                 "display_seconds": displaySeconds,
                 "enabled": enabled,
                 "sort_order": sortOrder,

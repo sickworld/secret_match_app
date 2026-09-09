@@ -1,4 +1,5 @@
 import Foundation
+import SwiftUI
 import UIKit
 
 struct ScreensaverMediaItem: Codable, Identifiable, Equatable, Sendable {
@@ -8,6 +9,7 @@ struct ScreensaverMediaItem: Codable, Identifiable, Equatable, Sendable {
     let imageURL: String
     let showInScreensaver: Bool
     let showAsSponsor: Bool
+    let useLightBackground: Bool
     let displaySeconds: Int
     let enabled: Bool
     let sortOrder: Int
@@ -23,11 +25,54 @@ struct ScreensaverMediaItem: Codable, Identifiable, Equatable, Sendable {
         case imageURL = "image_url"
         case showInScreensaver = "show_in_screensaver"
         case showAsSponsor = "show_as_sponsor"
+        case useLightBackground = "use_light_background"
         case displaySeconds = "display_seconds"
         case enabled
         case sortOrder = "sort_order"
         case revision
         case updatedAt = "updated_at"
+    }
+
+    init(from decoder: Decoder) throws {
+        let values = try decoder.container(keyedBy: CodingKeys.self)
+        id = try values.decode(String.self, forKey: .id)
+        attachmentID = try values.decodeIfPresent(Int.self, forKey: .attachmentID)
+        title = try values.decode(String.self, forKey: .title)
+        imageURL = try values.decode(String.self, forKey: .imageURL)
+        showInScreensaver = try values.decode(Bool.self, forKey: .showInScreensaver)
+        showAsSponsor = try values.decode(Bool.self, forKey: .showAsSponsor)
+        useLightBackground = try values.decodeIfPresent(Bool.self, forKey: .useLightBackground) ?? false
+        displaySeconds = try values.decode(Int.self, forKey: .displaySeconds)
+        enabled = try values.decode(Bool.self, forKey: .enabled)
+        sortOrder = try values.decode(Int.self, forKey: .sortOrder)
+        revision = try values.decode(Int.self, forKey: .revision)
+        updatedAt = try values.decodeIfPresent(Int.self, forKey: .updatedAt)
+    }
+}
+
+private struct ManagedMediaBackdropModifier: ViewModifier {
+    let enabled: Bool
+    let insets: EdgeInsets
+
+    @ViewBuilder
+    func body(content: Content) -> some View {
+        if enabled {
+            content
+                .padding(insets)
+                .background(Color.white.opacity(0.96))
+                .clipShape(RoundedRectangle(cornerRadius: SecretMatchTheme.cornerRadius))
+        } else {
+            content
+        }
+    }
+}
+
+extension View {
+    func managedMediaBackdrop(
+        _ enabled: Bool,
+        insets: EdgeInsets = EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 0)
+    ) -> some View {
+        modifier(ManagedMediaBackdropModifier(enabled: enabled, insets: insets))
     }
 }
 

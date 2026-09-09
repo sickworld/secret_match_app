@@ -108,6 +108,10 @@ struct AdminSidebarView: View {
                         .resizable()
                         .scaledToFit()
                         .frame(maxWidth: isCompact ? 210 : 180, maxHeight: isCompact ? 74 : 62)
+                        .managedMediaBackdrop(
+                            item.useLightBackground,
+                            insets: EdgeInsets(top: 4, leading: 7, bottom: 4, trailing: 7)
+                        )
                         .accessibilityLabel(item.title.isEmpty ? "Sponsorbild" : item.title)
                 }
             }

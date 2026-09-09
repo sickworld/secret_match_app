@@ -217,6 +217,10 @@ struct SidebarView: View {
                             .resizable()
                             .scaledToFit()
                             .frame(maxWidth: isCompact ? 190 : metric(190, 198))
+                            .managedMediaBackdrop(
+                                item.useLightBackground,
+                                insets: EdgeInsets(top: 4, leading: 7, bottom: 4, trailing: 7)
+                            )
                             .accessibilityLabel(item.title.isEmpty ? "Sponsorbild" : item.title)
                     }
                 }
