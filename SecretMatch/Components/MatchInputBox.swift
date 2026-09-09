@@ -76,6 +76,11 @@ struct MatchInputBox: View {
         return renderedValue / normalizedScale
     }
 
+    private var initialEntryTopInset: CGFloat {
+        guard fillsAvailableSpace, !targetIsConfirmed else { return 0 }
+        return metric(36, 28)
+    }
+
     private var visibleDeliveryStatus: InteractionDeliveryStatus? {
         guard let deliveryStatus else { return nil }
 
@@ -107,6 +112,9 @@ struct MatchInputBox: View {
 
     private var content: some View {
         VStack(spacing: 0) {
+            Color.clear
+                .frame(height: initialEntryTopInset)
+
             introHeader
 
             Color.clear
@@ -124,6 +132,7 @@ struct MatchInputBox: View {
             maxWidth: fillsAvailableSpace ? .infinity : 780,
             alignment: .top
         )
+        .animation(.easeInOut(duration: 0.24), value: targetIsConfirmed)
     }
 
     private var introHeader: some View {
