@@ -523,9 +523,12 @@ struct AdminDashboardView: View {
                 }
                 .buttonStyle(SecretSecondaryButtonStyle())
 
-                Stepper("Wechsel alle \(rotationSeconds) Sekunden", value: $rotationSeconds, in: 5...8)
+                Stepper("Match-Einblendung: \(rotationSeconds) Sekunden", value: $rotationSeconds, in: 5...8)
                     .foregroundStyle(.white)
-                Button("Intervall speichern") {
+                Text("Neue Matches werden kurz groß gezeigt. Die Live-Ansicht selbst bleibt ruhig stehen.")
+                    .font(.caption)
+                    .foregroundStyle(SecretMatchTheme.muted)
+                Button("Dauer speichern") {
                     Task { await billboard("set_interval", seconds: rotationSeconds) }
                 }
                 .buttonStyle(SecretSecondaryButtonStyle())

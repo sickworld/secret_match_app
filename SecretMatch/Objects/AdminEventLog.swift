@@ -105,7 +105,7 @@ struct AdminEventLogEntry: Identifiable, Decodable {
             "admin_dummy_data_deleted": "Admin: Testdaten gelöscht",
             "admin_billboard_top_test_started": "Admin: Billboard-Test gestartet",
             "admin_billboard_normal_mode_started": "Admin: Normalbetrieb gestartet",
-            "admin_billboard_interval_updated": "Admin: Billboard-Intervall geändert",
+            "admin_billboard_interval_updated": "Admin: Match-Einblendung geändert",
             "admin_billboard_access_revoked": "Admin: Billboard-Zugänge widerrufen",
             "admin_billboard_control_updated": "Admin: Billboard-Steuerung geändert",
             "wp_admin_numbers_generated": "WordPress: Nummern erzeugt",
