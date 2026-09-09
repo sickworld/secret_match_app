@@ -52,12 +52,15 @@ struct InteractionOptions {
 
 enum InteractionOptionsError: LocalizedError {
     case invalidTarget(String)
+    case connectivityUnavailable
     case unavailable
 
     var errorDescription: String? {
         switch self {
         case .invalidTarget(let number):
             return "Die Nummer \(number.displayEventNumber) ist für dieses Event nicht verfügbar."
+        case .connectivityUnavailable:
+            return "Die Auswahl wird gerade im Offline-Modus angezeigt."
         case .unavailable:
             return "Die Auswahl konnte gerade nicht angepasst werden."
         }

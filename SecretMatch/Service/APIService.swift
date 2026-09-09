@@ -365,11 +365,20 @@ class APIService: ObservableObject {
         guard let url = components?.url else { throw InteractionOptionsError.unavailable }
 
         var request = URLRequest(url: url)
-        request.timeoutInterval = 4
+        request.timeoutInterval = 1.5
         let data: Data
         let response: URLResponse
         do {
             (data, response) = try await URLSession.shared.data(for: request)
+        } catch let error as URLError where Self.isConnectivityFailure(error.code) {
+            let connectionState: ConnectionState = switch error.code {
+            case .notConnectedToInternet, .networkConnectionLost, .dataNotAllowed, .internationalRoamingOff:
+                .offline
+            default:
+                .serverUnavailable
+            }
+            setConnectionState(connectionState)
+            throw InteractionOptionsError.connectivityUnavailable
         } catch {
             throw InteractionOptionsError.unavailable
         }
@@ -388,6 +397,23 @@ class APIService: ObservableObject {
             throw InteractionOptionsError.invalidTarget(normalizedTarget)
         }
         throw InteractionOptionsError.unavailable
+    }
+
+    private static func isConnectivityFailure(_ code: URLError.Code) -> Bool {
+        switch code {
+        case .timedOut,
+             .cannotFindHost,
+             .cannotConnectToHost,
+             .networkConnectionLost,
+             .dnsLookupFailed,
+             .notConnectedToInternet,
+             .internationalRoamingOff,
+             .callIsActive,
+             .dataNotAllowed:
+            true
+        default:
+            false
+        }
     }
     
     @MainActor

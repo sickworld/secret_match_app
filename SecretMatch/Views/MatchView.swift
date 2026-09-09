@@ -399,6 +399,16 @@ struct MatchView: View {
                 responseMessage = InteractionOptionsError.invalidTarget(invalidNumber).localizedDescription
                 submissionFailed = true
                 targetIsConfirmed = false
+            } catch InteractionOptionsError.connectivityUnavailable {
+                allowedActionTypes = ["bjob", "hjob", "ljob"]
+                usesProfileBasedSelection = false
+                usesOfflineSelectionFallback = true
+                selectedActions = Set(selectedActions.filter {
+                    $0 == "normal" || $0 == "hot" || allowedActionTypes.contains($0)
+                })
+                withAnimation(.easeOut(duration: 0.2)) {
+                    targetIsConfirmed = true
+                }
             } catch {
                 responseMessage = "Die passenden Aktionen konnten gerade nicht geladen werden. Bitte bestätige die Nummer noch einmal."
                 submissionFailed = true
