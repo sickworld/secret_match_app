@@ -95,6 +95,7 @@ struct AdminDashboardView: View {
     @Environment(\.adminDashboardSection) private var dashboardSection
     @Binding var showBillboard: Bool
     @Binding var selectedSection: AdminDashboardSection
+    var showsFeatureOverview = true
 
     @State private var participantSearch = ""
     @State private var newParticipantNumber = ""
@@ -216,7 +217,9 @@ struct AdminDashboardView: View {
         switch dashboardSection {
         case .overview:
             header
-            featureOverview
+            if showsFeatureOverview {
+                featureOverview
+            }
             liveStatus
             deviceStatus
             metrics
@@ -348,7 +351,11 @@ struct AdminDashboardView: View {
                 Text("Live-Übersicht")
                     .font(.system(size: 34, weight: .bold, design: .rounded))
                     .foregroundStyle(.white)
-                Text("Event steuern, Teilnehmer verwalten und den Systemzustand prüfen.")
+                Text(
+                    showsFeatureOverview
+                        ? "Event steuern, Teilnehmer verwalten und den Systemzustand prüfen."
+                        : "Live-Status, Geräte und Kennzahlen auf einen Blick."
+                )
                     .foregroundStyle(SecretMatchTheme.muted)
             }
             Spacer()

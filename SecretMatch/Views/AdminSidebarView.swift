@@ -26,7 +26,8 @@ struct AdminSidebarView: View {
             Divider().background(Color.white.opacity(0.3))
 
 #if ADMIN_APP
-            ForEach([AdminDashboardSection.overview] + AdminDashboardSection.featureSections) { section in
+            navigationButton(.overview, title: "Dashboard")
+            ForEach(AdminDashboardSection.featureSections) { section in
                 navigationButton(section)
             }
 #else

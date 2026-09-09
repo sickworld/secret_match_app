@@ -100,7 +100,11 @@ struct AdminMainView: View {
             AdminFeedbackView()
                 .environmentObject(api)
         default:
-            AdminDashboardView(showBillboard: $showBillboard, selectedSection: $dashboardSection)
+            AdminDashboardView(
+                showBillboard: $showBillboard,
+                selectedSection: $dashboardSection,
+                showsFeatureOverview: !usesCompactNavigation
+            )
                 .environment(\.adminDashboardSection, dashboardSection)
                 .environmentObject(api)
         }
@@ -140,7 +144,7 @@ struct AdminMainView: View {
                     .font(.caption2.bold())
                     .tracking(1.5)
                     .foregroundStyle(SecretMatchTheme.secondary)
-                Text(dashboardSection.title)
+                Text(toolbarTitle(showsMenu: showsMenu))
                     .font(.headline.bold())
                     .foregroundStyle(.white)
             }
@@ -210,6 +214,10 @@ struct AdminMainView: View {
 #else
         false
 #endif
+    }
+
+    private func toolbarTitle(showsMenu: Bool) -> String {
+        showsMenu && dashboardSection == .overview ? "Dashboard" : dashboardSection.title
     }
 
 }
