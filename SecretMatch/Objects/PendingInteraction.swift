@@ -21,6 +21,7 @@ struct PendingInteraction: Codable, Identifiable {
 struct InteractionSubmissionResult {
     let messages: [String]
     let queuedCount: Int
+    let actionRequestIDs: [UUID]
 
     var userMessage: String {
         guard queuedCount > 0 else {
@@ -35,6 +36,12 @@ struct InteractionSubmissionResult {
         guard !messages.isEmpty else { return queuedMessage }
         return messages.joined(separator: "\n") + "\n" + queuedMessage
     }
+}
+
+struct ActionWithdrawalError: LocalizedError {
+    let message: String
+
+    var errorDescription: String? { message }
 }
 
 enum InteractionQueueWording {

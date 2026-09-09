@@ -12,6 +12,8 @@ struct ParticipantOverviewView: View {
         let other: String
         let type: String
         let message: String?
+        let requestID: String?
+        let isSent: Bool
     }
 
     @EnvironmentObject private var api: APIService
@@ -24,6 +26,10 @@ struct ParticipantOverviewView: View {
     @State private var actions: [SecretAction] = []
     @State private var selectedType = "all"
     @State private var numberQuery = ""
+    @State private var showsSentActions = false
+    @State private var pendingWithdrawal: OverviewEntry?
+    @State private var withdrawalErrorMessage: String?
+    @State private var withdrawingRequestID: String?
     @State private var matchesLoadErrorMessage: String?
     @State private var interestsLoadErrorMessage: String?
     @State private var actionsLoadErrorMessage: String?
@@ -49,6 +55,31 @@ struct ParticipantOverviewView: View {
         .task(id: isPresented) {
             guard isPresented else { return }
             await loadSelectedSection()
+        }
+        .confirmationDialog(
+            "Aktion zurückziehen?",
+            isPresented: Binding(
+                get: { pendingWithdrawal != nil },
+                set: { if !$0 { pendingWithdrawal = nil } }
+            ),
+            titleVisibility: .visible
+        ) {
+            Button("Aktion zurückziehen", role: .destructive) {
+                guard let entry = pendingWithdrawal else { return }
+                pendingWithdrawal = nil
+                Task { await withdraw(entry) }
+            }
+            Button("Abbrechen", role: .cancel) { pendingWithdrawal = nil }
+        } message: {
+            Text("Die Aktion an \(pendingWithdrawal?.other.displayEventNumber ?? "dieser Nummer") wird beim Empfänger entfernt.")
+        }
+        .alert("Das hat nicht geklappt", isPresented: Binding(
+            get: { withdrawalErrorMessage != nil },
+            set: { if !$0 { withdrawalErrorMessage = nil } }
+        )) {
+            Button("OK", role: .cancel) { withdrawalErrorMessage = nil }
+        } message: {
+            Text(withdrawalErrorMessage ?? "Bitte versuche es erneut.")
         }
     }
 
@@ -84,6 +115,14 @@ struct ParticipantOverviewView: View {
 
     private var filterBar: some View {
         VStack(spacing: 12) {
+            if selectedSection == .actions {
+                HStack(spacing: 0) {
+                    actionDirectionButton("Erhalten", sent: false, icon: "tray.and.arrow.down.fill")
+                    actionDirectionButton("Von dir gesendet", sent: true, icon: "paperplane.fill")
+                }
+                .overlay(Rectangle().stroke(SecretMatchTheme.border, lineWidth: 1))
+            }
+
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 10) {
                     filterButton(
@@ -130,6 +169,25 @@ struct ParticipantOverviewView: View {
             .clipShape(RoundedRectangle(cornerRadius: SecretMatchTheme.cornerRadius, style: .continuous))
             .overlay(RoundedRectangle(cornerRadius: SecretMatchTheme.cornerRadius).stroke(SecretMatchTheme.border))
         }
+    }
+
+    private func actionDirectionButton(_ title: String, sent: Bool, icon: String) -> some View {
+        let isSelected = showsSentActions == sent
+        return Button {
+            withAnimation(.easeOut(duration: 0.18)) {
+                showsSentActions = sent
+                selectedType = "all"
+                numberQuery = ""
+            }
+        } label: {
+            Label(title, systemImage: icon)
+                .font(.system(size: 17, weight: .bold, design: .rounded))
+                .foregroundStyle(isSelected ? Color.black : Color.white)
+                .frame(maxWidth: .infinity, minHeight: 50)
+                .background(isSelected ? SecretMatchTheme.secondary : SecretMatchTheme.surfaceRaised)
+        }
+        .buttonStyle(.plain)
+        .accessibilityAddTraits(isSelected ? .isSelected : [])
     }
 
     @ViewBuilder
@@ -258,12 +316,30 @@ struct ParticipantOverviewView: View {
                 .background(Color.black.opacity(0.2))
                 .clipShape(RoundedRectangle(cornerRadius: SecretMatchTheme.cornerRadius, style: .continuous))
             }
+
+            if selectedSection == .actions, entry.isSent, let requestID = entry.requestID {
+                Button {
+                    pendingWithdrawal = entry
+                } label: {
+                    HStack {
+                        Image(systemName: "arrow.uturn.backward")
+                        Text(withdrawingRequestID == requestID ? "Wird zurückgezogen…" : "Aktion zurückziehen")
+                    }
+                    .font(.system(size: 16, weight: .bold, design: .rounded))
+                    .foregroundStyle(.white)
+                    .frame(maxWidth: .infinity, minHeight: 48)
+                    .background(Color.red.opacity(highContrast ? 1 : 0.72))
+                    .overlay(Rectangle().stroke(Color.white.opacity(0.7), lineWidth: highContrast ? 2 : 1))
+                }
+                .buttonStyle(.plain)
+                .disabled(withdrawingRequestID != nil)
+            }
         }
         .padding(18)
         .background(color.opacity(0.13))
         .clipShape(RoundedRectangle(cornerRadius: SecretMatchTheme.cornerRadius, style: .continuous))
         .overlay(RoundedRectangle(cornerRadius: SecretMatchTheme.cornerRadius).stroke(color.opacity(0.62), lineWidth: 1.2))
-        .accessibilityElement(children: .combine)
+        .accessibilityElement(children: .contain)
     }
 
     private func loadErrorState(message: String) -> some View {
@@ -284,12 +360,22 @@ struct ParticipantOverviewView: View {
     private var activeEntries: [OverviewEntry] {
         switch selectedSection {
         case .matches:
-            return matches.map { OverviewEntry(id: $0.id, other: $0.other, type: $0.type, message: $0.message) }
+            return matches.map { OverviewEntry(id: $0.id, other: $0.other, type: $0.type, message: $0.message, requestID: nil, isSent: false) }
         case .interests:
-            return interests.map { OverviewEntry(id: $0.id, other: $0.other, type: $0.type, message: $0.message) }
+            return interests.map { OverviewEntry(id: $0.id, other: $0.other, type: $0.type, message: $0.message, requestID: nil, isSent: false) }
         case .actions:
-            return actions.map {
-                OverviewEntry(id: $0.id, other: $0.sender_number, type: $0.action_type, message: nil)
+            let ownNumber = api.number.normalizedEventNumber
+            return actions.compactMap {
+                let isSent = $0.sender_number.normalizedEventNumber == ownNumber
+                guard isSent == showsSentActions else { return nil }
+                return OverviewEntry(
+                    id: $0.id,
+                    other: isSent ? $0.receiver_number : $0.sender_number,
+                    type: $0.action_type,
+                    message: nil,
+                    requestID: $0.request_id,
+                    isSent: isSent
+                )
             }
         }
     }
@@ -326,7 +412,7 @@ struct ParticipantOverviewView: View {
         switch selectedSection {
         case .matches: return "Matches"
         case .interests: return "Interesse an dir"
-        case .actions: return "Erhaltene Aktionen"
+        case .actions: return showsSentActions ? "Von dir gesendet" : "Erhaltene Aktionen"
         }
     }
 
@@ -334,7 +420,10 @@ struct ParticipantOverviewView: View {
         switch selectedSection {
         case .matches: return "Ihr habt euch gegenseitig gewählt – hier ist der Kontakt bestätigt."
         case .interests: return "Diese Nummern haben dich gewählt. Du hast noch nicht zurückgematcht."
-        case .actions: return "Direkte Vorschläge, die andere Eventnummern an dich gesendet haben."
+        case .actions:
+            return showsSentActions
+                ? "Hier kannst du eine versehentlich gesendete Aktion zurückziehen."
+                : "Direkte Vorschläge, die andere Eventnummern an dich gesendet haben."
         }
     }
 
@@ -353,7 +442,7 @@ struct ParticipantOverviewView: View {
         switch selectedSection {
         case .matches: return "Noch keine Matches"
         case .interests: return "Noch kein offenes Interesse"
-        case .actions: return "Noch keine erhaltenen Aktionen"
+        case .actions: return showsSentActions ? "Noch keine gesendeten Aktionen" : "Noch keine erhaltenen Aktionen"
         }
     }
 
@@ -364,7 +453,10 @@ struct ParticipantOverviewView: View {
         switch selectedSection {
         case .matches: return "Sobald es gegenseitig passt, erscheint das Match hier."
         case .interests: return "Neue Wünsche an dich erscheinen hier und werden nach einem Match automatisch einsortiert."
-        case .actions: return "Neue direkte Vorschläge an dich erscheinen automatisch in dieser Übersicht."
+        case .actions:
+            return showsSentActions
+                ? "Deine gesendeten Aktionen erscheinen hier und können bei Bedarf zurückgezogen werden."
+                : "Neue direkte Vorschläge an dich erscheinen automatisch in dieser Übersicht."
         }
     }
 
@@ -448,11 +540,23 @@ struct ParticipantOverviewView: View {
         actionsLoadErrorMessage = nil
         defer { isLoadingActions = false }
         do {
-            actions = try await api.loadActions().filter {
-                $0.receiver_number.normalizedEventNumber == api.number.normalizedEventNumber
-            }
+            actions = try await api.loadActions()
         } catch {
             actionsLoadErrorMessage = "Bitte prüfe die Netzwerkverbindung und versuche es erneut."
+        }
+    }
+
+    @MainActor
+    private func withdraw(_ entry: OverviewEntry) async {
+        guard let requestID = entry.requestID else { return }
+        withdrawingRequestID = requestID
+        defer { withdrawingRequestID = nil }
+        do {
+            try await api.withdrawAction(requestID: requestID)
+            actions.removeAll { $0.request_id == requestID }
+        } catch {
+            withdrawalErrorMessage = (error as? LocalizedError)?.errorDescription
+                ?? "Die Aktion konnte gerade nicht zurückgezogen werden. Bitte versuche es erneut."
         }
     }
 }

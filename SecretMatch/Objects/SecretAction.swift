@@ -3,5 +3,6 @@ struct SecretAction: Identifiable, Decodable {
     let sender_number: String
     let receiver_number: String
     let action_type: String
+    let request_id: String?
     let created_at: String
 }

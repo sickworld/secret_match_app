@@ -30,7 +30,7 @@ Die bestehende dunkle Match&Play-Gestaltung verwendet für Karten, Buttons, Eing
 
 Das kompakte Menü der iPhone-Admin-App bleibt flächig und neutral. Bereichsfarben erscheinen nur an den Icons sowie dezent am aktiven Eintrag; eine linke Markierung und ein Häkchen kennzeichnen die Auswahl zusätzlich unabhängig von der Farbe. Der Logout bleibt als destruktive Aktion rot.
 
-Diese Funktionen benötigen das WordPress-Modul ab Version `2026.09.08.6`; das Modul muss vor oder zusammen mit diesem App-Build veröffentlicht werden.
+Diese Funktionen benötigen das WordPress-Modul ab Version `2026.09.09.3`; das Modul muss vor oder zusammen mit diesem App-Build veröffentlicht werden.
 
 ## Eingehende Interessen
 
@@ -73,6 +73,14 @@ Auswahlzustände werden nicht nur über Farbe, sondern zusätzlich mit Kreis- un
 Freie Match-Nachrichten werden über eine appinterne QWERTZ-Tastatur mit Umlauten, Zahlen und Satzzeichen eingegeben. Auch der gemeinsame Eventnummernfilter in **Matches**, **Interesse** und **Aktionen** nutzt die große appinterne Zahlentastatur. Die Schnelltexte lassen sich sowohl in der Admin-App unter **Steuerung → Match-Schnelltexte** als auch im WordPress-Backend unter **SecretMatch → Einstellungen** pflegen; beide Oberflächen bearbeiten dieselbe Liste.
 
 ## Sende-Warteschlange
+
+### Anforderung SM-ACT-WITHDRAW-001
+
+- **Priorität:** P1
+- **Phase:** Implementiert
+- **Akzeptanzkriterium:** Ein Teilnehmer kann eine selbst gesendete Blow-, Hand- oder Lick-Job-Aktion unmittelbar nach dem Versand oder aus der Liste **Von dir gesendet** zurückziehen. Wartende Queue-Einträge werden lokal entfernt; bereits zugestellte Aktionen werden serverseitig widerrufen und beim Empfänger nach der nächsten Aktualisierung nicht mehr angezeigt.
+- **Retry-Sicherheit:** Der Server behält die `request_id` einer zurückgezogenen Aktion als Widerrufsmarkierung. Ein verspäteter Retry bestätigt den Widerruf, ohne die Aktion erneut sichtbar zu machen.
+- **Zugriffsschutz:** Der Server leitet den Absender aus der Teilnehmer-Sitzung ab. Fremde oder empfangene Aktionen können nicht zurückgezogen werden. Matches und Match-Requests bleiben unverändert.
 
 Match- und Aktionssendungen werden vor dem ersten Netzwerkversuch lokal vorgemerkt. Bei fehlender oder instabiler Verbindung versucht die App sie mit wachsendem Abstand automatisch erneut; angemeldete Teilnehmer können den Retry zusätzlich über **Jetzt versuchen** auslösen. Offene Einträge bleiben an die ursprüngliche Eventnummer gebunden, überstehen einen App-Neustart und werden nach spätestens 24 Stunden verworfen. Die Anzeige unterscheidet einen gemeinsam ausgelösten Versandvorgang von seinen einzelnen Aktionen, beispielsweise „1 Versand mit 4 Aktionen“.
 

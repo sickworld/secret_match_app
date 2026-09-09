@@ -64,6 +64,7 @@ class APIService: ObservableObject {
     private var pendingTelemetryEvents: [PendingTelemetryEvent]
     private var isNetworkAvailable = true
     private var isProcessingSendQueue = false
+    private var isWithdrawingActions = false
     private var isFlushingTelemetry = false
     private var isApplicationActive = false
     private var retryTask: Task<Void, Never>?
@@ -235,7 +236,11 @@ class APIService: ObservableObject {
         } else {
             interactionDeliveryStatus = .partiallyDelivered(delivered: messages.count, queued: queuedCount)
         }
-        return InteractionSubmissionResult(messages: messages, queuedCount: queuedCount)
+        return InteractionSubmissionResult(
+            messages: messages,
+            queuedCount: queuedCount,
+            actionRequestIDs: interactions.filter { $0.kind == .action }.map(\.id)
+        )
     }
 
     func retryPendingSends() async {
@@ -377,9 +382,86 @@ class APIService: ObservableObject {
     @MainActor
     func loadActions() async throws -> [SecretAction] {
         let url = baseURL.appendingPathComponent("actions")
-        let (data, _) = try await URLSession.shared.data(from: url)
-        
+        let (data, response) = try await URLSession.shared.data(from: url)
+        guard let http = response as? HTTPURLResponse, http.statusCode == 200 else {
+            throw ActionWithdrawalError(message: "Die Aktionen konnten gerade nicht geladen werden.")
+        }
         return try JSONDecoder().decode([SecretAction].self, from: data)
+    }
+
+    func withdrawActions(requestIDs: [UUID]) async throws -> Int {
+        let ids = Set(requestIDs)
+        guard !ids.isEmpty else { return 0 }
+        let senderNumber = number.normalizedEventNumber
+        guard !senderNumber.isEmpty else {
+            throw ActionWithdrawalError(message: "Bitte melde dich erneut an.")
+        }
+
+        await waitForSendQueueToFinish()
+        isWithdrawingActions = true
+        defer {
+            isWithdrawingActions = false
+            scheduleRetry(for: senderNumber)
+        }
+
+        let locallyQueued = pendingInteractions.filter {
+            ids.contains($0.id) && $0.kind == .action && $0.senderNumber == senderNumber
+        }
+        let locallyQueuedIDs = Set(locallyQueued.map(\.id))
+
+        // Withdraw delivered actions first. If the network fails, locally queued
+        // actions stay retryable and a second withdrawal remains fully idempotent.
+        for requestID in ids.subtracting(locallyQueuedIDs) {
+            try await withdrawDeliveredAction(requestID: requestID.uuidString.lowercased())
+        }
+
+        if !locallyQueuedIDs.isEmpty {
+            pendingInteractions.removeAll { locallyQueuedIDs.contains($0.id) }
+            persistPendingInteractions()
+            for interaction in locallyQueued {
+                recordTelemetry(
+                    severity: "info",
+                    category: "queue",
+                    eventType: "action_withdrawn_locally",
+                    interaction: interaction,
+                    status: "withdrawn",
+                    context: ["interaction_type": interaction.type]
+                )
+            }
+        }
+
+        interactionDeliveryStatus = nil
+        interactionDeliveryErrorMessage = nil
+        await flushTelemetryEvents()
+        return ids.count
+    }
+
+    func withdrawAction(requestID: String) async throws {
+        let normalized = requestID.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        guard UUID(uuidString: normalized) != nil else {
+            throw ActionWithdrawalError(message: "Diese Aktion kann nicht zurückgezogen werden.")
+        }
+        try await withdrawDeliveredAction(requestID: normalized)
+    }
+
+    private func withdrawDeliveredAction(requestID: String) async throws {
+        let url = baseURL
+            .appendingPathComponent("actions")
+            .appendingPathComponent(requestID)
+        var request = URLRequest(url: url)
+        request.httpMethod = "DELETE"
+        request.timeoutInterval = 12
+
+        let (data, response) = try await URLSession.shared.data(for: request)
+        guard let http = response as? HTTPURLResponse else {
+            throw ActionWithdrawalError(message: "Die Aktion konnte gerade nicht zurückgezogen werden.")
+        }
+        guard (200...299).contains(http.statusCode) else {
+            let payload = try? JSONDecoder().decode(AdminMutationResponseError.self, from: data)
+            throw ActionWithdrawalError(
+                message: payload?.message ?? "Die Aktion konnte gerade nicht zurückgezogen werden."
+            )
+        }
     }
     
     @MainActor
@@ -1351,7 +1433,7 @@ class APIService: ObservableObject {
         allowsLoggedOutSession: Bool = false
     ) async -> [String] {
         removeExpiredPendingInteractions()
-        guard !isProcessingSendQueue, isNetworkAvailable else {
+        guard !isProcessingSendQueue, !isWithdrawingActions, isNetworkAvailable else {
             scheduleRetry(for: senderNumber)
             return []
         }
@@ -1570,7 +1652,7 @@ class APIService: ObservableObject {
     }
 
     private func waitForSendQueueToFinish() async {
-        while isProcessingSendQueue {
+        while isProcessingSendQueue || isWithdrawingActions {
             do {
                 try await Task.sleep(for: .milliseconds(50))
             } catch {

@@ -13,6 +13,9 @@ struct MatchView: View {
     @State private var responseMessage = ""
     @State private var matchMessage = ""
     @State private var submissionFailed = false
+    @State private var lastWithdrawableActionIDs: [UUID] = []
+    @State private var isWithdrawingLastActions = false
+    @State private var withdrawalConfirmationMessage: String?
 
 
     // Inactivity / Auto-Logout
@@ -225,7 +228,11 @@ struct MatchView: View {
                         isRetryingQueuedSends: api.isRetryingQueuedSends,
                         deliveryStatus: submissionFailed ? .failed : api.interactionDeliveryStatus,
                         deliveryErrorMessage: submissionFailed ? responseMessage : api.interactionDeliveryErrorMessage,
-                        onRetryQueuedSends: retryQueuedSends
+                        onRetryQueuedSends: retryQueuedSends,
+                        canUndoLastActions: !lastWithdrawableActionIDs.isEmpty,
+                        isUndoingLastActions: isWithdrawingLastActions,
+                        withdrawalConfirmationMessage: withdrawalConfirmationMessage,
+                        onUndoLastActions: undoLastActions
                     )
                     .padding(18)
                 }
@@ -250,6 +257,10 @@ struct MatchView: View {
                     deliveryStatus: submissionFailed ? .failed : api.interactionDeliveryStatus,
                     deliveryErrorMessage: submissionFailed ? responseMessage : api.interactionDeliveryErrorMessage,
                     onRetryQueuedSends: retryQueuedSends,
+                    canUndoLastActions: !lastWithdrawableActionIDs.isEmpty,
+                    isUndoingLastActions: isWithdrawingLastActions,
+                    withdrawalConfirmationMessage: withdrawalConfirmationMessage,
+                    onUndoLastActions: undoLastActions,
                     fillsAvailableSpace: true,
                     availableHeight: availableHeight
                 )
@@ -279,6 +290,8 @@ struct MatchView: View {
         Task {
             guard !targetNumber.isEmpty, !selectedActions.isEmpty else { return }
             submissionFailed = false
+            lastWithdrawableActionIDs = []
+            withdrawalConfirmationMessage = nil
             pauseInactivityTimer()
             isLoading = true
 
@@ -306,6 +319,8 @@ struct MatchView: View {
                     message: matchMessage
                 )
                 responseMessage = result.userMessage
+                lastWithdrawableActionIDs = result.actionRequestIDs
+                withdrawalConfirmationMessage = nil
                 matchMessage = ""
             } catch {
                 responseMessage = api.interactionDeliveryErrorMessage
@@ -321,6 +336,35 @@ struct MatchView: View {
             pauseInactivityTimer()
             await api.retryPendingSends()
             resetInactivityTimer()
+        }
+    }
+
+    private func undoLastActions() {
+        let requestIDs = lastWithdrawableActionIDs
+        guard !requestIDs.isEmpty, !isWithdrawingLastActions else { return }
+        Task {
+            isWithdrawingLastActions = true
+            submissionFailed = false
+            pauseInactivityTimer()
+            defer {
+                isWithdrawingLastActions = false
+                resetInactivityTimer()
+            }
+            do {
+                let count = try await api.withdrawActions(requestIDs: requestIDs)
+                lastWithdrawableActionIDs = []
+                withdrawalConfirmationMessage = count == 1
+                    ? "Die Aktion wurde zurückgezogen."
+                    : "Die Aktionen wurden zurückgezogen."
+                Task { @MainActor in
+                    try? await Task.sleep(for: .seconds(4))
+                    withdrawalConfirmationMessage = nil
+                }
+            } catch {
+                responseMessage = (error as? LocalizedError)?.errorDescription
+                    ?? "Die Aktion konnte gerade nicht zurückgezogen werden. Bitte versuche es erneut."
+                submissionFailed = true
+            }
         }
     }
 }

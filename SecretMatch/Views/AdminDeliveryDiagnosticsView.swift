@@ -175,6 +175,7 @@ struct AdminDeliveryDiagnosticsView: View {
         case "retrying": return ("Wartet auf Retry", "wifi.exclamationmark", .orange)
         case "sending": return ("Sendeversuch", "arrow.up.circle.fill", SecretMatchTheme.secondary)
         case "queued": return ("Vorgemerkt", "clock.fill", .orange)
+        case "withdrawn": return ("Zurückgezogen", "arrow.uturn.backward.circle.fill", SecretMatchTheme.secondary)
         default: return ("Unbekannt", "questionmark.circle.fill", SecretMatchTheme.muted)
         }
     }
@@ -195,6 +196,8 @@ struct AdminDeliveryDiagnosticsView: View {
             return "Ein Sendeversuch wurde gestartet, aber es liegt noch keine abschließende Bestätigung vor."
         case "queued":
             return "Die Sendung wurde lokal auf dem iPad vorgemerkt. Noch ist kein Sendeversuch protokolliert."
+        case "withdrawn":
+            return "Die Aktion wurde vom Absender zurückgezogen und ist für den Empfänger nicht mehr sichtbar."
         default:
             return "Der aktuelle Zustand konnte aus den vorhandenen Protokollen nicht eindeutig bestimmt werden."
         }
@@ -208,6 +211,9 @@ struct AdminDeliveryDiagnosticsView: View {
         if step.eventType == "interaction_delivered" { return .green }
         if step.eventType == "interaction_rejected" { return .red }
         if step.eventType == "interaction_retry_scheduled" { return .orange }
+        if step.eventType == "action_withdrawn_locally" || step.eventType == "action_withdrawn_success" {
+            return SecretMatchTheme.secondary
+        }
         return SecretMatchTheme.secondary
     }
 

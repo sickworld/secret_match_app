@@ -29,6 +29,10 @@ struct MatchInputBox: View {
     var deliveryStatus: InteractionDeliveryStatus?
     var deliveryErrorMessage: String?
     var onRetryQueuedSends: () -> Void = {}
+    var canUndoLastActions = false
+    var isUndoingLastActions = false
+    var withdrawalConfirmationMessage: String?
+    var onUndoLastActions: () -> Void = {}
     var fillsAvailableSpace = false
     var availableHeight: CGFloat?
 
@@ -375,9 +379,13 @@ struct MatchInputBox: View {
         }
         .overlay(alignment: .bottom) {
             VStack(spacing: 10) {
+                if let withdrawalConfirmationMessage {
+                    withdrawalFeedback(withdrawalConfirmationMessage)
+                        .transition(.move(edge: .bottom).combined(with: .opacity))
+                }
+
                 if let status = floatingDeliveryStatus {
                     deliveryFeedback(status)
-                        .allowsHitTesting(false)
                         .transition(.move(edge: .bottom).combined(with: .opacity))
                 }
 
@@ -398,7 +406,7 @@ struct MatchInputBox: View {
             guard let deliveryStatus, case .delivered = deliveryStatus else { return }
 
             do {
-                try await Task.sleep(for: .seconds(4))
+                try await Task.sleep(for: .seconds(canUndoLastActions ? 15 : 4))
             } catch {
                 return
             }
@@ -462,12 +470,18 @@ struct MatchInputBox: View {
 
             Spacer(minLength: 8)
 
-            Button(isRetryingQueuedSends ? "Wird versucht…" : "Jetzt versuchen") {
-                onRetryQueuedSends()
+            VStack(alignment: .trailing, spacing: 9) {
+                Button(isRetryingQueuedSends ? "Wird versucht…" : "Jetzt versuchen") {
+                    onRetryQueuedSends()
+                }
+                .font(.subheadline.bold())
+                .foregroundStyle(SecretMatchTheme.secondary)
+                .disabled(isRetryingQueuedSends)
+
+                if canUndoLastActions {
+                    undoLastActionsButton
+                }
             }
-            .font(.subheadline.bold())
-            .foregroundStyle(SecretMatchTheme.secondary)
-            .disabled(isRetryingQueuedSends)
         }
         .padding(14)
         .frame(maxWidth: .infinity)
@@ -506,6 +520,9 @@ struct MatchInputBox: View {
                     .foregroundStyle(SecretMatchTheme.muted)
             }
             Spacer()
+            if case .delivered = status, canUndoLastActions {
+                undoLastActionsButton
+            }
         }
         .padding(14)
         .frame(maxWidth: .infinity)
@@ -515,6 +532,36 @@ struct MatchInputBox: View {
             RoundedRectangle(cornerRadius: SecretMatchTheme.cornerRadius, style: .continuous)
                 .stroke(presentation.color.opacity(0.9), lineWidth: 2)
         )
+        .accessibilityElement(children: .contain)
+    }
+
+    private var undoLastActionsButton: some View {
+        Button(isUndoingLastActions ? "Wird zurückgezogen…" : "Rückgängig") {
+            onUndoLastActions()
+        }
+        .font(.subheadline.bold())
+        .foregroundStyle(.white)
+        .padding(.horizontal, 12)
+        .frame(minHeight: 40)
+        .background(Color.red.opacity(highContrast ? 1 : 0.76))
+        .overlay(Rectangle().stroke(Color.white.opacity(0.7), lineWidth: highContrast ? 2 : 1))
+        .disabled(isUndoingLastActions)
+    }
+
+    private func withdrawalFeedback(_ message: String) -> some View {
+        HStack(spacing: 12) {
+            Image(systemName: "arrow.uturn.backward.circle.fill")
+                .font(.title2.bold())
+                .foregroundStyle(.green)
+            Text(message)
+                .font(.headline.bold())
+                .foregroundStyle(.white)
+            Spacer()
+        }
+        .padding(14)
+        .frame(maxWidth: .infinity)
+        .background(SecretMatchTheme.surfaceRaised)
+        .overlay(Rectangle().stroke(Color.green.opacity(0.9), lineWidth: 2))
         .accessibilityElement(children: .combine)
     }
 
