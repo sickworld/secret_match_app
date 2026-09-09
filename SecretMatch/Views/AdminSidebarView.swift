@@ -58,7 +58,25 @@ struct AdminSidebarView: View {
 
             HStack {
                 Spacer()
-                HStack(alignment: .center, spacing: 5) {
+                partnerLogos
+            }
+        }
+        .padding(isCompact ? 16 : 22)
+        .frame(width: isCompact ? nil : 260)
+        .frame(maxWidth: isCompact ? .infinity : nil)
+        .background(SecretMatchTheme.surface.opacity(0.97))
+        .overlay(alignment: isCompact ? .bottom : .trailing) {
+            Rectangle()
+                .fill(SecretMatchTheme.border)
+                .frame(width: isCompact ? nil : 1, height: isCompact ? 1 : nil)
+        }
+    }
+
+    @ViewBuilder
+    private var partnerLogos: some View {
+        let managedItems = api.screensaverItems.filter { $0.enabled && $0.showAsSponsor }
+        if managedItems.isEmpty {
+            HStack(alignment: .center, spacing: 5) {
                     Image("hot-chili")
                         .resizable()
                         .scaledToFit()
@@ -80,17 +98,19 @@ struct AdminSidebarView: View {
                         .scaledToFit()
                         .frame(width: isCompact ? 108 : 88, height: isCompact ? 74 : 62)
                         .accessibilityLabel("Club 2020")
+            }
+        } else {
+            TimelineView(.periodic(from: .now, by: 6)) { context in
+                let index = Int(context.date.timeIntervalSince1970 / 6) % managedItems.count
+                let item = managedItems[index]
+                if let image = api.cachedScreensaverImage(for: item) {
+                    Image(uiImage: image)
+                        .resizable()
+                        .scaledToFit()
+                        .frame(maxWidth: isCompact ? 210 : 180, maxHeight: isCompact ? 74 : 62)
+                        .accessibilityLabel(item.title.isEmpty ? "Sponsorbild" : item.title)
                 }
             }
-        }
-        .padding(isCompact ? 16 : 22)
-        .frame(width: isCompact ? nil : 260)
-        .frame(maxWidth: isCompact ? .infinity : nil)
-        .background(SecretMatchTheme.surface.opacity(0.97))
-        .overlay(alignment: isCompact ? .bottom : .trailing) {
-            Rectangle()
-                .fill(SecretMatchTheme.border)
-                .frame(width: isCompact ? nil : 1, height: isCompact ? 1 : nil)
         }
     }
 

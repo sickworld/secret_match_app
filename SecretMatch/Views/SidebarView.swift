@@ -205,6 +205,31 @@ struct SidebarView: View {
     }
 
     private var partnerLogos: some View {
+        Group {
+            if managedSponsorItems.isEmpty {
+                bundledPartnerLogos
+            } else {
+                TimelineView(.periodic(from: .now, by: 6)) { context in
+                    let index = Int(context.date.timeIntervalSince1970 / 6) % managedSponsorItems.count
+                    let item = managedSponsorItems[index]
+                    if let image = api.cachedScreensaverImage(for: item) {
+                        Image(uiImage: image)
+                            .resizable()
+                            .scaledToFit()
+                            .frame(maxWidth: isCompact ? 190 : metric(190, 198))
+                            .accessibilityLabel(item.title.isEmpty ? "Sponsorbild" : item.title)
+                    }
+                }
+            }
+        }
+        .frame(maxWidth: .infinity, minHeight: isCompact ? 66 : metric(62, 58), alignment: .center)
+    }
+
+    private var managedSponsorItems: [ScreensaverMediaItem] {
+        api.screensaverItems.filter { $0.enabled && $0.showAsSponsor }
+    }
+
+    private var bundledPartnerLogos: some View {
         HStack(alignment: .center, spacing: isCompact ? 4 : metric(5, 5)) {
             Image("hot-chili")
                 .resizable()
@@ -238,7 +263,6 @@ struct SidebarView: View {
                 )
                 .accessibilityLabel("Club 2020")
         }
-        .frame(maxWidth: .infinity, minHeight: isCompact ? 66 : metric(62, 58), alignment: .center)
     }
 
     private var sidebarDivider: some View {

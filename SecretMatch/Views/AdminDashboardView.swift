@@ -41,7 +41,7 @@ enum AdminDashboardSection: String, CaseIterable, Identifiable {
         case .requests: return "Offene und gematchte Wünsche verwalten"
         case .matches: return "Erfolgreiche Matches verwalten"
         case .feedback: return "Anonyme Bewertungen auswerten"
-        case .controls: return "Billboards, Schnelltexte und Testdaten"
+        case .controls: return "Billboards, Medien, Schnelltexte und Testdaten"
         case .participants: return "Nummern, PIN und Gender verwalten"
         case .system: return "Status, Geräte und Event-Reset"
         }
@@ -115,6 +115,7 @@ struct AdminDashboardView: View {
     @State private var billboardNameDraft = ""
     @State private var generatedBillboardURL: URL?
     @State private var showBillboardCreator = false
+    @State private var showScreensaverMediaManager = false
     @State private var participantRangeMax = ""
     @State private var participantRangeConfirmation = ""
     @State private var adminCredentialName = ""
@@ -214,6 +215,10 @@ struct AdminDashboardView: View {
         }
         .sheet(isPresented: $showBillboardCreator) {
             billboardCreator
+        }
+        .sheet(isPresented: $showScreensaverMediaManager) {
+            AdminScreensaverMediaView()
+                .environmentObject(api)
         }
     }
 
@@ -496,6 +501,18 @@ struct AdminDashboardView: View {
 
     private var controls: some View {
         LazyVGrid(columns: [GridItem(.adaptive(minimum: 330), spacing: 16)], spacing: 16) {
+            controlCard(title: "🖼️ Bildschirmschoner & Sponsoren", subtitle: "Bilder, Texte, Sichtbarkeit und Reihenfolge gemeinsam pflegen") {
+                Text(api.adminScreensaverItems.isEmpty
+                     ? "Standardbilder sind aktiv."
+                     : "\(api.adminScreensaverItems.count) eigene Medien im Katalog.")
+                    .foregroundStyle(SecretMatchTheme.muted)
+
+                Button("Medien verwalten") {
+                    showScreensaverMediaManager = true
+                }
+                .buttonStyle(SecretPrimaryButtonStyle())
+            }
+
             controlCard(title: "📺 Billboard-Steuerung", subtitle: "Darstellung und globale Steuerung aller Bildschirme") {
                 Button("Vollbild öffnen") { showBillboard = true }
                     .buttonStyle(SecretPrimaryButtonStyle())

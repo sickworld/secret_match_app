@@ -21,6 +21,7 @@ class APIService: ObservableObject {
     private init() {
         pendingInteractions = Self.loadPendingInteractions()
         pendingTelemetryEvents = Self.loadPendingTelemetryEvents()
+        screensaverItems = ScreensaverMediaCache.loadCatalog()
         removeExpiredPendingInteractions()
         removeExpiredTelemetryEvents()
 
@@ -58,6 +59,8 @@ class APIService: ObservableObject {
     @Published private(set) var connectionState: ConnectionState = .checking
     @Published private(set) var isCheckingConnection = false
     @Published private(set) var matchMessageOptions: [String] = []
+    @Published private(set) var screensaverItems: [ScreensaverMediaItem]
+    @Published private(set) var adminScreensaverItems: [ScreensaverMediaItem] = []
     private var adminToken: String?
     private let baseURL = URL(string: "https://secret-match.de/wp-json/secretmatch/v1")!
     private var pendingInteractions: [PendingInteraction]
@@ -70,6 +73,8 @@ class APIService: ObservableObject {
     private var retryTask: Task<Void, Never>?
     private var connectionPollingTask: Task<Void, Never>?
     private var heartbeatTask: Task<Void, Never>?
+    private var isLoadingScreensaverContent = false
+    private var lastScreensaverContentRefreshAt: Date?
     private let networkMonitor = NWPathMonitor()
     private let networkMonitorQueue = DispatchQueue(label: "de.secret-match.send-queue.network")
 
@@ -292,6 +297,7 @@ class APIService: ObservableObject {
             guard self?.isApplicationActive == true,
                   self?.connectionState == .online else { return }
             await self?.retryPendingSends()
+            await self?.loadScreensaverContent(force: true)
             if self?.isAdmin == true {
                 await self?.syncAdminPushToken()
             }
@@ -1193,6 +1199,163 @@ class APIService: ObservableObject {
         try? await loadAdminDashboard()
     }
 
+    func loadScreensaverContent(force: Bool = false) async {
+        if !force, let lastScreensaverContentRefreshAt,
+           Date().timeIntervalSince(lastScreensaverContentRefreshAt) < 60 {
+            return
+        }
+        if isLoadingScreensaverContent {
+            guard force else { return }
+            while isLoadingScreensaverContent {
+                do {
+                    try await Task.sleep(for: .milliseconds(50))
+                } catch {
+                    return
+                }
+            }
+        }
+        guard isNetworkAvailable else { return }
+        isLoadingScreensaverContent = true
+        lastScreensaverContentRefreshAt = Date()
+        defer { isLoadingScreensaverContent = false }
+
+        do {
+            let url = baseURL.appendingPathComponent("screensaver-content")
+            var request = URLRequest(url: url)
+            request.timeoutInterval = 5
+            let (data, response) = try await Self.performTimedRequest(request, hardTimeout: 5)
+            guard let http = response as? HTTPURLResponse, http.statusCode == 200 else { return }
+            let items = try JSONDecoder().decode([ScreensaverMediaItem].self, from: data)
+                .filter { $0.enabled && ($0.showInScreensaver || $0.showAsSponsor) }
+
+            let missingItems = items.filter { !ScreensaverMediaCache.containsImage(for: $0) }
+            let downloaded = try await withThrowingTaskGroup(of: (String, Data).self) { group in
+                for item in missingItems {
+                    guard let imageURL = item.remoteURL else { throw URLError(.badURL) }
+                    group.addTask {
+                        var imageRequest = URLRequest(url: imageURL)
+                        imageRequest.timeoutInterval = 6
+                        let (imageData, imageResponse) = try await Self.performTimedRequest(imageRequest, hardTimeout: 6)
+                        guard let imageHTTP = imageResponse as? HTTPURLResponse,
+                              (200...299).contains(imageHTTP.statusCode),
+                              UIImage(data: imageData) != nil else {
+                            throw URLError(.cannotDecodeContentData)
+                        }
+                        return (item.id, imageData)
+                    }
+                }
+
+                var result: [String: Data] = [:]
+                for try await (id, imageData) in group {
+                    result[id] = imageData
+                }
+                return result
+            }
+
+            try ScreensaverMediaCache.storeCompleteCatalog(items, downloadedData: downloaded)
+            screensaverItems = items
+        } catch {
+            // Keep the last complete local catalog. Bundled assets remain the first-install fallback.
+        }
+    }
+
+    func cachedScreensaverImage(for item: ScreensaverMediaItem) -> UIImage? {
+        ScreensaverMediaCache.image(for: item)
+    }
+
+    func loadAdminScreensaverContent() async throws {
+        let url = baseURL.appendingPathComponent("admin/screensaver-content")
+        let (data, response) = try await URLSession.shared.data(for: adminRequest(url: url))
+        try validateAdminResponse(response)
+        adminScreensaverItems = try JSONDecoder().decode([ScreensaverMediaItem].self, from: data)
+    }
+
+    func uploadAdminScreensaverImage(
+        imageData: Data,
+        title: String,
+        showInScreensaver: Bool,
+        showAsSponsor: Bool,
+        displaySeconds: Int,
+        enabled: Bool,
+        sortOrder: Int
+    ) async throws {
+        let boundary = "MatchAndPlay-\(UUID().uuidString)"
+        let url = baseURL.appendingPathComponent("admin/screensaver-content/upload")
+        var request = try adminRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("multipart/form-data; boundary=\(boundary)", forHTTPHeaderField: "Content-Type")
+
+        var body = Data()
+        func appendField(_ name: String, _ value: String) {
+            body.append("--\(boundary)\r\n".data(using: .utf8)!)
+            body.append("Content-Disposition: form-data; name=\"\(name)\"\r\n\r\n".data(using: .utf8)!)
+            body.append("\(value)\r\n".data(using: .utf8)!)
+        }
+        appendField("title", title)
+        appendField("show_in_screensaver", showInScreensaver ? "1" : "0")
+        appendField("show_as_sponsor", showAsSponsor ? "1" : "0")
+        appendField("display_seconds", String(displaySeconds))
+        appendField("enabled", enabled ? "1" : "0")
+        appendField("sort_order", String(sortOrder))
+        body.append("--\(boundary)\r\n".data(using: .utf8)!)
+        body.append("Content-Disposition: form-data; name=\"file\"; filename=\"match-and-play-sponsor.jpg\"\r\n".data(using: .utf8)!)
+        body.append("Content-Type: image/jpeg\r\n\r\n".data(using: .utf8)!)
+        body.append(imageData)
+        body.append("\r\n--\(boundary)--\r\n".data(using: .utf8)!)
+        request.httpBody = body
+
+        let (responseData, response) = try await URLSession.shared.data(for: request)
+        guard let http = response as? HTTPURLResponse, (200...299).contains(http.statusCode) else {
+            handleExpiredAdminToken(response)
+            let responseError = try? JSONDecoder().decode(AdminMutationResponseError.self, from: responseData)
+            throw AdminMutationError(message: responseError?.message ?? "Das Bild konnte nicht hochgeladen werden.")
+        }
+        try await loadAdminScreensaverContent()
+        await loadScreensaverContent(force: true)
+    }
+
+    func updateAdminScreensaverItem(
+        id: String,
+        title: String,
+        showInScreensaver: Bool,
+        showAsSponsor: Bool,
+        displaySeconds: Int,
+        enabled: Bool,
+        sortOrder: Int
+    ) async throws {
+        try await mutateAdminResource(
+            path: ["admin", "screensaver-content", id],
+            method: "PATCH",
+            body: [
+                "title": title,
+                "show_in_screensaver": showInScreensaver,
+                "show_as_sponsor": showAsSponsor,
+                "display_seconds": displaySeconds,
+                "enabled": enabled,
+                "sort_order": sortOrder,
+            ]
+        )
+        try await loadAdminScreensaverContent()
+        await loadScreensaverContent(force: true)
+    }
+
+    func deleteAdminScreensaverItem(id: String) async throws {
+        let url = baseURL
+            .appendingPathComponent("admin")
+            .appendingPathComponent("screensaver-content")
+            .appendingPathComponent(id)
+        var request = try adminRequest(url: url)
+        request.httpMethod = "DELETE"
+        let (data, response) = try await URLSession.shared.data(for: request)
+        guard let http = response as? HTTPURLResponse, (200...299).contains(http.statusCode) else {
+            handleExpiredAdminToken(response)
+            let responseError = try? JSONDecoder().decode(AdminMutationResponseError.self, from: data)
+            throw AdminMutationError(message: responseError?.message ?? "Das Bild konnte nicht entfernt werden.")
+        }
+        try await loadAdminScreensaverContent()
+        await loadScreensaverContent(force: true)
+    }
+
     func controlBillboard(action: String, seconds: Int? = nil) async throws {
         let url = baseURL.appendingPathComponent("admin/billboard-control")
         var request = try adminRequest(url: url)
@@ -1296,6 +1459,7 @@ class APIService: ObservableObject {
     func refreshAdminControlData() async throws {
         try await loadAdminDashboard()
         try await loadAdminParticipants()
+        try? await loadAdminScreensaverContent()
     }
 
     func logout() {
@@ -1462,6 +1626,7 @@ class APIService: ObservableObject {
                 }
                 guard !Task.isCancelled else { return }
                 await self?.checkConnection()
+                await self?.loadScreensaverContent()
             }
         }
     }
