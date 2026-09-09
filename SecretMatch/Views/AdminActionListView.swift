@@ -38,7 +38,7 @@ struct AdminActionListView: View {
                             .font(.caption.bold())
                             .tracking(1.8)
                             .foregroundStyle(SecretMatchTheme.secondary)
-                        Text("Aktionen verwalten")
+                        Text(AdminDashboardSection.actions.title)
                             .font(.system(size: 32, weight: .bold, design: .rounded))
                             .foregroundStyle(.white)
                     }

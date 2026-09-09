@@ -19,7 +19,12 @@ enum AdminDashboardSection: String, CaseIterable, Identifiable {
         case .liveFeed: return "Livefeed"
         case .eventLog: return "Protokoll"
         case .statistics: return "Statistik"
-        case .actions: return "Aktionen verwalten"
+        case .actions:
+#if ADMIN_APP
+            return "Aktionen verwalten"
+#else
+            return "Aktionen"
+#endif
         case .requests: return "Match-Requests"
         case .matches: return "Matches verwalten"
         case .feedback: return "Feedback"
