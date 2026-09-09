@@ -143,8 +143,16 @@ struct AdminActionListView: View {
         }
         .sheet(item: $editor) { editor in
             actionEditor(editor)
-                .presentationDetents([.medium, .large])
+                .presentationDetents(editorPresentationDetents)
         }
+    }
+
+    private var editorPresentationDetents: Set<PresentationDetent> {
+#if ADMIN_APP
+        [.medium, .large]
+#else
+        [.fraction(0.72), .large]
+#endif
     }
 
     private func loadErrorState(message: String) -> some View {
