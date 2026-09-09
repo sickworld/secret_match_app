@@ -117,6 +117,9 @@ struct AdminDashboardView: View {
     @State private var showBillboardCreator = false
     @State private var participantRangeMax = ""
     @State private var participantRangeConfirmation = ""
+    @State private var adminCredentialName = ""
+    @State private var adminCredentialPassword = ""
+    @State private var adminCredentialConfirmation = ""
 
     private enum QuickMessagesSaveState: Equatable {
         case idle
@@ -153,6 +156,7 @@ struct AdminDashboardView: View {
         case blockParticipant(String)
         case deleteDevice(id: String, name: String)
         case deleteBillboard(id: String, name: String)
+        case deleteAdminCredential(id: String, name: String)
 
         var id: String {
             switch self {
@@ -164,6 +168,7 @@ struct AdminDashboardView: View {
             case .blockParticipant(let number): return "block-participant-\(number)"
             case .deleteDevice(let id, _): return "delete-device-\(id)"
             case .deleteBillboard(let id, _): return "delete-billboard-\(id)"
+            case .deleteAdminCredential(let id, _): return "delete-admin-credential-\(id)"
             }
         }
     }
@@ -233,6 +238,7 @@ struct AdminDashboardView: View {
             participants
         case .system:
             sectionHeading(dashboardSection.title, subtitle: dashboardSection.subtitle)
+            adminAccess
             systemStatus
             deviceStatus
             resetCard
@@ -1149,6 +1155,132 @@ struct AdminDashboardView: View {
         .secretCard(padding: 20)
     }
 
+    private var adminAccess: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            VStack(alignment: .leading, spacing: 5) {
+                Text("🔐 Admin-Zugänge")
+                    .font(.title2.bold())
+                    .foregroundStyle(.white)
+                Text("Getrennte Passwörter für Eventleitung, Technik und weitere Administratoren.")
+                    .foregroundStyle(SecretMatchTheme.muted)
+            }
+
+            HStack(spacing: 10) {
+                SecretBinaryStatusIcon(isPositive: api.adminStandardCredentialActive)
+                Text("Bisheriger Standardzugang")
+                    .foregroundStyle(.white)
+                Spacer()
+                Text(api.adminStandardCredentialActive ? "Aktiv" : "Nicht eingerichtet")
+                    .font(.callout.bold())
+                    .foregroundStyle(api.adminStandardCredentialActive ? .green : SecretMatchTheme.muted)
+            }
+            .padding(12)
+            .background(SecretMatchTheme.surfaceRaised)
+            .clipShape(RoundedRectangle(cornerRadius: SecretMatchTheme.cornerRadius))
+
+            if api.adminCredentials.isEmpty {
+                Label("Noch keine benannten Zugänge", systemImage: "person.badge.key")
+                    .foregroundStyle(SecretMatchTheme.muted)
+                    .frame(maxWidth: .infinity, minHeight: 52, alignment: .leading)
+            } else {
+                VStack(spacing: 0) {
+                    ForEach(Array(api.adminCredentials.enumerated()), id: \.element.id) { index, credential in
+                        HStack(spacing: 12) {
+                            Image(systemName: "person.crop.circle.badge.checkmark")
+                                .font(.title3)
+                                .foregroundStyle(SecretMatchTheme.secondary)
+                                .frame(width: 30)
+
+                            VStack(alignment: .leading, spacing: 3) {
+                                Text(credential.name)
+                                    .font(.headline)
+                                    .foregroundStyle(.white)
+                                Text("Angelegt: \(credential.createdAtDescription)")
+                                    .font(.caption)
+                                    .foregroundStyle(SecretMatchTheme.muted)
+                            }
+
+                            Spacer(minLength: 10)
+
+                            Button(role: .destructive) {
+                                confirmation = .deleteAdminCredential(id: credential.id, name: credential.name)
+                            } label: {
+                                Label("Widerrufen", systemImage: "trash")
+                                    .font(.callout.bold())
+                            }
+                            .buttonStyle(.bordered)
+                            .tint(SecretMatchTheme.danger)
+                            .disabled(isWorking)
+                        }
+                        .padding(.vertical, 12)
+
+                        if index < api.adminCredentials.count - 1 {
+                            Divider().overlay(SecretMatchTheme.border)
+                        }
+                    }
+                }
+                .padding(.horizontal, 12)
+                .background(SecretMatchTheme.surfaceRaised)
+                .clipShape(RoundedRectangle(cornerRadius: SecretMatchTheme.cornerRadius))
+            }
+
+            Divider().overlay(SecretMatchTheme.border)
+
+            Text("Neuen Zugang anlegen")
+                .font(.headline)
+                .foregroundStyle(.white)
+
+            AdminKeyboardTextField(
+                title: "Name, z. B. Eventleitung",
+                text: $adminCredentialName,
+                keyboard: .text(maxCharacters: 60),
+                keyboardTitle: "Name des Admin-Zugangs"
+            )
+            .secretAdminInput(highlighted: !adminCredentialName.isEmpty)
+
+            AdminKeyboardTextField(
+                title: "Passwort (mindestens 4 Zeichen)",
+                text: $adminCredentialPassword,
+                keyboard: .text(maxCharacters: 128),
+                keyboardTitle: "Admin-Passwort festlegen",
+                isSecure: true
+            )
+            .textContentType(.newPassword)
+            .secretAdminInput(highlighted: !adminCredentialPassword.isEmpty)
+
+            AdminKeyboardTextField(
+                title: "Passwort wiederholen",
+                text: $adminCredentialConfirmation,
+                keyboard: .text(maxCharacters: 128),
+                keyboardTitle: "Admin-Passwort wiederholen",
+                isSecure: true,
+                doneLabel: "Zugang anlegen",
+                onSubmit: createAdminCredential
+            )
+            .textContentType(.newPassword)
+            .secretAdminInput(highlighted: !adminCredentialConfirmation.isEmpty)
+
+            if !adminCredentialConfirmation.isEmpty,
+               adminCredentialPassword != adminCredentialConfirmation {
+                Label("Die Passwörter stimmen noch nicht überein.", systemImage: "exclamationmark.triangle.fill")
+                    .font(.caption.bold())
+                    .foregroundStyle(SecretMatchTheme.danger)
+            }
+
+            Button(action: createAdminCredential) {
+                Label("Admin-Zugang anlegen", systemImage: "person.badge.plus")
+            }
+            .buttonStyle(SecretPrimaryButtonStyle(minHeight: 56))
+            .disabled(!canCreateAdminCredential || isWorking)
+            .opacity(canCreateAdminCredential ? 1 : 0.55)
+
+            Text("Beim Widerrufen werden die mit diesem Zugang angemeldeten Sitzungen sofort beendet. Passwörter werden nicht angezeigt oder protokolliert.")
+                .font(.caption)
+                .foregroundStyle(SecretMatchTheme.muted)
+        }
+        .secretCard(padding: 20)
+    }
+
     private var filteredParticipants: [String] {
         api.adminParticipants.allowed
             .filter {
@@ -1166,6 +1298,15 @@ struct AdminDashboardView: View {
 
     private var isValidParticipantRange: Bool {
         participantRangeTarget != nil
+    }
+
+    private var canCreateAdminCredential: Bool {
+        let name = adminCredentialName.trimmingCharacters(in: .whitespacesAndNewlines)
+        return !name.isEmpty
+            && name.count <= 60
+            && (4...128).contains(adminCredentialPassword.count)
+            && adminCredentialPassword == adminCredentialConfirmation
+            && api.adminCredentials.count < 20
     }
 
     private var dummyNumbers: Set<String> {
@@ -1220,6 +1361,8 @@ struct AdminDashboardView: View {
             return "\(name) aus der iPad-Liste entfernen und den Gerätezugang widerrufen? Ist dort noch eine Nummer angemeldet, registriert es sich beim nächsten Heartbeat, sonst beim nächsten Teilnehmer-Login erneut."
         case .deleteBillboard(_, let name):
             return "Den Zugang für \(name) löschen? Die laufende Sitzung wird sofort ungültig und das Billboard muss danach neu angemeldet werden."
+        case .deleteAdminCredential(_, let name):
+            return "Den Admin-Zugang „\(name)“ widerrufen? Alle damit angemeldeten Sitzungen werden sofort beendet. Falls du gerade diesen Zugang verwendest, kehrst du anschließend zum Admin-Login zurück."
         case nil: return ""
         }
     }
@@ -1307,6 +1450,7 @@ struct AdminDashboardView: View {
             if !isWorking || quickMessagesText.isEmpty {
                 quickMessagesText = (api.adminDashboard?.matchMessageOptions ?? []).joined(separator: "\n")
             }
+            try? await api.loadAdminCredentials()
             errorMessage = nil
         } catch {
             if showErrors { errorMessage = "Aktualisierung fehlgeschlagen." }
@@ -1349,6 +1493,21 @@ struct AdminDashboardView: View {
             }
         }
         if errorMessage == nil { equipmentEditor = nil }
+    }
+
+    private func createAdminCredential() {
+        guard canCreateAdminCredential, !isWorking else { return }
+        let name = adminCredentialName.trimmingCharacters(in: .whitespacesAndNewlines)
+        Task {
+            await operation("Admin-Zugang „\(name)“ wurde angelegt.") {
+                try await api.createAdminCredential(name: name, password: adminCredentialPassword)
+            }
+            if errorMessage == nil {
+                adminCredentialName = ""
+                adminCredentialPassword = ""
+                adminCredentialConfirmation = ""
+            }
+        }
     }
 
     @MainActor
@@ -1459,6 +1618,10 @@ struct AdminDashboardView: View {
         case .deleteBillboard(let id, let name):
             await operation("Der Zugang für \(name) wurde gelöscht.") {
                 try await api.deleteAdminBillboard(id: id)
+            }
+        case .deleteAdminCredential(let id, let name):
+            await operation("Admin-Zugang „\(name)“ wurde widerrufen.") {
+                _ = try await api.deleteAdminCredential(id: id)
             }
         case nil:
             break

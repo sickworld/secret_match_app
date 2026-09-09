@@ -60,6 +60,46 @@ struct AdminDashboard: Decodable {
     }
 }
 
+struct AdminCredential: Decodable, Identifiable, Equatable {
+    let id: String
+    let name: String
+    let createdAt: Int
+
+    var createdAtDescription: String {
+        guard createdAt > 0 else { return "Datum unbekannt" }
+        return Date(timeIntervalSince1970: TimeInterval(createdAt)).formatted(
+            date: .abbreviated,
+            time: .shortened
+        )
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case id
+        case name
+        case createdAt = "created_at"
+    }
+}
+
+struct AdminCredentialsResponse: Decodable {
+    let credentials: [AdminCredential]
+    let standardCredentialActive: Bool
+
+    private enum CodingKeys: String, CodingKey {
+        case credentials
+        case standardCredentialActive = "standard_credential_active"
+    }
+}
+
+struct AdminCredentialDeletionResponse: Decodable {
+    let revokedSessions: Int
+    let currentSessionRevoked: Bool
+
+    private enum CodingKeys: String, CodingKey {
+        case revokedSessions = "revoked_sessions"
+        case currentSessionRevoked = "current_session_revoked"
+    }
+}
+
 struct AdminAPNSDiagnostics: Decodable {
     let configured: Bool
     let keyIDValid: Bool

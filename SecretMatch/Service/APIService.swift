@@ -48,6 +48,8 @@ class APIService: ObservableObject {
     @Published var adminStatistics: AdminStatisticsResponse?
     @Published var adminDashboard: AdminDashboard?
     @Published var adminParticipants = AdminParticipants(allowed: [], active: [])
+    @Published var adminCredentials: [AdminCredential] = []
+    @Published var adminStandardCredentialActive = false
     @Published private(set) var queuedSendCount = 0
     @Published private(set) var queuedBatchCount = 0
     @Published private(set) var isRetryingQueuedSends = false
@@ -700,6 +702,48 @@ class APIService: ObservableObject {
         try? await loadAdminDashboard()
     }
 
+    func loadAdminCredentials() async throws {
+        let url = baseURL.appendingPathComponent("admin/credentials")
+        let (data, response) = try await URLSession.shared.data(for: adminRequest(url: url))
+        try validateAdminResponse(response)
+        let result = try JSONDecoder().decode(AdminCredentialsResponse.self, from: data)
+        adminCredentials = result.credentials
+        adminStandardCredentialActive = result.standardCredentialActive
+    }
+
+    func createAdminCredential(name: String, password: String) async throws {
+        try await mutateAdminResource(
+            path: ["admin", "credentials"],
+            method: "POST",
+            body: ["name": name, "password": password]
+        )
+        try await loadAdminCredentials()
+    }
+
+    func deleteAdminCredential(id: String) async throws -> AdminCredentialDeletionResponse {
+        let url = baseURL
+            .appendingPathComponent("admin/credentials")
+            .appendingPathComponent(id)
+        var request = try adminRequest(url: url)
+        request.httpMethod = "DELETE"
+        let (data, response) = try await URLSession.shared.data(for: request)
+        guard let http = response as? HTTPURLResponse else {
+            throw AdminMutationError(message: "Ungültige Serverantwort.")
+        }
+        guard (200...299).contains(http.statusCode) else {
+            handleExpiredAdminToken(response)
+            let responseError = try? JSONDecoder().decode(AdminMutationResponseError.self, from: data)
+            throw AdminMutationError(message: responseError?.message ?? "Serverfehler (HTTP \(http.statusCode)).")
+        }
+        let result = try JSONDecoder().decode(AdminCredentialDeletionResponse.self, from: data)
+        if result.currentSessionRevoked {
+            logout()
+        } else {
+            try await loadAdminCredentials()
+        }
+        return result
+    }
+
     func loadAdminDashboard() async throws {
         let url = baseURL.appendingPathComponent("admin/dashboard")
         let (data, response) = try await URLSession.shared.data(for: adminRequest(url: url))
@@ -1107,6 +1151,8 @@ class APIService: ObservableObject {
         self.adminMatches = []
         self.adminMatchRequests = []
         self.adminFeedback = []
+        self.adminCredentials = []
+        self.adminStandardCredentialActive = false
         self.isAdmin = false
         interactionDeliveryStatus = nil
         interactionDeliveryErrorMessage = nil
