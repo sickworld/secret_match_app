@@ -83,7 +83,7 @@ struct SidebarView: View {
             sidebarDivider
 
             overviewButton(
-                "Erhaltene Aktionen",
+                "Aktionen",
                 systemImage: "tray.and.arrow.down.fill",
                 section: .actions
             )
