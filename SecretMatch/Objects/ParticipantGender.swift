@@ -59,6 +59,7 @@ enum ParticipantLoginError: LocalizedError {
     case pinRequired
     case invalidCredentials
     case tooManyAttempts
+    case connectionUnavailable
     case invalidResponse
 
     var errorDescription: String? {
@@ -66,6 +67,7 @@ enum ParticipantLoginError: LocalizedError {
         case .pinRequired: return "Bitte persönliche PIN eingeben."
         case .invalidCredentials: return "Nummer oder PIN ist nicht gültig."
         case .tooManyAttempts: return "Zu viele Login-Versuche. Bitte kurz warten."
+        case .connectionUnavailable: return "Match&Play ist gerade nicht erreichbar."
         case .invalidResponse: return "Der Login-Server antwortet nicht korrekt."
         }
     }

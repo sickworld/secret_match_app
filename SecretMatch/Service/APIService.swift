@@ -75,6 +75,10 @@ class APIService: ObservableObject {
 
     func login(number: String, pin: String) async throws -> ParticipantLoginRequirements {
         if isAdmin { return ParticipantLoginRequirements(needsPin: false, needsGender: false) }
+        guard isNetworkAvailable else {
+            setConnectionState(.offline)
+            throw ParticipantLoginError.connectionUnavailable
+        }
         await waitForSendQueueToFinish()
         await retryPendingSendsForPreviousSession()
         await flushTelemetryEvents(allowsLoggedOutSession: true)
@@ -86,7 +90,7 @@ class APIService: ObservableObject {
         request.httpBody = formBody(["secretmatch_number": normalizedNumber, "secretmatch_pin": pin])
         request.setValue("application/x-www-form-urlencoded", forHTTPHeaderField: "Content-Type")
 
-        let (data, response) = try await URLSession.shared.data(for: request)
+        let (data, response) = try await participantAuthenticationData(for: request)
         guard let http = response as? HTTPURLResponse else {
             throw ParticipantLoginError.invalidResponse
         }
@@ -113,7 +117,7 @@ class APIService: ObservableObject {
         request.httpMethod = "POST"
         request.httpBody = formBody(["pin": pin, "pin_confirmation": confirmation])
         request.setValue("application/x-www-form-urlencoded", forHTTPHeaderField: "Content-Type")
-        let (_, response) = try await URLSession.shared.data(for: request)
+        let (_, response) = try await participantAuthenticationData(for: request)
         guard let http = response as? HTTPURLResponse, http.statusCode == 200 else {
             throw URLError(.badServerResponse)
         }
@@ -126,9 +130,34 @@ class APIService: ObservableObject {
         request.httpBody = formBody(["gender": gender.rawValue])
         request.setValue("application/x-www-form-urlencoded", forHTTPHeaderField: "Content-Type")
 
-        let (_, response) = try await URLSession.shared.data(for: request)
+        let (_, response) = try await participantAuthenticationData(for: request)
         guard let http = response as? HTTPURLResponse, http.statusCode == 200 else {
             throw URLError(.badServerResponse)
+        }
+    }
+
+    private func participantAuthenticationData(for originalRequest: URLRequest) async throws -> (Data, URLResponse) {
+        guard isNetworkAvailable else {
+            setConnectionState(.offline)
+            throw ParticipantLoginError.connectionUnavailable
+        }
+
+        var request = originalRequest
+        request.timeoutInterval = 3
+
+        do {
+            let result = try await URLSession.shared.data(for: request)
+            setConnectionState(.online)
+            return result
+        } catch let error as URLError where Self.isConnectivityFailure(error.code) {
+            let connectionState: ConnectionState = switch error.code {
+            case .notConnectedToInternet, .networkConnectionLost, .dataNotAllowed, .internationalRoamingOff:
+                .offline
+            default:
+                .serverUnavailable
+            }
+            setConnectionState(connectionState)
+            throw ParticipantLoginError.connectionUnavailable
         }
     }
 

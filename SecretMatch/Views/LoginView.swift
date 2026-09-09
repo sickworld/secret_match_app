@@ -401,6 +401,8 @@ struct LoginView: View {
                 } else {
                     errorMessage = "Diese Eventnummer ist nicht gültig."
                 }
+            } catch ParticipantLoginError.connectionUnavailable {
+                errorMessage = "Keine Verbindung zu Match&Play. Prüfe kurz das WLAN und versuche es erneut."
             } catch {
                 errorMessage = "Login fehlgeschlagen. Bitte Verbindung prüfen und erneut versuchen."
             }
@@ -445,6 +447,8 @@ struct LoginView: View {
                 } else {
                     api.finishParticipantLogin()
                 }
+            } catch ParticipantLoginError.connectionUnavailable {
+                pinSetupError = "Keine Verbindung zu Match&Play. Deine PIN wurde noch nicht gespeichert."
             } catch {
                 pinSetupError = "Die PIN konnte nicht gespeichert werden. Bitte prüfe beide Eingaben."
             }
@@ -480,6 +484,8 @@ struct LoginView: View {
                 try await api.submitParticipantGender(gender)
                 showGenderChoice = false
                 api.finishParticipantLogin()
+            } catch ParticipantLoginError.connectionUnavailable {
+                genderError = "Keine Verbindung zu Match&Play. Deine Auswahl wurde noch nicht gespeichert."
             } catch {
                 genderError = "Die Auswahl konnte nicht gespeichert werden. Bitte erneut versuchen."
             }
