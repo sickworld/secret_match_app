@@ -146,7 +146,7 @@ class APIService: ObservableObject {
         request.timeoutInterval = 3
 
         do {
-            let result = try await URLSession.shared.data(for: request)
+            let result = try await Self.performTimedRequest(request, hardTimeout: 3)
             setConnectionState(.online)
             return result
         } catch let error as URLError where Self.isConnectivityFailure(error.code) {
@@ -394,11 +394,11 @@ class APIService: ObservableObject {
         guard let url = components?.url else { throw InteractionOptionsError.unavailable }
 
         var request = URLRequest(url: url)
-        request.timeoutInterval = 1.5
+        request.timeoutInterval = 1
         let data: Data
         let response: URLResponse
         do {
-            (data, response) = try await URLSession.shared.data(for: request)
+            (data, response) = try await Self.performTimedRequest(request, hardTimeout: 1)
         } catch let error as URLError where Self.isConnectivityFailure(error.code) {
             let connectionState: ConnectionState = switch error.code {
             case .notConnectedToInternet, .networkConnectionLost, .dataNotAllowed, .internationalRoamingOff:
@@ -442,6 +442,28 @@ class APIService: ObservableObject {
             true
         default:
             false
+        }
+    }
+
+    private static func performTimedRequest(
+        _ request: URLRequest,
+        hardTimeout: TimeInterval
+    ) async throws -> (Data, URLResponse) {
+        try await withThrowingTaskGroup(of: TimedRequestResult.self) { group in
+            group.addTask {
+                let (data, response) = try await URLSession.shared.data(for: request)
+                return TimedRequestResult(data: data, response: response)
+            }
+            group.addTask {
+                try await Task.sleep(for: .seconds(hardTimeout))
+                throw URLError(.timedOut)
+            }
+
+            defer { group.cancelAll() }
+            guard let firstResult = try await group.next() else {
+                throw URLError(.unknown)
+            }
+            return (firstResult.data, firstResult.response)
         }
     }
     
@@ -2027,6 +2049,11 @@ private struct InteractionAPIErrorResponse: Decodable {
 
 private struct AdminMutationResponseError: Decodable {
     let message: String
+}
+
+private struct TimedRequestResult: @unchecked Sendable {
+    let data: Data
+    let response: URLResponse
 }
 
 private struct AdminParticipantMutationResponse: Decodable {
