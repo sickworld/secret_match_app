@@ -1,5 +1,6 @@
 import Foundation
 import Combine
+import LocalAuthentication
 import Network
 import SwiftUI
 import UIKit
@@ -25,6 +26,8 @@ class APIService: ObservableObject {
 
         if let savedAdminToken = AdminSessionStore.loadToken(), !savedAdminToken.isEmpty {
             adminToken = savedAdminToken
+            hasSavedAdminSession = true
+        } else if AdminSessionStore.hasBiometricCredential {
             hasSavedAdminSession = true
         }
 
@@ -413,7 +416,44 @@ class APIService: ObservableObject {
     }
     
     @MainActor
-    func adminLogin(password: String) async -> Bool {
+    func adminLogin(password: String) async -> AdminAuthenticationResult {
+        await performAdminLogin(password: password, storesBiometricCredential: true)
+    }
+
+    func resumeSavedAdminSession(authenticationContext: LAContext) async -> AdminAuthenticationResult {
+        switch await validateSavedAdminToken() {
+        case .success:
+            return .success
+        case .connectionFailed:
+            return .connectionFailed
+        case .invalidCredentials, .sessionExpired:
+            break
+        }
+
+        guard let password = AdminSessionStore.loadBiometricCredential(
+            authenticationContext: authenticationContext
+        ), !password.isEmpty else {
+            AdminSessionStore.clearBiometricCredential()
+            hasSavedAdminSession = false
+            return .sessionExpired
+        }
+
+        switch await performAdminLogin(password: password, storesBiometricCredential: false) {
+        case .success:
+            return .success
+        case .connectionFailed:
+            return .connectionFailed
+        case .invalidCredentials, .sessionExpired:
+            AdminSessionStore.clearBiometricCredential()
+            hasSavedAdminSession = false
+            return .sessionExpired
+        }
+    }
+
+    private func performAdminLogin(
+        password: String,
+        storesBiometricCredential: Bool
+    ) async -> AdminAuthenticationResult {
         let url = baseURL.appendingPathComponent("admin/login")
 
         var request = URLRequest(url: url)
@@ -423,30 +463,56 @@ class APIService: ObservableObject {
 
         do {
             let (data, response) = try await URLSession.shared.data(for: request)
-            let success = (response as? HTTPURLResponse)?.statusCode == 200
-
-            if success {
-                let login = try JSONDecoder().decode(AdminLoginResponse.self, from: data)
-                adminToken = login.token
-                AdminSessionStore.saveToken(login.token)
-                hasSavedAdminSession = true
-                isAdmin = true
-                isLoggedIn = false
-                number = ""
-                matches = []
-                actions = []
+            guard let http = response as? HTTPURLResponse else {
+                return .connectionFailed
+            }
+            guard http.statusCode == 200 else {
+                return http.statusCode == 400 || http.statusCode == 401 || http.statusCode == 403
+                    ? .invalidCredentials
+                    : .connectionFailed
             }
 
-            return success
+            let login = try JSONDecoder().decode(AdminLoginResponse.self, from: data)
+            adminToken = login.token
+            AdminSessionStore.saveToken(login.token)
+            if storesBiometricCredential && !AdminSessionStore.hasBiometricCredential {
+                AdminSessionStore.saveBiometricCredential(password)
+            }
+            hasSavedAdminSession = true
+            activateAdminSession()
+
+            return .success
         } catch {
-            return false
+            return .connectionFailed
         }
     }
 
-    func unlockSavedAdminSession() -> Bool {
+    private func validateSavedAdminToken() async -> AdminAuthenticationResult {
+        guard adminToken != nil else { return .sessionExpired }
+
+        do {
+            let url = baseURL.appendingPathComponent("admin/dashboard")
+            let (data, response) = try await URLSession.shared.data(for: adminRequest(url: url))
+            guard let http = response as? HTTPURLResponse else { return .connectionFailed }
+
+            if http.statusCode == 401 || http.statusCode == 403 {
+                handleExpiredAdminToken(response)
+                return .sessionExpired
+            }
+            guard (200...299).contains(http.statusCode) else { return .connectionFailed }
+
+            adminDashboard = try? JSONDecoder().decode(AdminDashboard.self, from: data)
+            activateAdminSession()
+            return .success
+        } catch {
+            return .connectionFailed
+        }
+    }
+
+    private func activateAdminSession() {
         guard let adminToken, !adminToken.isEmpty else {
-            hasSavedAdminSession = false
-            return false
+            hasSavedAdminSession = AdminSessionStore.hasBiometricCredential
+            return
         }
 
         isAdmin = true
@@ -454,7 +520,6 @@ class APIService: ObservableObject {
         number = ""
         matches = []
         actions = []
-        return true
     }
 
     func registerAdminPushToken(_ token: String, environment: String) async {
@@ -1028,6 +1093,7 @@ class APIService: ObservableObject {
 
         adminToken = nil
         AdminSessionStore.clearToken()
+        AdminSessionStore.clearBiometricCredential()
         hasSavedAdminSession = false
         self.isLoggedIn = false
         self.number = ""
@@ -1718,7 +1784,7 @@ class APIService: ObservableObject {
 
         adminToken = nil
         AdminSessionStore.clearToken()
-        hasSavedAdminSession = false
+        hasSavedAdminSession = AdminSessionStore.hasBiometricCredential
         isAdmin = false
     }
 }
@@ -1779,6 +1845,13 @@ private struct MatchMessageOptionsResponse: Decodable {
 
 private struct AdminLoginResponse: Decodable {
     let token: String
+}
+
+enum AdminAuthenticationResult {
+    case success
+    case invalidCredentials
+    case sessionExpired
+    case connectionFailed
 }
 
 private struct AdminFeedbackEnvelope: Decodable {

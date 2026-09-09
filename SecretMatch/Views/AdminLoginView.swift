@@ -149,13 +149,18 @@ struct AdminLoginView: View {
         errorMessage = nil
         Task {
             isLoading = true
-            let success = await api.adminLogin(password: password)
+            let result = await api.adminLogin(password: password)
             isLoading = false
 
-            if success {
+            switch result {
+            case .success:
                 isPresented = false
-            } else {
+            case .invalidCredentials:
                 errorMessage = "Falsches Passwort"
+            case .sessionExpired:
+                errorMessage = "Die Admin-Sitzung ist abgelaufen. Bitte erneut anmelden."
+            case .connectionFailed:
+                errorMessage = "Anmeldung gerade nicht möglich. Bitte Internetverbindung prüfen."
             }
         }
     }
@@ -192,9 +197,20 @@ struct AdminLoginView: View {
                     .deviceOwnerAuthenticationWithBiometrics,
                     localizedReason: "Admin-Bereich von Match&Play entsperren"
                 )
+                guard authenticated else {
+                    isLoading = false
+                    return
+                }
+
+                let result = await api.resumeSavedAdminSession(authenticationContext: context)
                 isLoading = false
-                if authenticated && api.unlockSavedAdminSession() {
+                switch result {
+                case .success:
                     isPresented = false
+                case .invalidCredentials, .sessionExpired:
+                    errorMessage = "Die gespeicherte Anmeldung ist abgelaufen. Bitte gib das Admin-Passwort einmal neu ein."
+                case .connectionFailed:
+                    errorMessage = "\(biometricName) war erfolgreich, aber der Server ist gerade nicht erreichbar. Bitte Verbindung prüfen."
                 }
             } catch let error as LAError {
                 isLoading = false
