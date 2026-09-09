@@ -68,6 +68,8 @@ Beim Zoomen werden Texte, Bedienelemente und Abstände gemeinsam skaliert; respo
 
 Während modale Ansichten oder die appinternen Tastaturen geöffnet sind, wird die globale Bedienleiste vorübergehend ausgeblendet. Dadurch bleiben Schließen- und Tastaturtasten auf allen Zoomstufen frei erreichbar; die gewählte Darstellungsgröße und der Kontrastmodus bleiben dabei erhalten.
 
+Schwebende Netzwerk-, Versand-, Queue- und Rückgängig-Hinweise verwenden eine gemeinsame Feedback-Karte mit identischem Hintergrund, 8-Punkt-Radius, 2-Punkt-Statusrand, Innenabstand und Schatten. Position, Symbol und Akzentfarbe vermitteln weiterhin den jeweiligen Zustand; Formularfehler bleiben als kontextnahe Inline-Hinweise bestehen.
+
 Auswahlzustände werden nicht nur über Farbe, sondern zusätzlich mit Kreis- und Häkchensymbolen dargestellt. Aktiviert das iPad **Ohne Farben differenzieren**, verwendet die App für wichtige Auswahlen automatisch eine kontrastreiche Schwarz-Weiß-Darstellung. Geräte- und Billboard-Zustände unterscheiden Online und Offline zusätzlich durch Häkchen beziehungsweise ein achteckiges X-Symbol.
 
 Freie Match-Nachrichten werden über eine appinterne QWERTZ-Tastatur mit Umlauten, Zahlen und Satzzeichen eingegeben. Auch der gemeinsame Eventnummernfilter in **Matches**, **Interesse** und **Aktionen** nutzt die große appinterne Zahlentastatur. Die Schnelltexte lassen sich sowohl in der Admin-App unter **Steuerung → Match-Schnelltexte** als auch im WordPress-Backend unter **SecretMatch → Einstellungen** pflegen; beide Oberflächen bearbeiten dieselbe Liste.

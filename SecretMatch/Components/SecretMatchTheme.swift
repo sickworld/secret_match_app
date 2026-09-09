@@ -61,6 +61,28 @@ extension View {
     func secretCard(cornerRadius: CGFloat = SecretMatchTheme.cornerRadius, padding: CGFloat = 24) -> some View {
         modifier(SecretCardModifier(cornerRadius: cornerRadius, padding: padding))
     }
+
+    func secretFloatingFeedback(accentColor: Color) -> some View {
+        modifier(SecretFloatingFeedbackModifier(accentColor: accentColor))
+    }
+}
+
+struct SecretFloatingFeedbackModifier: ViewModifier {
+    @Environment(\.secretMatchHighContrast) private var highContrast
+    let accentColor: Color
+
+    func body(content: Content) -> some View {
+        content
+            .padding(14)
+            .frame(maxWidth: .infinity)
+            .background(SecretMatchTheme.surfaceRaised)
+            .clipShape(RoundedRectangle(cornerRadius: SecretMatchTheme.cornerRadius, style: .continuous))
+            .overlay(
+                RoundedRectangle(cornerRadius: SecretMatchTheme.cornerRadius, style: .continuous)
+                    .stroke(accentColor.opacity(highContrast ? 1 : 0.9), lineWidth: 2)
+            )
+            .shadow(color: .black.opacity(highContrast ? 0.78 : 0.58), radius: 18, y: 8)
+    }
 }
 
 struct SecretPrimaryButtonStyle: ButtonStyle {

@@ -473,7 +473,6 @@ struct MatchInputBox: View {
             }
             .padding(.horizontal, fillsAvailableSpace ? metric(30, 30) : 24)
             .padding(.bottom, floatingFeedbackBottomInset)
-            .shadow(color: .black.opacity(0.68), radius: 20, y: 9)
         }
         .animation(.easeOut(duration: 0.22), value: floatingDeliveryStatus)
         .animation(.easeOut(duration: 0.22), value: queuedSendCount)
@@ -560,14 +559,7 @@ struct MatchInputBox: View {
                 }
             }
         }
-        .padding(14)
-        .frame(maxWidth: .infinity)
-        .background(SecretMatchTheme.surfaceRaised)
-        .clipShape(RoundedRectangle(cornerRadius: SecretMatchTheme.cornerRadius, style: .continuous))
-        .overlay(
-            RoundedRectangle(cornerRadius: SecretMatchTheme.cornerRadius, style: .continuous)
-                .stroke(SecretMatchTheme.secondary.opacity(0.9), lineWidth: 2)
-        )
+        .secretFloatingFeedback(accentColor: SecretMatchTheme.secondary)
         .accessibilityElement(children: .contain)
     }
 
@@ -601,14 +593,7 @@ struct MatchInputBox: View {
                 undoLastActionsButton
             }
         }
-        .padding(14)
-        .frame(maxWidth: .infinity)
-        .background(SecretMatchTheme.surfaceRaised)
-        .clipShape(RoundedRectangle(cornerRadius: SecretMatchTheme.cornerRadius, style: .continuous))
-        .overlay(
-            RoundedRectangle(cornerRadius: SecretMatchTheme.cornerRadius, style: .continuous)
-                .stroke(presentation.color.opacity(0.9), lineWidth: 2)
-        )
+        .secretFloatingFeedback(accentColor: presentation.color)
         .accessibilityElement(children: .contain)
     }
 
@@ -642,10 +627,7 @@ struct MatchInputBox: View {
                 .foregroundStyle(.white)
             Spacer()
         }
-        .padding(14)
-        .frame(maxWidth: .infinity)
-        .background(SecretMatchTheme.surfaceRaised)
-        .overlay(Rectangle().stroke(Color.green.opacity(0.9), lineWidth: 2))
+        .secretFloatingFeedback(accentColor: .green)
         .accessibilityElement(children: .combine)
     }
 

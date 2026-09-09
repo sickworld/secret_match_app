@@ -37,15 +37,7 @@ struct ConnectionStatusBanner: View {
                     .frame(minHeight: 44)
                     .disabled(isChecking)
             }
-            .padding(.horizontal, 18)
-            .frame(minHeight: 54)
-            .background(.black.opacity(0.92))
-            .clipShape(RoundedRectangle(cornerRadius: SecretMatchTheme.cornerRadius, style: .continuous))
-            .overlay(
-                RoundedRectangle(cornerRadius: SecretMatchTheme.cornerRadius, style: .continuous)
-                    .stroke(statusColor.opacity(0.55), lineWidth: 1)
-            )
-            .shadow(color: .black.opacity(0.4), radius: 14, y: 6)
+            .secretFloatingFeedback(accentColor: statusColor)
             .frame(maxWidth: 680)
             .padding(.horizontal, 24)
             .padding(.top, 12)
