@@ -427,6 +427,7 @@ struct MatchView: View {
         usesProfileBasedSelection = false
         usesOfflineSelectionFallback = false
         withAnimation(.easeOut(duration: 0.2)) {
+            targetNumber = ""
             targetIsConfirmed = false
             showTextKeyboard = false
             showKeyboard = true
