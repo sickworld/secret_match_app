@@ -202,15 +202,11 @@ struct MatchInputBox: View {
                     }
                 }
 
-                if usesProfileBasedSelection {
-                    Label("Passend zur Zielnummer angezeigt", systemImage: "checkmark.shield.fill")
-                        .font(.system(size: metric(13, 14), weight: .semibold, design: .rounded))
-                        .foregroundStyle(SecretMatchTheme.muted)
-                } else if usesOfflineSelectionFallback {
+                if usesOfflineSelectionFallback {
                     Label("Offline-Modus: Alle Aktionen sind sichtbar", systemImage: "wifi.slash")
                         .font(.system(size: metric(13, 14), weight: .bold, design: .rounded))
                         .foregroundStyle(.orange)
-                } else {
+                } else if !usesProfileBasedSelection {
                     Label("Für diese Zielnummer sind alle Aktionen sichtbar", systemImage: "info.circle.fill")
                         .font(.system(size: metric(13, 14), weight: .semibold, design: .rounded))
                         .foregroundStyle(SecretMatchTheme.muted)
@@ -621,12 +617,19 @@ struct MatchInputBox: View {
             onUndoLastActions()
         }
         .font(.subheadline.bold())
-        .foregroundStyle(.white)
+        .foregroundStyle(highContrast ? Color.black : Color.white)
         .padding(.horizontal, 12)
         .frame(minHeight: 40)
-        .background(Color.red.opacity(highContrast ? 1 : 0.76))
-        .overlay(Rectangle().stroke(Color.white.opacity(0.7), lineWidth: highContrast ? 2 : 1))
+        .background(highContrast ? Color.white : SecretMatchTheme.primary)
+        .overlay(
+            Rectangle()
+                .stroke(
+                    highContrast ? Color.white : SecretMatchTheme.primaryHover,
+                    lineWidth: highContrast ? 2 : 1
+                )
+        )
         .disabled(isUndoingLastActions)
+        .opacity(isUndoingLastActions ? 0.7 : 1)
     }
 
     private func withdrawalFeedback(_ message: String) -> some View {
