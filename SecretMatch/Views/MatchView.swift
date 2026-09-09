@@ -19,6 +19,7 @@ struct MatchView: View {
     @State private var targetIsConfirmed = false
     @State private var allowedActionTypes: Set<String> = ["bjob", "hjob", "ljob"]
     @State private var usesProfileBasedSelection = false
+    @State private var usesOfflineSelectionFallback = false
 
 
     // Inactivity / Auto-Logout
@@ -228,6 +229,7 @@ struct MatchView: View {
                         targetIsConfirmed: targetIsConfirmed,
                         allowedActionTypes: allowedActionTypes,
                         usesProfileBasedSelection: usesProfileBasedSelection,
+                        usesOfflineSelectionFallback: usesOfflineSelectionFallback,
                         onEditTarget: editTargetNumber,
                         queuedSendCount: api.queuedSendCount,
                         queuedBatchCount: api.queuedBatchCount,
@@ -260,6 +262,7 @@ struct MatchView: View {
                     targetIsConfirmed: targetIsConfirmed,
                     allowedActionTypes: allowedActionTypes,
                     usesProfileBasedSelection: usesProfileBasedSelection,
+                    usesOfflineSelectionFallback: usesOfflineSelectionFallback,
                     onEditTarget: editTargetNumber,
                     queuedSendCount: api.queuedSendCount,
                     queuedBatchCount: api.queuedBatchCount,
@@ -312,6 +315,7 @@ struct MatchView: View {
                 targetIsConfirmed = false
                 allowedActionTypes = ["bjob", "hjob", "ljob"]
                 usesProfileBasedSelection = false
+                usesOfflineSelectionFallback = false
                 resetInactivityTimer()
                 showKeyboard = false
                 showTextKeyboard = false
@@ -363,6 +367,7 @@ struct MatchView: View {
         if api.connectionState == .offline || api.connectionState == .serverUnavailable {
             allowedActionTypes = ["bjob", "hjob", "ljob"]
             usesProfileBasedSelection = false
+            usesOfflineSelectionFallback = true
             withAnimation(.easeOut(duration: 0.2)) {
                 targetIsConfirmed = true
             }
@@ -383,6 +388,7 @@ struct MatchView: View {
                 let options = try await api.loadInteractionOptions(targetNumber: target)
                 allowedActionTypes = options.actionTypes
                 usesProfileBasedSelection = options.profileBased
+                usesOfflineSelectionFallback = false
                 selectedActions = Set(selectedActions.filter {
                     $0 == "normal" || $0 == "hot" || options.actionTypes.contains($0)
                 })
@@ -394,12 +400,11 @@ struct MatchView: View {
                 submissionFailed = true
                 targetIsConfirmed = false
             } catch {
-                // Network problems must not block the event flow or offline queue.
-                allowedActionTypes = ["bjob", "hjob", "ljob"]
+                responseMessage = "Die passenden Aktionen konnten gerade nicht geladen werden. Bitte bestätige die Nummer noch einmal."
+                submissionFailed = true
+                targetIsConfirmed = false
                 usesProfileBasedSelection = false
-                withAnimation(.easeOut(duration: 0.2)) {
-                    targetIsConfirmed = true
-                }
+                usesOfflineSelectionFallback = false
             }
         }
     }
@@ -410,6 +415,7 @@ struct MatchView: View {
         submissionFailed = false
         allowedActionTypes = ["bjob", "hjob", "ljob"]
         usesProfileBasedSelection = false
+        usesOfflineSelectionFallback = false
         withAnimation(.easeOut(duration: 0.2)) {
             targetIsConfirmed = false
             showTextKeyboard = false
