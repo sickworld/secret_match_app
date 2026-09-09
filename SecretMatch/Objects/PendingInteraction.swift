@@ -44,6 +44,26 @@ struct ActionWithdrawalError: LocalizedError {
     var errorDescription: String? { message }
 }
 
+struct InteractionOptions {
+    let actionTypes: Set<String>
+
+    var profileBased: Bool { actionTypes.count < 3 }
+}
+
+enum InteractionOptionsError: LocalizedError {
+    case invalidTarget(String)
+    case unavailable
+
+    var errorDescription: String? {
+        switch self {
+        case .invalidTarget(let number):
+            return "Die Nummer \(number.displayEventNumber) ist für dieses Event nicht verfügbar."
+        case .unavailable:
+            return "Die Auswahl konnte gerade nicht angepasst werden."
+        }
+    }
+}
+
 enum InteractionQueueWording {
     static func shipmentCount(reportedShipmentCount: Int?, actionCount: Int) -> Int {
         guard actionCount > 0 else { return 0 }

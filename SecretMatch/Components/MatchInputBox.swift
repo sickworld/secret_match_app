@@ -23,6 +23,10 @@ struct MatchInputBox: View {
     @Binding var matchMessage: String
     let quickMessages: [String]
     let onSend: () -> Void
+    var targetIsConfirmed = false
+    var allowedActionTypes: Set<String> = ["bjob", "hjob", "ljob"]
+    var usesProfileBasedSelection = false
+    var onEditTarget: () -> Void = {}
     var queuedSendCount = 0
     var queuedBatchCount = 0
     var isRetryingQueuedSends = false
@@ -49,7 +53,13 @@ struct MatchInputBox: View {
     }
 
     private var actionOptions: [ActionOption] {
-        options.filter { $0.type != "normal" && $0.type != "hot" }
+        options.filter {
+            $0.type != "normal" && $0.type != "hot" && allowedActionTypes.contains($0.type)
+        }
+    }
+
+    private var actionColumns: [GridItem] {
+        Array(repeating: GridItem(.flexible()), count: max(1, actionOptions.count))
     }
 
     private var normalizedScale: CGFloat {
@@ -101,7 +111,13 @@ struct MatchInputBox: View {
             Color.clear
                 .frame(height: fillsAvailableSpace ? metric(18, 16) : 22)
 
-            actionPanel
+            if targetIsConfirmed {
+                actionPanel
+                    .transition(.opacity.combined(with: .move(edge: .trailing)))
+            } else {
+                targetSelectionPanel
+                    .transition(.opacity.combined(with: .move(edge: .leading)))
+            }
         }
         .frame(
             maxWidth: fillsAvailableSpace ? .infinity : 780,
@@ -116,19 +132,37 @@ struct MatchInputBox: View {
                 .tracking(2)
                 .foregroundStyle(SecretMatchTheme.secondary)
 
-            Text("Was möchtest du senden?")
+            Text(targetIsConfirmed ? "Was möchtest du senden?" : "An wen möchtest du senden?")
                 .font(.system(size: metric(32, 37), weight: .bold, design: .rounded))
                 .foregroundStyle(.white)
 
-            Text("Wähle Match-Wünsche oder Aktionen und anschließend die Zielnummer.")
+            Text(
+                targetIsConfirmed
+                    ? "Wähle jetzt Match-Wünsche oder passende Aktionen."
+                    : "Gib zuerst die Zielnummer ein und bestätige sie auf der Tastatur."
+            )
                 .font(.system(size: metric(16, 18), weight: .medium, design: .rounded))
                 .foregroundStyle(SecretMatchTheme.muted)
                 .multilineTextAlignment(.center)
         }
     }
 
+    private var targetSelectionPanel: some View {
+        targetNumberSection
+            .padding(.horizontal, metric(16, 17))
+            .padding(.vertical, metric(16, 17))
+            .background(SecretMatchTheme.surfaceRaised.opacity(highContrast ? 0.78 : 0.38))
+            .overlay(Rectangle().stroke(SecretMatchTheme.border, lineWidth: highContrast ? 2 : 1))
+    }
+
     private var actionPanel: some View {
         VStack(spacing: 0) {
+            confirmedTargetSection
+                .padding(.horizontal, metric(16, 17))
+                .padding(.vertical, metric(12, 13))
+
+            panelDivider
+
             VStack(alignment: .leading, spacing: metric(9, 9)) {
                 panelSectionTitle("MATCH-WÜNSCHE")
 
@@ -150,22 +184,22 @@ struct MatchInputBox: View {
                 panelSectionTitle("AKTIONEN")
 
                 LazyVGrid(
-                    columns: [GridItem(.flexible()), GridItem(.flexible()), GridItem(.flexible())],
+                    columns: actionColumns,
                     spacing: metric(9, 10)
                 ) {
                     ForEach(actionOptions) { option in
                         selectionButton(for: option, compact: true)
                     }
                 }
+
+                if usesProfileBasedSelection {
+                    Label("Passend zur Zielnummer angezeigt", systemImage: "checkmark.shield.fill")
+                        .font(.system(size: metric(13, 14), weight: .semibold, design: .rounded))
+                        .foregroundStyle(SecretMatchTheme.muted)
+                }
             }
             .padding(.horizontal, metric(16, 17))
             .padding(.vertical, metric(14, 14))
-
-            panelDivider
-
-            targetNumberSection
-                .padding(.horizontal, metric(16, 17))
-                .padding(.vertical, metric(13, 14))
 
             if selectedActions.contains("normal") || selectedActions.contains("hot") {
                 panelDivider
@@ -188,6 +222,35 @@ struct MatchInputBox: View {
                     SecretMatchTheme.border.opacity(highContrast ? 1 : 0.95),
                     lineWidth: highContrast ? 2 : 1
                 )
+        }
+    }
+
+    private var confirmedTargetSection: some View {
+        HStack(spacing: metric(12, 13)) {
+            Image(systemName: "number")
+                .font(.system(size: metric(18, 20), weight: .bold))
+                .foregroundStyle(SecretMatchTheme.secondary)
+
+            VStack(alignment: .leading, spacing: 2) {
+                panelSectionTitle("ZIELNUMMER")
+                Text(targetNumber.displayEventNumber)
+                    .font(.system(size: metric(25, 28), weight: .heavy, design: .monospaced))
+                    .foregroundStyle(.white)
+            }
+
+            Spacer()
+
+            Button("Nummer ändern") {
+                onEditTarget()
+            }
+            .font(.system(size: metric(14, 15), weight: .bold, design: .rounded))
+            .lineLimit(1)
+            .minimumScaleFactor(0.8)
+            .foregroundStyle(SecretMatchTheme.secondary)
+            .padding(.horizontal, metric(12, 13))
+            .frame(minHeight: metric(42, 44))
+            .background(SecretMatchTheme.surfaceRaised)
+            .overlay(Rectangle().stroke(SecretMatchTheme.border, lineWidth: highContrast ? 2 : 1))
         }
     }
 

@@ -16,6 +16,9 @@ struct MatchView: View {
     @State private var lastWithdrawableActionIDs: [UUID] = []
     @State private var isWithdrawingLastActions = false
     @State private var withdrawalConfirmationMessage: String?
+    @State private var targetIsConfirmed = false
+    @State private var allowedActionTypes: Set<String> = ["bjob", "hjob", "ljob"]
+    @State private var usesProfileBasedSelection = false
 
 
     // Inactivity / Auto-Logout
@@ -96,8 +99,7 @@ struct MatchView: View {
                             resetInactivityTimer()
                         }
                     ) {
-                        showKeyboard = false
-                        resetInactivityTimer()
+                        confirmTargetNumber()
                     }
                     .frame(maxWidth: 740)
                     .padding()
@@ -223,6 +225,10 @@ struct MatchView: View {
                         matchMessage: $matchMessage,
                         quickMessages: api.matchMessageOptions,
                         onSend: sendInteractions,
+                        targetIsConfirmed: targetIsConfirmed,
+                        allowedActionTypes: allowedActionTypes,
+                        usesProfileBasedSelection: usesProfileBasedSelection,
+                        onEditTarget: editTargetNumber,
                         queuedSendCount: api.queuedSendCount,
                         queuedBatchCount: api.queuedBatchCount,
                         isRetryingQueuedSends: api.isRetryingQueuedSends,
@@ -251,6 +257,10 @@ struct MatchView: View {
                     matchMessage: $matchMessage,
                     quickMessages: api.matchMessageOptions,
                     onSend: sendInteractions,
+                    targetIsConfirmed: targetIsConfirmed,
+                    allowedActionTypes: allowedActionTypes,
+                    usesProfileBasedSelection: usesProfileBasedSelection,
+                    onEditTarget: editTargetNumber,
                     queuedSendCount: api.queuedSendCount,
                     queuedBatchCount: api.queuedBatchCount,
                     isRetryingQueuedSends: api.isRetryingQueuedSends,
@@ -299,6 +309,9 @@ struct MatchView: View {
                 isLoading = false
                 targetNumber = ""
                 selectedActions = []
+                targetIsConfirmed = false
+                allowedActionTypes = ["bjob", "hjob", "ljob"]
+                usesProfileBasedSelection = false
                 resetInactivityTimer()
                 showKeyboard = false
                 showTextKeyboard = false
@@ -328,6 +341,81 @@ struct MatchView: View {
                 submissionFailed = true
             }
         }
+    }
+
+    private func confirmTargetNumber() {
+        let target = targetNumber.normalizedEventNumber
+        showKeyboard = false
+
+        guard !target.isEmpty else {
+            responseMessage = "Bitte gib zuerst eine Zielnummer ein."
+            submissionFailed = true
+            resetInactivityTimer()
+            return
+        }
+        guard target != api.number.normalizedEventNumber else {
+            responseMessage = "Du kannst keine Aktion an dich selbst senden 😅"
+            submissionFailed = true
+            resetInactivityTimer()
+            return
+        }
+
+        if api.connectionState == .offline || api.connectionState == .serverUnavailable {
+            allowedActionTypes = ["bjob", "hjob", "ljob"]
+            usesProfileBasedSelection = false
+            withAnimation(.easeOut(duration: 0.2)) {
+                targetIsConfirmed = true
+            }
+            resetInactivityTimer()
+            return
+        }
+
+        Task {
+            submissionFailed = false
+            pauseInactivityTimer()
+            isLoading = true
+            defer {
+                isLoading = false
+                resetInactivityTimer()
+            }
+
+            do {
+                let options = try await api.loadInteractionOptions(targetNumber: target)
+                allowedActionTypes = options.actionTypes
+                usesProfileBasedSelection = options.profileBased
+                selectedActions = Set(selectedActions.filter {
+                    $0 == "normal" || $0 == "hot" || options.actionTypes.contains($0)
+                })
+                withAnimation(.easeOut(duration: 0.2)) {
+                    targetIsConfirmed = true
+                }
+            } catch InteractionOptionsError.invalidTarget(let invalidNumber) {
+                responseMessage = InteractionOptionsError.invalidTarget(invalidNumber).localizedDescription
+                submissionFailed = true
+                targetIsConfirmed = false
+            } catch {
+                // Network problems must not block the event flow or offline queue.
+                allowedActionTypes = ["bjob", "hjob", "ljob"]
+                usesProfileBasedSelection = false
+                withAnimation(.easeOut(duration: 0.2)) {
+                    targetIsConfirmed = true
+                }
+            }
+        }
+    }
+
+    private func editTargetNumber() {
+        selectedActions = []
+        matchMessage = ""
+        submissionFailed = false
+        allowedActionTypes = ["bjob", "hjob", "ljob"]
+        usesProfileBasedSelection = false
+        withAnimation(.easeOut(duration: 0.2)) {
+            targetIsConfirmed = false
+            showTextKeyboard = false
+            showKeyboard = true
+        }
+        resetInactivityTimer()
     }
 
     private func retryQueuedSends() {

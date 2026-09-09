@@ -354,6 +354,41 @@ class APIService: ObservableObject {
         guard let http = response as? HTTPURLResponse, http.statusCode == 200 else { throw URLError(.badServerResponse) }
         matchMessageOptions = try JSONDecoder().decode(MatchMessageOptionsResponse.self, from: data).options
     }
+
+    func loadInteractionOptions(targetNumber: String) async throws -> InteractionOptions {
+        let normalizedTarget = targetNumber.normalizedEventNumber
+        var components = URLComponents(
+            url: baseURL.appendingPathComponent("interaction-options"),
+            resolvingAgainstBaseURL: false
+        )
+        components?.queryItems = [URLQueryItem(name: "target_number", value: normalizedTarget)]
+        guard let url = components?.url else { throw InteractionOptionsError.unavailable }
+
+        var request = URLRequest(url: url)
+        request.timeoutInterval = 4
+        let data: Data
+        let response: URLResponse
+        do {
+            (data, response) = try await URLSession.shared.data(for: request)
+        } catch {
+            throw InteractionOptionsError.unavailable
+        }
+        guard let http = response as? HTTPURLResponse else {
+            throw InteractionOptionsError.unavailable
+        }
+        if http.statusCode == 200 {
+            let decoded = try JSONDecoder().decode(InteractionOptionsResponse.self, from: data)
+            let supported = Set(["bjob", "hjob", "ljob"])
+            let actionTypes = Set(decoded.actionTypes).intersection(supported)
+            return InteractionOptions(actionTypes: actionTypes.isEmpty ? supported : actionTypes)
+        }
+
+        let responseError = try? JSONDecoder().decode(InteractionAPIErrorResponse.self, from: data)
+        if responseError?.code == "invalid_target" {
+            throw InteractionOptionsError.invalidTarget(normalizedTarget)
+        }
+        throw InteractionOptionsError.unavailable
+    }
     
     @MainActor
     func loadMatches() async throws -> [Match] {
@@ -1969,6 +2004,14 @@ private struct ParticipantStatusResponse: Decodable {
 
 private struct MatchMessageOptionsResponse: Decodable {
     let options: [String]
+}
+
+private struct InteractionOptionsResponse: Decodable {
+    let actionTypes: [String]
+
+    private enum CodingKeys: String, CodingKey {
+        case actionTypes = "action_types"
+    }
 }
 
 private struct AdminLoginResponse: Decodable {

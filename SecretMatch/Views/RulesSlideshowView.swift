@@ -37,8 +37,8 @@ struct RulesSlideshowView: View {
             icon: "paperplane.fill",
             eyebrow: "AKTIONEN",
             title: "Aktionen sind Vorschläge",
-            text: "Aktionen sind direkter als Matches. Du kannst damit zeigen, worauf du Lust hast.",
-            highlights: ["Aktion wählen", "Nummer eingeben", "Absenden"]
+            text: "Gib zuerst die Zielnummer ein. Danach zeigt Match&Play die passenden Aktionen, mit denen du ausdrücken kannst, worauf du Lust hast.",
+            highlights: ["Nummer eingeben", "Aktion wählen", "Absenden"]
         ),
         RuleSlide(
             icon: "hand.raised.fill",

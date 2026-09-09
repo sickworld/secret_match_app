@@ -28,6 +28,14 @@ struct HowToUseView: View {
         DemoActionOption(type: "ljob", title: "Lick-Job", emoji: "👅", color: Color(hex: "#D65C8D"))
     ]
 
+    private var matchOptions: [DemoActionOption] {
+        options.filter { $0.type == "normal" || $0.type == "hot" }
+    }
+
+    private var actionOptions: [DemoActionOption] {
+        options.filter { $0.type != "normal" && $0.type != "hot" }
+    }
+
     var body: some View {
         ZStack {
             GeometryReader { proxy in
@@ -146,10 +154,13 @@ struct HowToUseView: View {
             progressBar
 
             VStack(spacing: isCompact ? 20 : 10) {
-                demoActionGrid(isCompact: isCompact)
                 demoNumberInput
 
-                demoSendButton
+                if step >= 3 {
+                    demoActionGrid(isCompact: isCompact)
+                        .transition(.opacity.combined(with: .move(edge: .trailing)))
+                    demoSendButton
+                }
 
                 if step >= 5 {
                     successMessage
@@ -183,19 +194,32 @@ struct HowToUseView: View {
 
     private func demoActionGrid(isCompact: Bool) -> some View {
         VStack(spacing: 10) {
-            demoSectionTitle("Aktion auswählen", icon: "hand.tap.fill")
+            demoSectionTitle("Match-Wunsch auswählen", icon: "heart.fill")
 
             LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: isCompact ? 12 : 7) {
-                ForEach(options) { option in
+                ForEach(matchOptions) { option in
                     demoActionCard(option, isCompact: isCompact)
                 }
             }
+
+            demoSectionTitle("Passende Aktion auswählen", icon: "hand.tap.fill")
+
+            LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: isCompact ? 12 : 7) {
+                ForEach(actionOptions) { option in
+                    demoActionCard(option, isCompact: isCompact)
+                }
+            }
+
+            Text("Je nach Zielnummer kann Blow- oder Lick-Job automatisch ausgeblendet sein.")
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(SecretMatchTheme.muted)
+                .frame(maxWidth: .infinity, alignment: .leading)
         }
-        .highlighted(step == 1)
+        .highlighted(step == 3)
     }
 
     private func demoActionCard(_ option: DemoActionOption, isCompact: Bool) -> some View {
-        let isSelected = step >= 1 && option.type == "hot"
+        let isSelected = step >= 3 && option.type == "hjob"
 
         return HStack(spacing: 10) {
             Text(option.emoji)
@@ -228,13 +252,13 @@ struct HowToUseView: View {
                 .foregroundStyle(demoKeyboardNumber.isEmpty ? SecretMatchTheme.muted : .white)
                 .font(.system(size: 22, weight: .semibold, design: .rounded))
                 .multilineTextAlignment(.center)
-                .secretInput(highlighted: step == 2 || step == 3)
+                .secretInput(highlighted: step == 1 || step == 2)
         }
-        .highlighted(step == 2 || step == 3)
+        .highlighted(step == 1 || step == 2)
     }
 
     private var showsDemoKeyboard: Bool {
-        (step == 2 || step == 3) && !isDemoKeyboardDismissed
+        step == 2 && !isDemoKeyboardDismissed
     }
 
     private var demoPopupKeyboard: some View {
@@ -281,7 +305,7 @@ struct HowToUseView: View {
         HStack(alignment: .top, spacing: 10) {
             Image(systemName: "checkmark.seal.fill")
                 .foregroundStyle(SecretMatchTheme.secondary)
-            Text("Demo erfolgreich. Im echten Modus findest du empfangene Vorschläge unter \"Deine Übersicht → Aktionen\".")
+            Text("Demo erfolgreich. Empfangene und selbst gesendete Vorschläge findest du unter \"Deine Übersicht → Aktionen\"; eigene Aktionen kannst du dort zurückziehen.")
                 .font(.subheadline.weight(.semibold))
                 .foregroundStyle(.white)
                 .fixedSize(horizontal: false, vertical: true)
@@ -352,9 +376,9 @@ struct HowToUseView: View {
     private var stepTitle: String {
         switch step {
         case 0: return "So läuft es ab"
-        case 1: return "Aktion auswählen"
-        case 2: return "Nummer antippen"
-        case 3: return "Nummer eingeben"
+        case 1: return "Nummer antippen"
+        case 2: return "Nummer eingeben"
+        case 3: return "Auswahl treffen"
         case 4: return "Aktion senden"
         default: return "Fertig"
         }
@@ -363,10 +387,10 @@ struct HowToUseView: View {
     private var stepText: String {
         switch step {
         case 0: return "Die Demo spielt den Ablauf automatisch vor."
-        case 1: return "Zuerst wird ausgewählt, was gesendet werden soll."
-        case 2: return "Danach wird das Nummernfeld geöffnet."
-        case 3: return "Die Event-Nummer der anderen Person wird eingetippt."
-        case 4: return "Wenn Aktion und Nummer gesetzt sind, wird der Button aktiv."
+        case 1: return "Zuerst wird das Feld für die Zielnummer geöffnet."
+        case 2: return "Nummer eingeben und direkt mit dem Häkchen bestätigen."
+        case 3: return "Danach erscheinen Match-Wünsche und passende Aktionen – ohne weiteren Zwischenschritt."
+        case 4: return "Nach der Auswahl wird der Senden-Button aktiv."
         default: return "Die Demo ist nur eine Vorschau und verschickt nichts."
         }
     }
@@ -379,7 +403,7 @@ struct HowToUseView: View {
     private func finishDemoKeyboardEntry() {
         playbackTask?.cancel()
         isPlaying = false
-        step = 4
+        step = 3
         registerActivity()
     }
 

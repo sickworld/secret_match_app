@@ -30,7 +30,7 @@ Die bestehende dunkle Match&Play-Gestaltung verwendet für Karten, Buttons, Eing
 
 Das kompakte Menü der iPhone-Admin-App bleibt flächig und neutral. Bereichsfarben erscheinen nur an den Icons sowie dezent am aktiven Eintrag; eine linke Markierung und ein Häkchen kennzeichnen die Auswahl zusätzlich unabhängig von der Farbe. Der Logout bleibt als destruktive Aktion rot.
 
-Diese Funktionen benötigen das WordPress-Modul ab Version `2026.09.09.3`; das Modul muss vor oder zusammen mit diesem App-Build veröffentlicht werden.
+Diese Funktionen benötigen das WordPress-Modul ab Version `2026.09.09.4`; das Modul muss vor oder zusammen mit diesem App-Build veröffentlicht werden.
 
 ## Eingehende Interessen
 
@@ -73,6 +73,15 @@ Auswahlzustände werden nicht nur über Farbe, sondern zusätzlich mit Kreis- un
 Freie Match-Nachrichten werden über eine appinterne QWERTZ-Tastatur mit Umlauten, Zahlen und Satzzeichen eingegeben. Auch der gemeinsame Eventnummernfilter in **Matches**, **Interesse** und **Aktionen** nutzt die große appinterne Zahlentastatur. Die Schnelltexte lassen sich sowohl in der Admin-App unter **Steuerung → Match-Schnelltexte** als auch im WordPress-Backend unter **SecretMatch → Einstellungen** pflegen; beide Oberflächen bearbeiten dieselbe Liste.
 
 ## Sende-Warteschlange
+
+### Anforderung SM-ACT-FLOW-001
+
+- **Priorität:** P1
+- **Phase:** Implementiert
+- **Akzeptanzkriterium:** Die Teilnehmeransicht zeigt zunächst ausschließlich die Zielnummer. Die Bestätigungstaste der appinternen Zahlentastatur öffnet ohne zusätzlichen Weiter-Button direkt Match-Wünsche und Aktionen; die Nummer kann anschließend über **Nummer ändern** korrigiert werden.
+- **Passende Aktionen:** Das WordPress-Modul liefert nur die für das Zielprofil sichtbaren Aktionstypen. Bei einem männlich hinterlegten Ziel wird Lick-Job, bei einem weiblich hinterlegten Ziel Blow-Job ausgeblendet. Das Geschlecht selbst wird nicht an die App übertragen.
+- **Offline-Fallback:** Fehlen Profildaten oder ist der neue Endpunkt nicht erreichbar, zeigt die App alle Aktionen. Match-Wünsche und Hand-Job bleiben immer verfügbar.
+- **Anleitung:** Die geführte Demo und die Spielregeln verwenden denselben Nummer-zuerst-Ablauf, trennen Match-Wünsche von Aktionen und erklären die automatisch passende Auswahl sowie den Rückzug gesendeter Aktionen.
 
 ### Anforderung SM-ACT-WITHDRAW-001
 
