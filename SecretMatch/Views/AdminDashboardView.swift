@@ -1074,7 +1074,7 @@ struct AdminDashboardView: View {
             Text("🗄️ Event abschließen")
                 .font(.title2.bold())
                 .foregroundStyle(.white)
-            Text("Archiviert Eventdaten, Logs und die vollständige Statistik dauerhaft. Danach startet der Live-Stand für das nächste Event bei null; freigegebene Nummern und Einstellungen bleiben erhalten.")
+            Text("Archiviert Eventdaten, Logs und die vollständige Statistik dauerhaft. Danach startet der Live-Stand für das nächste Event bei null; Teilnehmer-PINs werden zurückgesetzt, freigegebene Nummern und Einstellungen bleiben erhalten.")
                 .foregroundStyle(SecretMatchTheme.muted)
             Button("Event-Archiv öffnen", role: .destructive) {
                 resetConfirmation = ""
@@ -1093,6 +1093,7 @@ struct AdminDashboardView: View {
                     Label("Benanntes Archiv des aktuellen Events erstellen", systemImage: "archivebox")
                     Label("Daten, Logs und vollständige Statistik sichern", systemImage: "chart.bar.xaxis")
                     Label("Live-Stand für das nächste Event auf null setzen", systemImage: "arrow.counterclockwise")
+                    Label("Teilnehmer-PINs für die neue Selbstvergabe löschen", systemImage: "key.slash")
                     Label("Teilnehmer- und Billboard-Sessions beenden", systemImage: "person.crop.circle.badge.xmark")
                     Label("Top-16-Testmodus zurücksetzen", systemImage: "rectangle.on.rectangle.slash")
                 }
@@ -1693,7 +1694,7 @@ struct AdminDashboardView: View {
         do {
             let result = try await api.resetEvent(confirmation: resetConfirmation, name: archiveName)
             let name = result.archiveName ?? archiveName
-            statusMessage = "„\(name)“ wurde archiviert. Der Live-Stand ist wieder leer: \(result.deleted.matches) Matches, \(result.deleted.requests) Anfragen, \(result.deleted.actions) Aktionen und \(result.deleted.eventLog ?? 0) Logs abgeschlossen."
+            statusMessage = "„\(name)“ wurde archiviert. Der Live-Stand ist wieder leer und alle Teilnehmer-PINs wurden für die neue Selbstvergabe zurückgesetzt: \(result.deleted.matches) Matches, \(result.deleted.requests) Anfragen, \(result.deleted.actions) Aktionen und \(result.deleted.eventLog ?? 0) Logs abgeschlossen."
             errorMessage = nil
             showResetAssistant = false
         } catch {

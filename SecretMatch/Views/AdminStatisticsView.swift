@@ -243,7 +243,7 @@ struct AdminStatisticsView: View {
                     Section {
                         Text("„\(archive.name)“ wird zum aktiven Event.")
                             .font(.headline)
-                        Text("Der aktuelle Live-Stand wird vorher automatisch als eigenes Sicherheitsarchiv gespeichert. Teilnehmer- und Billboard-Sitzungen werden beendet. PINs, Nummernfreigaben und globale Einstellungen bleiben unverändert.")
+                        Text("Der aktuelle Live-Stand wird vorher automatisch als eigenes Sicherheitsarchiv gespeichert. Alle Teilnehmer-PINs und Sitzungen werden zurückgesetzt; beim nächsten Login wird eine neue PIN angelegt. Nummernfreigaben und globale Einstellungen bleiben erhalten.")
                             .foregroundStyle(.secondary)
                     }
                     Section("Automatisches Sicherheitsarchiv") {
@@ -663,7 +663,7 @@ struct AdminStatisticsView: View {
             selectedEventID = "current"
             archiveOperation = nil
             errorMessage = nil
-            archiveSuccessMessage = "„\(result.restoredArchiveName)“ ist jetzt wieder aktiv. Der vorherige Live-Stand wurde als „\(result.safetyArchiveName)“ archiviert."
+            archiveSuccessMessage = "„\(result.restoredArchiveName)“ ist jetzt wieder aktiv. Der vorherige Live-Stand wurde als „\(result.safetyArchiveName)“ archiviert. Alle Teilnehmer legen beim nächsten Login eine neue PIN fest."
         } catch {
             archiveError = "Das Event konnte nicht wiederhergestellt werden. Der bisherige Live-Stand wurde nicht verändert."
         }
