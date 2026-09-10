@@ -101,6 +101,9 @@ struct AdminEventLogEntry: Identifiable, Decodable {
             "admin_push_device_unregistered": "Admin-Gerät von Push abgemeldet",
             "admin_event_log_examples_created": "Admin: Testprotokolle angelegt",
             "admin_event_reset": "Admin: Event-Reset",
+            "admin_event_archived": "Admin: Event archiviert",
+            "admin_event_archive_renamed": "Admin: Event-Archiv umbenannt",
+            "admin_event_archive_deleted": "Admin: Event-Archiv gelöscht",
             "admin_dummy_data_created": "Admin: Testdaten angelegt",
             "admin_dummy_data_deleted": "Admin: Testdaten gelöscht",
             "admin_billboard_top_test_started": "Admin: Billboard-Test gestartet",
@@ -222,10 +225,30 @@ enum LogContextValue: Decodable {
 struct AdminStatisticsResponse: Decodable {
     let current: AdminEventStatistics
     let lastEvent: AdminEventStatistics?
+    let archives: [AdminEventArchiveSummary]?
 
     private enum CodingKeys: String, CodingKey {
         case current
         case lastEvent = "last_event"
+        case archives
+    }
+}
+
+struct AdminEventArchiveSummary: Decodable, Identifiable {
+    let id: String
+    let eventID: String
+    let name: String
+    let startedAt: String?
+    let completedAt: String
+    let createdAt: String
+    let statistics: AdminEventStatistics
+
+    private enum CodingKeys: String, CodingKey {
+        case id, name, statistics
+        case eventID = "event_id"
+        case startedAt = "started_at"
+        case completedAt = "completed_at"
+        case createdAt = "created_at"
     }
 }
 

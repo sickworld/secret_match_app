@@ -264,6 +264,8 @@ struct ParticipantRangeResponse: Decodable {
 
 struct EventResetResponse: Decodable {
     let backupCreatedAt: String
+    let archiveID: String?
+    let archiveName: String?
     let deleted: DeletedCounts
 
     struct DeletedCounts: Decodable {
@@ -281,6 +283,8 @@ struct EventResetResponse: Decodable {
 
     private enum CodingKeys: String, CodingKey {
         case backupCreatedAt = "backup_created_at"
+        case archiveID = "archive_id"
+        case archiveName = "archive_name"
         case deleted
     }
 }

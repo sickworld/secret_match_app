@@ -25,7 +25,7 @@ enum AdminDashboardSection: String, CaseIterable, Identifiable {
         case .feedback: return "Feedback"
         case .controls: return "Eventsteuerung"
         case .participants: return "Teilnehmer"
-        case .system: return "System & Reset"
+        case .system: return "System & Archiv"
         }
     }
 
@@ -43,7 +43,7 @@ enum AdminDashboardSection: String, CaseIterable, Identifiable {
         case .feedback: return "Anonyme Bewertungen auswerten"
         case .controls: return "Billboards, Medien, Schnelltexte und Testdaten"
         case .participants: return "Nummern, PIN und Gender verwalten"
-        case .system: return "Status, Geräte und Event-Reset"
+        case .system: return "Status, Geräte und Event-Archiv"
         }
     }
 
@@ -106,6 +106,7 @@ struct AdminDashboardView: View {
     @State private var confirmation: Confirmation?
     @State private var showResetAssistant = false
     @State private var resetConfirmation = ""
+    @State private var archiveName = ""
     @State private var quickMessagesText = ""
     @State private var quickMessagesSaveState = QuickMessagesSaveState.idle
     @State private var pinEditorNumber: String?
@@ -1070,13 +1071,14 @@ struct AdminDashboardView: View {
 
     private var resetCard: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Text("🚨 Neues Event vorbereiten")
+            Text("🗄️ Event abschließen")
                 .font(.title2.bold())
                 .foregroundStyle(.white)
-            Text("Erstellt zuerst ein Backup und eine anonyme Abschlussstatistik, leert Matches, Anfragen, Aktionen, Feedbacks und sämtliche Logs, beendet Sessions und setzt das Billboard zurück. Freigegebene Nummern und Einstellungen bleiben erhalten.")
+            Text("Archiviert Eventdaten, Logs und die vollständige Statistik dauerhaft. Danach startet der Live-Stand für das nächste Event bei null; freigegebene Nummern und Einstellungen bleiben erhalten.")
                 .foregroundStyle(SecretMatchTheme.muted)
-            Button("Event-Reset-Assistent öffnen", role: .destructive) {
+            Button("Event-Archiv öffnen", role: .destructive) {
                 resetConfirmation = ""
+                archiveName = ""
                 showResetAssistant = true
             }
             .foregroundStyle(.red)
@@ -1088,31 +1090,42 @@ struct AdminDashboardView: View {
         NavigationStack {
             Form {
                 Section("Der Assistent führt diese Schritte aus") {
-                    Label("Backup des aktuellen Events erstellen", systemImage: "archivebox")
-                    Label("Anonyme Abschlussstatistik sichern", systemImage: "chart.bar.xaxis")
-                    Label("Matches, Anfragen, Aktionen, Feedbacks und Logs leeren", systemImage: "trash")
+                    Label("Benanntes Archiv des aktuellen Events erstellen", systemImage: "archivebox")
+                    Label("Daten, Logs und vollständige Statistik sichern", systemImage: "chart.bar.xaxis")
+                    Label("Live-Stand für das nächste Event auf null setzen", systemImage: "arrow.counterclockwise")
                     Label("Teilnehmer- und Billboard-Sessions beenden", systemImage: "person.crop.circle.badge.xmark")
                     Label("Top-16-Testmodus zurücksetzen", systemImage: "rectangle.on.rectangle.slash")
                 }
-                Section("Sicherheitsbestätigung") {
-                    Text("Zum Ausführen exakt EVENT RESET eingeben.")
+                Section("Eventname") {
                     AdminKeyboardTextField(
-                        title: "EVENT RESET",
+                        title: "z. B. Match&Play September 2026",
+                        text: $archiveName,
+                        keyboard: .text(maxCharacters: 120),
+                        keyboardTitle: "Event benennen"
+                    )
+                }
+                Section("Sicherheitsbestätigung") {
+                    Text("Zum Ausführen exakt EVENT ABSCHLIESSEN eingeben.")
+                    AdminKeyboardTextField(
+                        title: "EVENT ABSCHLIESSEN",
                         text: $resetConfirmation,
-                        keyboard: .text(maxCharacters: 11),
-                        keyboardTitle: "Event-Reset bestätigen",
+                        keyboard: .text(maxCharacters: 18),
+                        keyboardTitle: "Eventabschluss bestätigen",
                         forcesUppercase: true
                     )
                         .textInputAutocapitalization(.characters)
-                    Button("Backup erstellen und Event zurücksetzen", role: .destructive) {
+                    Button("Event abschließen und archivieren", role: .destructive) {
                         Task { await performReset() }
                     }
-                    .disabled(resetConfirmation != "EVENT RESET" || isWorking)
+                    .disabled(resetConfirmation != "EVENT ABSCHLIESSEN" || archiveName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || isWorking)
+                }
+                Section("Rückblick") {
+                    Text("Alle abgeschlossenen Events findest du anschließend unter Statistik und kannst dort ihre Kennzahlen rückwirkend ansehen und exportieren.")
                 }
             }
             .scrollContentBackground(.hidden)
             .background(SecretMatchTheme.background)
-            .navigationTitle("Event-Reset")
+            .navigationTitle("Event-Archiv")
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Abbrechen") { showResetAssistant = false }
@@ -1678,16 +1691,13 @@ struct AdminDashboardView: View {
     private func performReset() async {
         isWorking = true
         do {
-            let result = try await api.resetEvent(confirmation: resetConfirmation)
-            if let feedback = result.deleted.feedback {
-                statusMessage = "Event zurückgesetzt. Backup: \(result.backupCreatedAt) · \(result.deleted.matches) Matches, \(result.deleted.actions) Aktionen, \(feedback) Feedbacks und \(result.deleted.eventLog ?? 0) Logs entfernt. Die anonyme Statistik bleibt erhalten."
-            } else {
-                statusMessage = "Event zurückgesetzt. Backup: \(result.backupCreatedAt) · \(result.deleted.matches) Matches und \(result.deleted.actions) Aktionen entfernt."
-            }
+            let result = try await api.resetEvent(confirmation: resetConfirmation, name: archiveName)
+            let name = result.archiveName ?? archiveName
+            statusMessage = "„\(name)“ wurde archiviert. Der Live-Stand ist wieder leer: \(result.deleted.matches) Matches, \(result.deleted.requests) Anfragen, \(result.deleted.actions) Aktionen und \(result.deleted.eventLog ?? 0) Logs abgeschlossen."
             errorMessage = nil
             showResetAssistant = false
         } catch {
-            errorMessage = "Event-Reset fehlgeschlagen: \(error.localizedDescription)"
+            errorMessage = "Event konnte nicht archiviert werden: \(error.localizedDescription)"
         }
         isWorking = false
     }

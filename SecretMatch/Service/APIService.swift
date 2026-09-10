@@ -1037,6 +1037,30 @@ class APIService: ObservableObject {
         adminStatistics = try JSONDecoder().decode(AdminStatisticsResponse.self, from: data)
     }
 
+    func renameAdminEventArchive(id: String, name: String) async throws {
+        let url = baseURL.appendingPathComponent("admin/event-archives").appendingPathComponent(id)
+        var request = try adminRequest(url: url)
+        request.httpMethod = "PATCH"
+        request.httpBody = try JSONSerialization.data(withJSONObject: [
+            "name": name.trimmingCharacters(in: .whitespacesAndNewlines)
+        ])
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        let (_, response) = try await URLSession.shared.data(for: request)
+        try validateAdminResponse(response)
+        try await loadAdminStatistics()
+    }
+
+    func deleteAdminEventArchive(id: String, confirmation: String) async throws {
+        let url = baseURL.appendingPathComponent("admin/event-archives").appendingPathComponent(id)
+        var request = try adminRequest(url: url)
+        request.httpMethod = "DELETE"
+        request.httpBody = try JSONSerialization.data(withJSONObject: ["confirmation": confirmation])
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        let (_, response) = try await URLSession.shared.data(for: request)
+        try validateAdminResponse(response)
+        try await loadAdminStatistics()
+    }
+
     func loadAdminParticipants() async throws {
         let url = baseURL.appendingPathComponent("admin/participants")
         let (data, response) = try await URLSession.shared.data(for: adminRequest(url: url))
@@ -1481,11 +1505,14 @@ class APIService: ObservableObject {
         try await participantCommand(number: number, suffix: nil, method: "DELETE")
     }
 
-    func resetEvent(confirmation: String) async throws -> EventResetResponse {
+    func resetEvent(confirmation: String, name: String) async throws -> EventResetResponse {
         let url = baseURL.appendingPathComponent("admin/event-reset")
         var request = try adminRequest(url: url)
         request.httpMethod = "POST"
-        request.httpBody = try JSONSerialization.data(withJSONObject: ["confirmation": confirmation])
+        request.httpBody = try JSONSerialization.data(withJSONObject: [
+            "confirmation": confirmation,
+            "name": name.trimmingCharacters(in: .whitespacesAndNewlines)
+        ])
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         let (data, response) = try await URLSession.shared.data(for: request)
         try validateAdminResponse(response)

@@ -2,14 +2,40 @@ import SwiftUI
 
 struct AdminStatisticsView: View {
     @EnvironmentObject private var api: APIService
-    @State private var showsLastEvent = false
+    @State private var selectedEventID = "current"
     @State private var isLoading = false
     @State private var errorMessage: String?
     @State private var exportArtifact: AdminExportArtifact?
     @State private var exportError: String?
+    @State private var archiveOperation: ArchiveOperation?
+    @State private var archiveNameDraft = ""
+    @State private var archiveDeleteConfirmation = ""
+    @State private var archiveError: String?
+
+    private enum ArchiveOperation: Identifiable {
+        case rename(AdminEventArchiveSummary)
+        case delete(AdminEventArchiveSummary)
+
+        var id: String {
+            switch self {
+            case .rename(let archive): return "rename-\(archive.id)"
+            case .delete(let archive): return "delete-\(archive.id)"
+            }
+        }
+    }
 
     private var statistics: AdminEventStatistics? {
-        showsLastEvent ? api.adminStatistics?.lastEvent : api.adminStatistics?.current
+        if selectedEventID == "current" { return api.adminStatistics?.current }
+        if selectedEventID == "legacy-last" { return api.adminStatistics?.lastEvent }
+        return api.adminStatistics?.archives?.first(where: { $0.id == selectedEventID })?.statistics
+    }
+
+    private var selectedArchive: AdminEventArchiveSummary? {
+        api.adminStatistics?.archives?.first(where: { $0.id == selectedEventID })
+    }
+
+    private var isCurrentEvent: Bool {
+        selectedEventID == "current"
     }
 
     var body: some View {
@@ -36,11 +62,11 @@ struct AdminStatisticsView: View {
                 } else if let statistics {
                     overview(statistics)
                     matchFunnel(statistics)
-                    if let lastEvent = api.adminStatistics?.lastEvent {
+                    if isCurrentEvent, let lastEvent = api.adminStatistics?.archives?.first?.statistics ?? api.adminStatistics?.lastEvent {
                         eventComparison(current: api.adminStatistics?.current ?? statistics, last: lastEvent)
                     }
-                    if !showsLastEvent {
-                        participantRanking(statistics.topParticipants ?? [])
+                    participantRanking(statistics.topParticipants ?? [])
+                    if isCurrentEvent {
                         deviceMonitoring
                     }
                     distributions(statistics)
@@ -49,7 +75,7 @@ struct AdminStatisticsView: View {
                     ContentUnavailableView(
                         "Noch keine Abschlussstatistik",
                         systemImage: "calendar.badge.clock",
-                        description: Text("Beim Event-Reset wird automatisch eine anonyme Zusammenfassung gespeichert.")
+                        description: Text("Beim Eventabschluss wird automatisch ein dauerhaftes Archiv gespeichert.")
                     )
                     .foregroundStyle(.white)
                     .frame(minHeight: 300)
@@ -63,6 +89,9 @@ struct AdminStatisticsView: View {
         .sheet(item: $exportArtifact) { artifact in
             AdminShareSheet(url: artifact.url)
         }
+        .sheet(item: $archiveOperation) { operation in
+            archiveOperationSheet(operation)
+        }
         .alert("Export fehlgeschlagen", isPresented: Binding(
             get: { exportError != nil },
             set: { if !$0 { exportError = nil } }
@@ -71,11 +100,19 @@ struct AdminStatisticsView: View {
         } message: {
             Text(exportError ?? "Der Bericht konnte nicht erstellt werden.")
         }
+        .alert("Archiv konnte nicht geändert werden", isPresented: Binding(
+            get: { archiveError != nil },
+            set: { if !$0 { archiveError = nil } }
+        )) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text(archiveError ?? "Bitte versuche es erneut.")
+        }
         .task {
             await load()
             while !Task.isCancelled {
                 try? await Task.sleep(for: .seconds(30))
-                if !showsLastEvent { await load(quietly: true) }
+                if isCurrentEvent { await load(quietly: true) }
             }
         }
     }
@@ -91,36 +128,64 @@ struct AdminStatisticsView: View {
                     Text("Statistik")
                         .font(.system(size: 34, weight: .bold, design: .rounded))
                         .foregroundStyle(.white)
-                    Text(showsLastEvent ? "Anonyme Abschlusswerte des letzten Events." : "Live-Auswertung des laufenden Events.")
+                    Text(isCurrentEvent ? "Live-Auswertung des laufenden Events." : "Rückblick auf \(selectedArchive?.name ?? "das abgeschlossene Event").")
                         .font(.subheadline.weight(.medium))
                         .foregroundStyle(SecretMatchTheme.muted)
                 }
                 Spacer()
-                Menu {
-                    Button {
-                        export(format: "pdf")
+                HStack(spacing: 10) {
+                    Menu {
+                        Button {
+                            export(format: "pdf")
+                        } label: {
+                            Label("Als PDF teilen", systemImage: "doc.richtext")
+                        }
+                        Button {
+                            export(format: "csv")
+                        } label: {
+                            Label("Als CSV teilen", systemImage: "tablecells")
+                        }
                     } label: {
-                        Label("Als PDF teilen", systemImage: "doc.richtext")
+                        Label("Bericht exportieren", systemImage: "square.and.arrow.up")
                     }
-                    Button {
-                        export(format: "csv")
-                    } label: {
-                        Label("Als CSV teilen", systemImage: "tablecells")
+                    .buttonStyle(.borderedProminent)
+                    .tint(SecretMatchTheme.primary)
+                    .disabled(statistics == nil)
+
+                    if let selectedArchive {
+                        Menu {
+                            Button {
+                                archiveNameDraft = selectedArchive.name
+                                archiveOperation = .rename(selectedArchive)
+                            } label: {
+                                Label("Umbenennen", systemImage: "pencil")
+                            }
+                            Button(role: .destructive) {
+                                archiveDeleteConfirmation = ""
+                                archiveOperation = .delete(selectedArchive)
+                            } label: {
+                                Label("Archiv löschen", systemImage: "trash")
+                            }
+                        } label: {
+                            Label("Archiv", systemImage: "archivebox")
+                        }
+                        .buttonStyle(.bordered)
                     }
-                } label: {
-                    Label("Bericht exportieren", systemImage: "square.and.arrow.up")
                 }
-                .buttonStyle(.borderedProminent)
-                .tint(SecretMatchTheme.primary)
-                .disabled(statistics == nil)
             }
 
-            Picker("Zeitraum", selection: $showsLastEvent) {
-                Text("Aktuelles Event").tag(false)
-                Text("Letztes Event").tag(true)
+            Picker("Event", selection: $selectedEventID) {
+                Text("Aktuelles Event · Live").tag("current")
+                ForEach(api.adminStatistics?.archives ?? []) { archive in
+                    Text("\(archive.name) · \(archive.completedAt)").tag(archive.id)
+                }
+                if (api.adminStatistics?.archives ?? []).isEmpty, api.adminStatistics?.lastEvent != nil {
+                    Text("Letztes Event (älteres Archiv)").tag("legacy-last")
+                }
             }
-            .pickerStyle(.segmented)
-            .frame(maxWidth: 420)
+            .pickerStyle(.menu)
+            .tint(SecretMatchTheme.secondary)
+            .frame(maxWidth: 560, alignment: .leading)
         }
     }
 
@@ -147,6 +212,63 @@ struct AdminStatisticsView: View {
                     .font(.caption.weight(.medium))
                     .foregroundStyle(SecretMatchTheme.muted)
             }
+        }
+    }
+
+    private func archiveOperationSheet(_ operation: ArchiveOperation) -> some View {
+        NavigationStack {
+            Form {
+                switch operation {
+                case .rename:
+                    Section("Eventname") {
+                        AdminKeyboardTextField(
+                            title: "Name des Events",
+                            text: $archiveNameDraft,
+                            keyboard: .text(maxCharacters: 120),
+                            keyboardTitle: "Event umbenennen"
+                        )
+                    }
+                    Section {
+                        Button("Namen speichern") {
+                            Task { await renameArchive(operation) }
+                        }
+                        .disabled(archiveNameDraft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || isLoading)
+                    }
+                case .delete(let archive):
+                    Section {
+                        Text("„\(archive.name)“ wird samt aller Eventdaten unwiderruflich gelöscht.")
+                    }
+                    Section("Sicherheitsbestätigung") {
+                        Text("Bitte exakt ARCHIV LÖSCHEN eingeben.")
+                        AdminKeyboardTextField(
+                            title: "ARCHIV LÖSCHEN",
+                            text: $archiveDeleteConfirmation,
+                            keyboard: .text(maxCharacters: 14),
+                            keyboardTitle: "Archiv löschen",
+                            forcesUppercase: true
+                        )
+                        Button("Archiv endgültig löschen", role: .destructive) {
+                            Task { await deleteArchive(operation) }
+                        }
+                        .disabled(archiveDeleteConfirmation != "ARCHIV LÖSCHEN" || isLoading)
+                    }
+                }
+            }
+            .scrollContentBackground(.hidden)
+            .background(SecretMatchTheme.background)
+            .navigationTitle(operationTitle(operation))
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Abbrechen") { archiveOperation = nil }
+                }
+            }
+        }
+    }
+
+    private func operationTitle(_ operation: ArchiveOperation) -> String {
+        switch operation {
+        case .rename: return "Event umbenennen"
+        case .delete: return "Archiv löschen"
         }
     }
 
@@ -447,10 +569,37 @@ struct AdminStatisticsView: View {
         }
     }
 
+    private func renameArchive(_ operation: ArchiveOperation) async {
+        guard case .rename(let archive) = operation else { return }
+        isLoading = true
+        defer { isLoading = false }
+        do {
+            try await api.renameAdminEventArchive(id: archive.id, name: archiveNameDraft)
+            archiveOperation = nil
+            errorMessage = nil
+        } catch {
+            archiveError = "Das Event-Archiv konnte nicht umbenannt werden."
+        }
+    }
+
+    private func deleteArchive(_ operation: ArchiveOperation) async {
+        guard case .delete(let archive) = operation else { return }
+        isLoading = true
+        defer { isLoading = false }
+        do {
+            try await api.deleteAdminEventArchive(id: archive.id, confirmation: archiveDeleteConfirmation)
+            selectedEventID = "current"
+            archiveOperation = nil
+            errorMessage = nil
+        } catch {
+            archiveError = "Das Event-Archiv konnte nicht gelöscht werden."
+        }
+    }
+
     private func export(format: String) {
         guard let statistics else { return }
         do {
-            let name = showsLastEvent ? "letztes-event" : "aktuelles-event"
+            let name = isCurrentEvent ? "aktuelles-event" : (selectedArchive?.name ?? "archiviertes-event")
             let url = if format == "pdf" {
                 try AdminReportExporter.pdf(for: statistics, eventName: name)
             } else {
