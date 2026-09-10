@@ -289,6 +289,36 @@ struct EventResetResponse: Decodable {
     }
 }
 
+struct EventRestoreResponse: Decodable {
+    let restoredArchiveID: String
+    let restoredArchiveName: String
+    let safetyArchiveID: String
+    let safetyArchiveName: String
+    let restored: RestoredCounts
+
+    struct RestoredCounts: Decodable {
+        let matches: Int
+        let requests: Int
+        let actions: Int
+        let profiles: Int
+        let feedback: Int
+        let eventLog: Int
+
+        private enum CodingKeys: String, CodingKey {
+            case matches, requests, actions, profiles, feedback
+            case eventLog = "event_log"
+        }
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case restoredArchiveID = "restored_archive_id"
+        case restoredArchiveName = "restored_archive_name"
+        case safetyArchiveID = "safety_archive_id"
+        case safetyArchiveName = "safety_archive_name"
+        case restored
+    }
+}
+
 struct AdminParticipants: Decodable {
     let allowed: [String]
     let active: [AdminActiveParticipant]

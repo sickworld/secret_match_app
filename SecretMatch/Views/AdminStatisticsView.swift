@@ -10,14 +10,19 @@ struct AdminStatisticsView: View {
     @State private var archiveOperation: ArchiveOperation?
     @State private var archiveNameDraft = ""
     @State private var archiveDeleteConfirmation = ""
+    @State private var archiveRestoreConfirmation = ""
+    @State private var safetyArchiveName = ""
     @State private var archiveError: String?
+    @State private var archiveSuccessMessage: String?
 
     private enum ArchiveOperation: Identifiable {
+        case restore(AdminEventArchiveSummary)
         case rename(AdminEventArchiveSummary)
         case delete(AdminEventArchiveSummary)
 
         var id: String {
             switch self {
+            case .restore(let archive): return "restore-\(archive.id)"
             case .rename(let archive): return "rename-\(archive.id)"
             case .delete(let archive): return "delete-\(archive.id)"
             }
@@ -108,6 +113,14 @@ struct AdminStatisticsView: View {
         } message: {
             Text(archiveError ?? "Bitte versuche es erneut.")
         }
+        .alert("Event wiederhergestellt", isPresented: Binding(
+            get: { archiveSuccessMessage != nil },
+            set: { if !$0 { archiveSuccessMessage = nil } }
+        )) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text(archiveSuccessMessage ?? "Das archivierte Event ist wieder aktiv.")
+        }
         .task {
             await load()
             while !Task.isCancelled {
@@ -154,6 +167,13 @@ struct AdminStatisticsView: View {
 
                     if let selectedArchive {
                         Menu {
+                            Button {
+                                archiveRestoreConfirmation = ""
+                                safetyArchiveName = "Sicherungsstand vor Wiederherstellung · \(Date.now.formatted(date: .numeric, time: .shortened))"
+                                archiveOperation = .restore(selectedArchive)
+                            } label: {
+                                Label("Wiederherstellen", systemImage: "arrow.counterclockwise")
+                            }
                             Button {
                                 archiveNameDraft = selectedArchive.name
                                 archiveOperation = .rename(selectedArchive)
@@ -219,6 +239,39 @@ struct AdminStatisticsView: View {
         NavigationStack {
             Form {
                 switch operation {
+                case .restore(let archive):
+                    Section {
+                        Text("„\(archive.name)“ wird zum aktiven Event.")
+                            .font(.headline)
+                        Text("Der aktuelle Live-Stand wird vorher automatisch als eigenes Sicherheitsarchiv gespeichert. Teilnehmer- und Billboard-Sitzungen werden beendet. PINs, Nummernfreigaben und globale Einstellungen bleiben unverändert.")
+                            .foregroundStyle(.secondary)
+                    }
+                    Section("Automatisches Sicherheitsarchiv") {
+                        AdminKeyboardTextField(
+                            title: "Name des Sicherheitsarchivs",
+                            text: $safetyArchiveName,
+                            keyboard: .text(maxCharacters: 120),
+                            keyboardTitle: "Sicherheitsarchiv benennen"
+                        )
+                    }
+                    Section("Sicherheitsbestätigung") {
+                        Text("Bitte exakt EVENT WIEDERHERSTELLEN eingeben.")
+                        AdminKeyboardTextField(
+                            title: "EVENT WIEDERHERSTELLEN",
+                            text: $archiveRestoreConfirmation,
+                            keyboard: .text(maxCharacters: 24),
+                            keyboardTitle: "Event wiederherstellen",
+                            forcesUppercase: true
+                        )
+                        Button("Event wiederherstellen", role: .destructive) {
+                            Task { await restoreArchive(operation) }
+                        }
+                        .disabled(
+                            archiveRestoreConfirmation != "EVENT WIEDERHERSTELLEN"
+                                || safetyArchiveName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+                                || isLoading
+                        )
+                    }
                 case .rename:
                     Section("Eventname") {
                         AdminKeyboardTextField(
@@ -267,6 +320,7 @@ struct AdminStatisticsView: View {
 
     private func operationTitle(_ operation: ArchiveOperation) -> String {
         switch operation {
+        case .restore: return "Event wiederherstellen"
         case .rename: return "Event umbenennen"
         case .delete: return "Archiv löschen"
         }
@@ -593,6 +647,25 @@ struct AdminStatisticsView: View {
             errorMessage = nil
         } catch {
             archiveError = "Das Event-Archiv konnte nicht gelöscht werden."
+        }
+    }
+
+    private func restoreArchive(_ operation: ArchiveOperation) async {
+        guard case .restore(let archive) = operation else { return }
+        isLoading = true
+        defer { isLoading = false }
+        do {
+            let result = try await api.restoreAdminEventArchive(
+                id: archive.id,
+                confirmation: archiveRestoreConfirmation,
+                safetyArchiveName: safetyArchiveName
+            )
+            selectedEventID = "current"
+            archiveOperation = nil
+            errorMessage = nil
+            archiveSuccessMessage = "„\(result.restoredArchiveName)“ ist jetzt wieder aktiv. Der vorherige Live-Stand wurde als „\(result.safetyArchiveName)“ archiviert."
+        } catch {
+            archiveError = "Das Event konnte nicht wiederhergestellt werden. Der bisherige Live-Stand wurde nicht verändert."
         }
     }
 

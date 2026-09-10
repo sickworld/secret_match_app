@@ -1061,6 +1061,26 @@ class APIService: ObservableObject {
         try await loadAdminStatistics()
     }
 
+    func restoreAdminEventArchive(id: String, confirmation: String, safetyArchiveName: String) async throws -> EventRestoreResponse {
+        let url = baseURL
+            .appendingPathComponent("admin/event-archives")
+            .appendingPathComponent(id)
+            .appendingPathComponent("restore")
+        var request = try adminRequest(url: url)
+        request.httpMethod = "POST"
+        request.httpBody = try JSONSerialization.data(withJSONObject: [
+            "confirmation": confirmation,
+            "safety_archive_name": safetyArchiveName.trimmingCharacters(in: .whitespacesAndNewlines)
+        ])
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        let (data, response) = try await URLSession.shared.data(for: request)
+        try validateAdminResponse(response)
+        let result = try JSONDecoder().decode(EventRestoreResponse.self, from: data)
+        try await loadAdminStatistics()
+        try? await loadAdminDashboard()
+        return result
+    }
+
     func loadAdminParticipants() async throws {
         let url = baseURL.appendingPathComponent("admin/participants")
         let (data, response) = try await URLSession.shared.data(for: adminRequest(url: url))
