@@ -43,6 +43,18 @@ struct AdminStatisticsView: View {
         selectedEventID == "current"
     }
 
+    private var comparisonStatistics: AdminEventStatistics? {
+        if isCurrentEvent {
+            return api.adminStatistics?.archives?.first?.statistics ?? api.adminStatistics?.lastEvent
+        }
+        guard let archives = api.adminStatistics?.archives,
+              let index = archives.firstIndex(where: { $0.id == selectedEventID }),
+              archives.indices.contains(index + 1) else {
+            return nil
+        }
+        return archives[index + 1].statistics
+    }
+
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 20) {
@@ -65,10 +77,15 @@ struct AdminStatisticsView: View {
                     }
                     .foregroundStyle(.white)
                 } else if let statistics {
+                    eventBalance(statistics)
                     overview(statistics)
                     matchFunnel(statistics)
-                    if isCurrentEvent, let lastEvent = api.adminStatistics?.archives?.first?.statistics ?? api.adminStatistics?.lastEvent {
-                        eventComparison(current: api.adminStatistics?.current ?? statistics, last: lastEvent)
+                    matchQuality(statistics)
+                    activityQuality(statistics)
+                    feedbackQuality(statistics)
+                    operatingQuality(statistics)
+                    if let previousEvent = comparisonStatistics {
+                        eventComparison(current: statistics, last: previousEvent)
                     }
                     participantRanking(statistics.topParticipants ?? [])
                     if isCurrentEvent {
@@ -235,6 +252,81 @@ struct AdminStatisticsView: View {
         }
     }
 
+    private func eventBalance(_ stats: AdminEventStatistics) -> some View {
+        let peak = (stats.peakInterval ?? "").isEmpty ? "–" : String((stats.peakInterval ?? "").suffix(5))
+        return VStack(alignment: .leading, spacing: 12) {
+            sectionTitle("Event-Bilanz", icon: "sparkles.rectangle.stack.fill")
+            LazyVGrid(columns: [GridItem(.adaptive(minimum: 210), spacing: 12)], spacing: 12) {
+                valueMetric("Teilnahmequote", percent(stats.participationRatePercent ?? 0), detail: "\(stats.engagedParticipants) von \(stats.allowedParticipants) Nummern", color: .green)
+                valueMetric("Match-Quote", percent(stats.matchRatePercent), detail: "\(stats.matches) erfolgreiche Paare", color: SecretMatchTheme.primary)
+                valueMetric("Event-Bewertung", rating(stats.feedbackAverage ?? 0), detail: "\(stats.feedbackCount ?? 0) Rückmeldungen", color: Color(hex: "#E6923E"))
+                valueMetric("Aktivste Viertelstunde", peak, detail: "\(stats.peakIntervalTotal ?? 0) Vorgänge", color: Color(hex: "#3E9ED6"))
+            }
+        }
+    }
+
+    private func matchQuality(_ stats: AdminEventStatistics) -> some View {
+        VStack(alignment: .leading, spacing: 12) {
+            sectionTitle("Matches im Detail", icon: "heart.text.square.fill")
+            LazyVGrid(columns: [GridItem(.adaptive(minimum: 220), spacing: 12)], spacing: 12) {
+                valueMetric("Offene Wünsche", "\(stats.openRequests ?? 0)", detail: "ohne gegenseitiges Match", color: Color(hex: "#8E63D2"))
+                valueMetric("Ø bis zum Match", duration(stats.averageMatchMinutes ?? 0), detail: "Median \(duration(stats.medianMatchMinutes ?? 0))", color: Color(hex: "#E83E8C"))
+                ForEach(stats.matchTypePerformance ?? []) { item in
+                    valueMetric(
+                        "\(label(for: item.name))-Quote",
+                        percent(item.ratePercent),
+                        detail: "\(item.matches) von \(item.requests) Wünschen erfolgreich",
+                        color: item.name == "hot" ? SecretMatchTheme.primary : SecretMatchTheme.secondary
+                    )
+                }
+            }
+        }
+    }
+
+    private func activityQuality(_ stats: AdminEventStatistics) -> some View {
+        VStack(alignment: .leading, spacing: 12) {
+            sectionTitle("Teilnahme & Aktivität", icon: "person.2.wave.2.fill")
+            LazyVGrid(columns: [GridItem(.adaptive(minimum: 210), spacing: 12)], spacing: 12) {
+                valueMetric("Wünsche pro Person", decimal(stats.requestsPerParticipant ?? 0), detail: "bezogen auf aktive Nummern", color: Color(hex: "#8E63D2"))
+                valueMetric("Aktionen pro Person", decimal(stats.actionsPerParticipant ?? 0), detail: "bezogen auf aktive Nummern", color: Color(hex: "#3E9ED6"))
+                valueMetric("Freitext-Anteil", percent(stats.requestsWithMessagePercent ?? 0), detail: "\(stats.requestsWithMessage) persönliche Texte", color: Color(hex: "#E6923E"))
+                valueMetric("Zurückgezogen", "\(stats.withdrawnActions ?? 0)", detail: "\(percent(stats.withdrawalRatePercent ?? 0)) aller gesendeten Aktionen", color: .orange)
+                valueMetric("Eventdauer", duration(Double(stats.eventDurationMinutes ?? 0)), detail: "erste bis letzte Aktivität", color: SecretMatchTheme.secondary)
+            }
+        }
+    }
+
+    @ViewBuilder
+    private func feedbackQuality(_ stats: AdminEventStatistics) -> some View {
+        if (stats.feedbackCount ?? 0) > 0 {
+            VStack(alignment: .leading, spacing: 12) {
+                sectionTitle("Feedback", icon: "star.bubble.fill")
+                LazyVGrid(columns: [GridItem(.adaptive(minimum: 190), spacing: 12)], spacing: 12) {
+                    valueMetric("Gesamteindruck", rating(stats.feedbackAverage ?? 0), detail: "von 5 Sternen", color: Color(hex: "#E6923E"))
+                    valueMetric("Funktion", rating(stats.functionalityAverage ?? 0), detail: "von 5 Sternen", color: .green)
+                    valueMetric("Bedienung", rating(stats.easeOfUseAverage ?? 0), detail: "von 5 Sternen", color: Color(hex: "#3E9ED6"))
+                    valueMetric("Design", rating(stats.designAverage ?? 0), detail: "von 5 Sternen", color: SecretMatchTheme.secondary)
+                }
+            }
+        }
+    }
+
+    private func operatingQuality(_ stats: AdminEventStatistics) -> some View {
+        let incidents = (stats.rejectedSendCount ?? 0) + (stats.queueStallCount ?? 0) + (stats.connectionLossCount ?? 0) + (stats.deviceOutageCount ?? 0)
+        return VStack(alignment: .leading, spacing: 12) {
+            sectionTitle("Technik & Stabilität", icon: "waveform.path.ecg.rectangle.fill")
+            LazyVGrid(columns: [GridItem(.adaptive(minimum: 190), spacing: 12)], spacing: 12) {
+                valueMetric("Abgelehnte Sendungen", "\(stats.rejectedSendCount ?? 0)", detail: "serverseitig nicht angenommen", color: (stats.rejectedSendCount ?? 0) > 0 ? .red : .green)
+                valueMetric("Queue hing", "\(stats.queueStallCount ?? 0)", detail: "erkannte Warteschlangenstopps", color: (stats.queueStallCount ?? 0) > 0 ? .orange : .green)
+                valueMetric("Verbindung weg", "\(stats.connectionLossCount ?? 0)", detail: "gemeldete Unterbrechungen", color: (stats.connectionLossCount ?? 0) > 0 ? .orange : .green)
+                valueMetric("Geräte offline", "\(stats.deviceOutageCount ?? 0)", detail: "iPads und Billboards", color: (stats.deviceOutageCount ?? 0) > 0 ? .orange : .green)
+            }
+            Text(incidents == 0 ? "Im Eventarchiv wurden keine dieser Betriebsstörungen protokolliert." : "Insgesamt wurden \(incidents) relevante Betriebsereignisse protokolliert.")
+                .font(.caption.weight(.medium))
+                .foregroundStyle(incidents == 0 ? Color.green : SecretMatchTheme.muted)
+        }
+    }
+
     private func archiveOperationSheet(_ operation: ArchiveOperation) -> some View {
         NavigationStack {
             Form {
@@ -362,8 +454,8 @@ struct AdminStatisticsView: View {
             sectionTitle("Eventvergleich", icon: "chart.bar.xaxis.ascending")
             VStack(spacing: 14) {
                 HStack(spacing: 18) {
-                    Label("Aktuell", systemImage: "circle.fill").foregroundStyle(SecretMatchTheme.primary)
-                    Label("Letztes Event", systemImage: "circle.fill").foregroundStyle(SecretMatchTheme.secondary)
+                    Label(isCurrentEvent ? "Aktuell" : "Gewähltes Event", systemImage: "circle.fill").foregroundStyle(SecretMatchTheme.primary)
+                    Label("Vorheriges Event", systemImage: "circle.fill").foregroundStyle(SecretMatchTheme.secondary)
                     Spacer()
                 }
                 .font(.caption.bold())
@@ -526,6 +618,43 @@ struct AdminStatisticsView: View {
         .overlay(RoundedRectangle(cornerRadius: SecretMatchTheme.cornerRadius).stroke(color.opacity(0.32)))
     }
 
+    private func valueMetric(_ title: String, _ value: String, detail: String, color: Color) -> some View {
+        VStack(alignment: .leading, spacing: 5) {
+            Text(value)
+                .font(.system(size: 28, weight: .bold, design: .rounded).monospacedDigit())
+                .foregroundStyle(.white)
+                .lineLimit(1)
+                .minimumScaleFactor(0.72)
+            Text(title).font(.caption.bold()).foregroundStyle(color)
+            Text(detail).font(.caption2.weight(.medium)).foregroundStyle(SecretMatchTheme.muted)
+        }
+        .frame(maxWidth: .infinity, minHeight: 76, alignment: .leading)
+        .padding(16)
+        .background(color.opacity(0.11))
+        .clipShape(RoundedRectangle(cornerRadius: SecretMatchTheme.cornerRadius))
+        .overlay(RoundedRectangle(cornerRadius: SecretMatchTheme.cornerRadius).stroke(color.opacity(0.32)))
+    }
+
+    private func percent(_ value: Double) -> String {
+        value.formatted(.number.precision(.fractionLength(1))) + " %"
+    }
+
+    private func decimal(_ value: Double) -> String {
+        value.formatted(.number.precision(.fractionLength(1)))
+    }
+
+    private func rating(_ value: Double) -> String {
+        value > 0 ? value.formatted(.number.precision(.fractionLength(1))) + " / 5" : "–"
+    }
+
+    private func duration(_ minutes: Double) -> String {
+        if minutes <= 0 { return "–" }
+        if minutes < 60 { return minutes.formatted(.number.precision(.fractionLength(minutes < 10 ? 1 : 0))) + " Min." }
+        let hours = Int(minutes) / 60
+        let remainder = Int(minutes.rounded()) % 60
+        return remainder == 0 ? "\(hours) Std." : "\(hours) Std. \(remainder) Min."
+    }
+
     private func distributionCard(_ title: String, entries: [AdminStatisticCount]) -> some View {
         VStack(alignment: .leading, spacing: 10) {
             Text(title).font(.headline).foregroundStyle(.white)
@@ -582,7 +711,7 @@ struct AdminStatisticsView: View {
                 }
             }
             .frame(height: 19)
-            Text("Aktuell \(current) · vorher \(last)")
+            Text("\(isCurrentEvent ? "Aktuell" : "Gewählt") \(current) · vorher \(last)")
                 .font(.caption2.bold().monospacedDigit())
                 .foregroundStyle(.white)
         }

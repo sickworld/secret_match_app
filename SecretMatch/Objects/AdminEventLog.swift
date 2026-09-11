@@ -271,6 +271,29 @@ struct AdminEventStatistics: Decodable {
     let errorCount: Int
     let adminActionCount: Int?
     let adminFailureCount: Int?
+    let participationRatePercent: Double?
+    let requestsPerParticipant: Double?
+    let actionsPerParticipant: Double?
+    let openRequests: Int?
+    let requestsWithMessagePercent: Double?
+    let withdrawnActions: Int?
+    let withdrawalRatePercent: Double?
+    let averageMatchMinutes: Double?
+    let medianMatchMinutes: Double?
+    let matchTypePerformance: [AdminMatchTypePerformance]?
+    let feedbackCount: Int?
+    let feedbackAverage: Double?
+    let functionalityAverage: Double?
+    let easeOfUseAverage: Double?
+    let designAverage: Double?
+    let reuseAverage: Double?
+    let rejectedSendCount: Int?
+    let queueStallCount: Int?
+    let connectionLossCount: Int?
+    let deviceOutageCount: Int?
+    let peakInterval: String?
+    let peakIntervalTotal: Int?
+    let eventDurationMinutes: Int?
     let requestTypes: [AdminStatisticCount]
     let actionTypes: [AdminStatisticCount]
     let topParticipants: [AdminParticipantStatistic]?
@@ -291,10 +314,47 @@ struct AdminEventStatistics: Decodable {
         case errorCount = "error_count"
         case adminActionCount = "admin_action_count"
         case adminFailureCount = "admin_failure_count"
+        case participationRatePercent = "participation_rate_percent"
+        case requestsPerParticipant = "requests_per_participant"
+        case actionsPerParticipant = "actions_per_participant"
+        case openRequests = "open_requests"
+        case requestsWithMessagePercent = "requests_with_message_percent"
+        case withdrawnActions = "withdrawn_actions"
+        case withdrawalRatePercent = "withdrawal_rate_percent"
+        case averageMatchMinutes = "average_match_minutes"
+        case medianMatchMinutes = "median_match_minutes"
+        case matchTypePerformance = "match_type_performance"
+        case feedbackCount = "feedback_count"
+        case feedbackAverage = "feedback_average"
+        case functionalityAverage = "functionality_average"
+        case easeOfUseAverage = "ease_of_use_average"
+        case designAverage = "design_average"
+        case reuseAverage = "reuse_average"
+        case rejectedSendCount = "rejected_send_count"
+        case queueStallCount = "queue_stall_count"
+        case connectionLossCount = "connection_loss_count"
+        case deviceOutageCount = "device_outage_count"
+        case peakInterval = "peak_interval"
+        case peakIntervalTotal = "peak_interval_total"
+        case eventDurationMinutes = "event_duration_minutes"
         case requestTypes = "request_types"
         case actionTypes = "action_types"
         case topParticipants = "top_participants"
         case timeline
+    }
+}
+
+struct AdminMatchTypePerformance: Decodable, Identifiable {
+    let name: String
+    let requests: Int
+    let matches: Int
+    let ratePercent: Double
+
+    var id: String { name }
+
+    private enum CodingKeys: String, CodingKey {
+        case name, requests, matches
+        case ratePercent = "rate_percent"
     }
 }
 

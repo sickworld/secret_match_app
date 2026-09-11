@@ -19,28 +19,57 @@ struct AdminShareSheet: UIViewControllerRepresentable {
 @MainActor
 enum AdminReportExporter {
     static func csv(for statistics: AdminEventStatistics, eventName: String) throws -> URL {
-        var rows = [
+        var rows: [[String]] = [
             ["Match&Play Eventbericht", eventName],
             ["Erstellt", statistics.generatedAt],
             ["Zeitraum", statistics.startedAt, statistics.completedAt ?? statistics.endedAt],
             [],
             ["Kennzahl", "Wert"],
-            ["Freigegebene Nummern", String(statistics.allowedParticipants)],
-            ["Teilnehmende", String(statistics.engagedParticipants)],
-            ["Match-Requests", String(statistics.requests)],
-            ["Matches", String(statistics.matches)],
-            ["Aktionen", String(statistics.actions)],
-            ["Freitext-Requests", String(statistics.requestsWithMessage)],
-            ["Match-Quote Prozent", String(statistics.matchRatePercent)],
-            ["Zugestellte Sendungen", String(statistics.deliveryCount)],
-            ["Retries", String(statistics.retryCount)],
-            ["Technische Fehler", String(statistics.errorCount)],
-            ["Admin-Aktionen", String(statistics.adminActionCount ?? 0)],
-            ["Fehlgeschlagene Admin-Aktionen", String(statistics.adminFailureCount ?? 0)],
-            [],
-            ["Match-Wunsch Typ", "Anzahl"],
         ]
+        func addMetric(_ name: String, _ value: String) {
+            rows.append([name, value])
+        }
+        addMetric("Freigegebene Nummern", String(statistics.allowedParticipants))
+        addMetric("Teilnehmende", String(statistics.engagedParticipants))
+        addMetric("Teilnahmequote Prozent", String(statistics.participationRatePercent ?? 0))
+        addMetric("Match-Requests", String(statistics.requests))
+        addMetric("Offene Match-Wünsche", String(statistics.openRequests ?? 0))
+        addMetric("Match-Wünsche pro aktiver Nummer", String(statistics.requestsPerParticipant ?? 0))
+        addMetric("Matches", String(statistics.matches))
+        addMetric("Durchschnittliche Minuten bis Match", String(statistics.averageMatchMinutes ?? 0))
+        addMetric("Median Minuten bis Match", String(statistics.medianMatchMinutes ?? 0))
+        addMetric("Aktionen", String(statistics.actions))
+        addMetric("Aktionen pro aktiver Nummer", String(statistics.actionsPerParticipant ?? 0))
+        addMetric("Zurückgezogene Aktionen", String(statistics.withdrawnActions ?? 0))
+        addMetric("Rückzugsquote Prozent", String(statistics.withdrawalRatePercent ?? 0))
+        addMetric("Freitext-Requests", String(statistics.requestsWithMessage))
+        addMetric("Freitext-Anteil Prozent", String(statistics.requestsWithMessagePercent ?? 0))
+        addMetric("Match-Quote Prozent", String(statistics.matchRatePercent))
+        addMetric("Feedbacks", String(statistics.feedbackCount ?? 0))
+        addMetric("Feedback Gesamteindruck", String(statistics.feedbackAverage ?? 0))
+        addMetric("Feedback Funktion", String(statistics.functionalityAverage ?? 0))
+        addMetric("Feedback Bedienung", String(statistics.easeOfUseAverage ?? 0))
+        addMetric("Feedback Design", String(statistics.designAverage ?? 0))
+        addMetric("Eventdauer Minuten", String(statistics.eventDurationMinutes ?? 0))
+        addMetric("Aktivste Viertelstunde", statistics.peakInterval ?? "")
+        addMetric("Vorgänge in aktivster Viertelstunde", String(statistics.peakIntervalTotal ?? 0))
+        addMetric("Zugestellte Sendungen", String(statistics.deliveryCount))
+        addMetric("Retries", String(statistics.retryCount))
+        addMetric("Technische Fehler", String(statistics.errorCount))
+        addMetric("Abgelehnte Sendungen", String(statistics.rejectedSendCount ?? 0))
+        addMetric("Queue-Stillstände", String(statistics.queueStallCount ?? 0))
+        addMetric("Verbindungsabbrüche", String(statistics.connectionLossCount ?? 0))
+        addMetric("Geräteausfälle", String(statistics.deviceOutageCount ?? 0))
+        addMetric("Admin-Aktionen", String(statistics.adminActionCount ?? 0))
+        addMetric("Fehlgeschlagene Admin-Aktionen", String(statistics.adminFailureCount ?? 0))
+        rows.append([])
+        rows.append(["Match-Wunsch Typ", "Anzahl"])
         rows.append(contentsOf: statistics.requestTypes.map { [$0.name, String($0.count)] })
+        rows.append([])
+        rows.append(["Match-Typ", "Wünsche", "Erfolgreiche Wünsche", "Quote Prozent"])
+        rows.append(contentsOf: (statistics.matchTypePerformance ?? []).map {
+            [$0.name, String($0.requests), String($0.matches), String($0.ratePercent)]
+        })
         rows.append([])
         rows.append(["Aktionstyp", "Anzahl"])
         rows.append(contentsOf: statistics.actionTypes.map { [$0.name, String($0.count)] })
@@ -120,8 +149,13 @@ enum AdminReportExporter {
 
             y += 12
             draw("Qualität & Betrieb", font: .boldSystemFont(ofSize: 18), height: 30)
+            draw("Teilnahmequote: \((statistics.participationRatePercent ?? 0).formatted(.number.precision(.fractionLength(1)))) %", font: .boldSystemFont(ofSize: 13), height: 23)
             draw("Match-Quote: \(statistics.matchRatePercent.formatted(.number.precision(.fractionLength(1)))) %", font: .boldSystemFont(ofSize: 13), height: 23)
+            draw("Offene Wünsche: \(statistics.openRequests ?? 0) · Ø bis Match: \((statistics.averageMatchMinutes ?? 0).formatted(.number.precision(.fractionLength(1)))) Min.", font: .systemFont(ofSize: 12), color: UIColor(white: 0.8, alpha: 1), height: 21)
             draw("Freitext-Requests: \(statistics.requestsWithMessage)", font: .systemFont(ofSize: 12), color: UIColor(white: 0.8, alpha: 1), height: 21)
+            draw("Zurückgezogene Aktionen: \(statistics.withdrawnActions ?? 0)", font: .systemFont(ofSize: 12), color: UIColor(white: 0.8, alpha: 1), height: 21)
+            draw("Feedback: \((statistics.feedbackAverage ?? 0).formatted(.number.precision(.fractionLength(1)))) / 5 aus \(statistics.feedbackCount ?? 0) Rückmeldungen", font: .systemFont(ofSize: 12), color: UIColor(white: 0.8, alpha: 1), height: 21)
+            draw("Peak: \(statistics.peakInterval ?? "–") · \(statistics.peakIntervalTotal ?? 0) Vorgänge", font: .systemFont(ofSize: 12), color: UIColor(white: 0.8, alpha: 1), height: 21)
             let adminFailures = statistics.adminFailureCount ?? 0
             draw("Fehlgeschlagene Admin-Aktionen: \(adminFailures)", font: .systemFont(ofSize: 12), color: adminFailures > 0 ? .systemOrange : .systemGreen, height: 21)
             draw("Zeitraum: \(statistics.startedAt) – \(statistics.completedAt ?? statistics.endedAt)", font: .systemFont(ofSize: 10), color: UIColor(white: 0.62, alpha: 1), height: 24)
@@ -131,9 +165,16 @@ enum AdminReportExporter {
             for entry in statistics.requestTypes {
                 draw("Match-Wunsch · \(label(for: entry.name)): \(entry.count)", font: .systemFont(ofSize: 12), color: UIColor(white: 0.82, alpha: 1), height: 20)
             }
+            for entry in statistics.matchTypePerformance ?? [] {
+                draw("\(label(for: entry.name))-Quote: \(entry.ratePercent.formatted(.number.precision(.fractionLength(1)))) % (\(entry.matches) von \(entry.requests) Wünschen erfolgreich)", font: .systemFont(ofSize: 12), color: UIColor(white: 0.82, alpha: 1), height: 20)
+            }
             for entry in statistics.actionTypes {
                 draw("Aktion · \(label(for: entry.name)): \(entry.count)", font: .systemFont(ofSize: 12), color: UIColor(white: 0.82, alpha: 1), height: 20)
             }
+
+            y += 12
+            draw("Technik & Stabilität", font: .boldSystemFont(ofSize: 18), height: 30)
+            draw("Abgelehnt \(statistics.rejectedSendCount ?? 0) · Queue hing \(statistics.queueStallCount ?? 0) · Verbindung weg \(statistics.connectionLossCount ?? 0) · Geräte offline \(statistics.deviceOutageCount ?? 0)", font: .systemFont(ofSize: 11), color: UIColor(white: 0.82, alpha: 1), height: 22)
 
             if !statistics.timeline.isEmpty {
                 y += 12
