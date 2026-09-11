@@ -10,6 +10,8 @@ iPads und Billboards besitzen ebenfalls eine vollständige Verwaltung für ihre 
 
 Das zentrale Protokoll benennt jede schreibende Admin-Aktion verständlich, einschließlich Änderungen an Aktionen, Matches, Requests, Teilnehmern, PIN/Gender, Geräten, Billboards, Schnelltexten und Testdaten. Auch Änderungen aus dem WordPress-Backend erscheinen in der Admin-App; Passwörter, PINs, Tokens und Nachrichteninhalte werden nicht protokolliert. Beim Eventabschluss wird das vollständige Live-Protokoll gemeinsam mit den übrigen Eventdaten archiviert; das neue Event startet mit einem leeren Protokoll.
 
+Die gemeinsame Testdatenfunktion erzeugt über die reservierten Nummern 901–916 einen vierstündigen Beispielverlauf mit 48 Matches, 300 Aktionen und 96 Match-Anfragen. Geschlechter, Freitexte und zurückgezogene Aktionen decken dabei die wichtigsten Filter-, Billboard- und Statistikzustände ab; beim Entfernen bleiben echte Eventdaten unangetastet.
+
 Die Admin-App bietet zusätzlich eine globale Nummernakte mit bestätigtem PIN- und Gender-Reset, einen Event-Startcheck und eine Request-ID-basierte Sendungsdiagnose. Die Statistik lässt sich ohne Eventnummern, Nachrichten, PINs oder Gerätekennungen als PDF beziehungsweise CSV teilen. Auf dem iPad unterscheidet die Versandbestätigung sichtbar zwischen zugestellt, sicher vorgemerkt, teilweise zugestellt und fehlgeschlagen. Die grüne Bestätigung spricht bewusst in kurzer Event-Sprache und blendet sich nach vier Sekunden weich aus. Versand- und Queue-Hinweise erscheinen auf vollständig deckenden Karten direkt oberhalb des Senden-Buttons; sie blockieren den Button nicht und verändern das Layout nicht. Die Queue-Karte bleibt bis zur Zustellung sichtbar und bietet einen manuellen Retry.
 
 ## Gemeinsame Admin-Architektur

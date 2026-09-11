@@ -540,7 +540,7 @@ struct AdminDashboardView: View {
                 .foregroundStyle(.red)
             }
 
-            controlCard(title: "🧪 Testdaten", subtitle: "Dummy-Nummern 901–916 und Top 16 testen") {
+            controlCard(title: "🧪 Testdaten", subtitle: "48 Matches, 300 Aktionen und 96 Anfragen realistisch testen") {
                 Text(api.adminDashboard?.dummyDataActive == true ? "Testdaten sind aktiv." : "Momentan keine Testdaten.")
                     .foregroundStyle(api.adminDashboard?.dummyDataActive == true ? .green : SecretMatchTheme.muted)
                 Button("Testdaten anlegen") { confirmation = .createDummy }
