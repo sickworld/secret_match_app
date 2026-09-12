@@ -69,6 +69,7 @@ class APIService: ObservableObject {
     @Published private(set) var screensaverItems: [ScreensaverMediaItem]
     @Published private(set) var screensaverIdleSeconds: Int
     @Published private(set) var adminScreensaverItems: [ScreensaverMediaItem] = []
+    @Published private(set) var adminEventAnnouncements: [EventAnnouncement] = []
     private var adminToken: String?
     private let baseURL = URL(string: "https://secret-match.de/wp-json/secretmatch/v1")!
     private var pendingInteractions: [PendingInteraction]
@@ -1019,6 +1020,65 @@ class APIService: ObservableObject {
         try? await loadAdminDashboard()
     }
 
+    func loadAdminEventAnnouncements() async throws {
+        let url = baseURL.appendingPathComponent("admin/event-announcements")
+        let (data, response) = try await URLSession.shared.data(for: adminRequest(url: url))
+        try validateAdminResponse(response)
+        adminEventAnnouncements = try JSONDecoder().decode([EventAnnouncement].self, from: data)
+    }
+
+    func createAdminEventAnnouncement(
+        message: String,
+        tone: String,
+        enabled: Bool,
+        startsAt: Int?,
+        endsAt: Int?
+    ) async throws {
+        try await mutateAdminResource(
+            path: ["admin", "event-announcements"],
+            method: "POST",
+            body: eventAnnouncementBody(
+                message: message,
+                tone: tone,
+                enabled: enabled,
+                startsAt: startsAt,
+                endsAt: endsAt
+            )
+        )
+        try await loadAdminEventAnnouncements()
+    }
+
+    func updateAdminEventAnnouncement(
+        id: String,
+        message: String,
+        tone: String,
+        enabled: Bool,
+        startsAt: Int?,
+        endsAt: Int?
+    ) async throws {
+        try await mutateAdminResource(
+            path: ["admin", "event-announcements", id],
+            method: "PATCH",
+            body: eventAnnouncementBody(
+                message: message,
+                tone: tone,
+                enabled: enabled,
+                startsAt: startsAt,
+                endsAt: endsAt
+            )
+        )
+        try await loadAdminEventAnnouncements()
+    }
+
+    func deleteAdminEventAnnouncement(id: String) async throws {
+        try await mutateAdminResource(
+            path: ["admin", "event-announcements", id],
+            method: "DELETE",
+            body: [:]
+        )
+        try await loadAdminEventAnnouncements()
+    }
+
     func loadAdminCredentials() async throws {
         let url = baseURL.appendingPathComponent("admin/credentials")
         let (data, response) = try await URLSession.shared.data(for: adminRequest(url: url))
@@ -1668,6 +1728,7 @@ class APIService: ObservableObject {
         try? await loadAdminActionDefinitions()
         try? await loadAdminMatchDefinitions()
         try? await loadAdminScreensaverContent()
+        try? await loadAdminEventAnnouncements()
     }
 
     func logout() {
@@ -1772,6 +1833,22 @@ class APIService: ObservableObject {
             let responseError = try? JSONDecoder().decode(AdminMutationResponseError.self, from: data)
             throw AdminMutationError(message: responseError?.message ?? "Serverfehler (HTTP \(http.statusCode)).")
         }
+    }
+
+    private func eventAnnouncementBody(
+        message: String,
+        tone: String,
+        enabled: Bool,
+        startsAt: Int?,
+        endsAt: Int?
+    ) -> [String: Any] {
+        [
+            "message": message.trimmingCharacters(in: .whitespacesAndNewlines),
+            "tone": tone,
+            "enabled": enabled,
+            "starts_at": startsAt ?? NSNull(),
+            "ends_at": endsAt ?? NSNull(),
+        ]
     }
 
     private func validateAdminResponse(_ response: URLResponse) throws {

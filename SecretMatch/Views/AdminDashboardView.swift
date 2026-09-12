@@ -1,12 +1,12 @@
 import SwiftUI
 
 enum AdminDashboardSection: String, CaseIterable, Identifiable {
-    case overview, readiness, diagnostics, liveFeed, eventLog, statistics, actions, requests, matches, feedback, controls, participants, system
+    case overview, readiness, diagnostics, liveFeed, announcements, eventLog, statistics, actions, requests, matches, feedback, controls, participants, system
 
     var id: String { rawValue }
 
     static let featureSections: [AdminDashboardSection] = [
-        .liveFeed, .actions, .requests, .matches,
+        .liveFeed, .announcements, .actions, .requests, .matches,
         .participants, .controls, .readiness, .diagnostics,
         .eventLog, .statistics, .feedback, .system
     ]
@@ -17,6 +17,7 @@ enum AdminDashboardSection: String, CaseIterable, Identifiable {
         case .readiness: return "Event-Check"
         case .diagnostics: return "Sendungsdiagnose"
         case .liveFeed: return "Livefeed"
+        case .announcements: return "Event-Mitteilungen"
         case .eventLog: return "Protokoll"
         case .statistics: return "Statistik"
         case .actions: return "Aktionen verwalten"
@@ -35,6 +36,7 @@ enum AdminDashboardSection: String, CaseIterable, Identifiable {
         case .readiness: return "Vor dem Start alles prüfen"
         case .diagnostics: return "Sendungen per Request-ID verfolgen"
         case .liveFeed: return "Aktivität während des Events"
+        case .announcements: return "Hinweise auf allen Billboards anzeigen"
         case .eventLog: return "Zentrale Ereignisse und Admin-Eingriffe"
         case .statistics: return "Eventverlauf auswerten und exportieren"
         case .actions: return "Empfangene Aktionen anlegen und bearbeiten"
@@ -53,6 +55,7 @@ enum AdminDashboardSection: String, CaseIterable, Identifiable {
         case .readiness: return "checkmark.seal.fill"
         case .diagnostics: return "waveform.path.ecg.rectangle"
         case .liveFeed: return "dot.radiowaves.left.and.right"
+        case .announcements: return "megaphone.fill"
         case .eventLog: return "list.bullet.rectangle.portrait.fill"
         case .statistics: return "chart.bar.xaxis"
         case .actions: return "paperplane.fill"
@@ -68,7 +71,7 @@ enum AdminDashboardSection: String, CaseIterable, Identifiable {
     var tint: Color {
         switch self {
         case .overview, .actions, .feedback: return SecretMatchTheme.primary
-        case .readiness, .eventLog, .controls: return SecretMatchTheme.secondary
+        case .readiness, .eventLog, .controls, .announcements: return SecretMatchTheme.secondary
         case .diagnostics, .system: return .orange
         case .liveFeed: return .green
         case .statistics: return .cyan
@@ -248,7 +251,7 @@ struct AdminDashboardView: View {
             systemStatus
             deviceStatus
             resetCard
-        case .readiness, .diagnostics, .liveFeed, .eventLog, .statistics, .actions, .requests, .matches, .feedback:
+        case .readiness, .diagnostics, .liveFeed, .announcements, .eventLog, .statistics, .actions, .requests, .matches, .feedback:
             EmptyView()
         }
     }

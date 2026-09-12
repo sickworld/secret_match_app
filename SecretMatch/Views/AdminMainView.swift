@@ -81,6 +81,9 @@ struct AdminMainView: View {
         case .liveFeed:
             AdminLiveFeedView(isPresented: .constant(true), isEmbedded: true)
                 .environmentObject(api)
+        case .announcements:
+            AdminEventAnnouncementsView()
+                .environmentObject(api)
         case .eventLog:
             AdminEventLogView()
                 .environmentObject(api)

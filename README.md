@@ -2,6 +2,12 @@
 
 In allen sichtbaren App-Texten, Exporten und Benachrichtigungen lautet der Produktname **Match&Play**. Interne Bezeichner wie API-Pfade, Bundle-IDs und technische Klassen bleiben aus Kompatibilitätsgründen unverändert.
 
+## Event-Mitteilungen (Build 140)
+
+Unter **Event-Mitteilungen** verwalten iPhone- und iPad-Adminbereich denselben zentralen Hinweisbestand wie WordPress und die externe Webverwaltung. Eine Mitteilung besitzt bis zu 160 Zeichen, die Darstellungsstufe Info, Highlight oder Dringend, einen Sichtbarkeitsschalter sowie optional Start- und Endzeit. Alle aktiven Hinweise erscheinen innerhalb des regulären zehnsekündigen Abgleichs auf jedem angemeldeten Billboard, wechseln bei mehreren Einträgen unabhängig von Matches und Aktionen und bleiben auch im Top-16-Modus sichtbar.
+
+Mitteilungen gehören zum jeweiligen Event: Beim Abschluss werden sie im Event-Snapshot archiviert und aus dem neuen Live-Stand entfernt. Eine Event-Wiederherstellung spielt auch den damaligen Mitteilungsstand zurück. Die Teilnehmer-App erhält weder die Adminliste noch zusätzliche öffentliche Steuerungsmöglichkeiten.
+
 ## Auswahlansicht (Build 139)
 
 Nach der Prüfung einer Zielnummer zeigt die Aktionsauswahl nur noch Hinweise an, die eine besondere Situation erklären, etwa den Offline-Modus. Der redundante Hinweis, dass alle aktiven Aktionen sichtbar sind, entfällt; die Auswahl bleibt dadurch kompakter.
@@ -50,7 +56,7 @@ Die bestehende dunkle Match&Play-Gestaltung verwendet für Karten, Buttons, Eing
 
 Das kompakte Menü der iPhone-Admin-App bleibt flächig und neutral. Bereichsfarben erscheinen nur an den Icons sowie dezent am aktiven Eintrag; eine linke Markierung und ein Häkchen kennzeichnen die Auswahl zusätzlich unabhängig von der Farbe. Der Logout bleibt als destruktive Aktion rot.
 
-Diese Funktionen benötigen das WordPress-Modul ab Version `2026.09.12.3`; das Modul muss vor oder zusammen mit diesem App-Build veröffentlicht werden.
+Diese Funktionen benötigen das WordPress-Modul ab Version `2026.09.13.1`; das Modul muss vor oder zusammen mit diesem App-Build veröffentlicht werden.
 
 ## Eingehende Interessen
 
