@@ -27,7 +27,6 @@ struct MatchInputBox: View {
     let onSend: () -> Void
     var targetIsConfirmed = false
     var allowedActionTypes: Set<String> = ["bjob", "hjob", "ljob"]
-    var usesProfileBasedSelection = false
     var usesOfflineSelectionFallback = false
     var onEditTarget: () -> Void = {}
     var queuedSendCount = 0
@@ -220,10 +219,6 @@ struct MatchInputBox: View {
                     Label("Offline-Modus: Alle aktiven Aktionen sind sichtbar", systemImage: "wifi.slash")
                         .font(.system(size: metric(13, 14), weight: .bold, design: .rounded))
                         .foregroundStyle(.orange)
-                } else if !usesProfileBasedSelection {
-                    Label("Für diese Zielnummer sind alle aktiven Aktionen sichtbar", systemImage: "info.circle.fill")
-                        .font(.system(size: metric(13, 14), weight: .semibold, design: .rounded))
-                        .foregroundStyle(SecretMatchTheme.muted)
                 }
             }
             .padding(.horizontal, metric(16, 17))

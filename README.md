@@ -2,6 +2,10 @@
 
 In allen sichtbaren App-Texten, Exporten und Benachrichtigungen lautet der Produktname **Match&Play**. Interne Bezeichner wie API-Pfade, Bundle-IDs und technische Klassen bleiben aus Kompatibilitätsgründen unverändert.
 
+## Auswahlansicht (Build 139)
+
+Nach der Prüfung einer Zielnummer zeigt die Aktionsauswahl nur noch Hinweise an, die eine besondere Situation erklären, etwa den Offline-Modus. Der redundante Hinweis, dass alle aktiven Aktionen sichtbar sind, entfällt; die Auswahl bleibt dadurch kompakter.
+
 ## Match-Typen-Katalog (Build 138)
 
 Hot- und Fuck-Match werden beim Serverupdate in einen zentralen Match-Typen-Katalog übernommen. Match-Typen können in WordPress, der externen Webverwaltung sowie in der gemeinsamen iPhone-/iPad-Adminansicht angelegt, umbenannt, eingefärbt, sortiert, ein-/ausgeblendet und – solange unbenutzt – gelöscht werden. Teilnehmerauswahl, Interessen, Matches, Adminlisten, Statistik und Billboard verwenden denselben Katalog und speichern ihn für den Offline-Betrieb lokal zwischen. Mindestens ein Typ bleibt aktiv; bestehende `normal`-/`hot`-Daten und der historische Wert `F-` bleiben kompatibel.
