@@ -2,6 +2,7 @@ import SwiftUI
 
 struct AdminActionListView: View {
     @EnvironmentObject var api: APIService
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     @Binding var isPresented: Bool
     var isEmbedded = false
     @State private var searchText = ""
@@ -32,44 +33,8 @@ struct AdminActionListView: View {
                     .onTapGesture { isPresented = false }
             }
 
-            VStack(spacing: 18) {
-                HStack(alignment: .top) {
-                    VStack(alignment: .leading, spacing: 5) {
-                        Text("EVENT CONTROL · \(filteredActions.count) EINTRÄGE")
-                            .font(.caption.bold())
-                            .tracking(1.8)
-                            .foregroundStyle(SecretMatchTheme.secondary)
-                        Text("Aktionen verwalten")
-                            .font(.system(size: 32, weight: .bold, design: .rounded))
-                            .foregroundStyle(.white)
-                    }
-                    Spacer()
-                    Button {
-                        showActionCatalog = true
-                    } label: {
-                        Label("Aktionsarten", systemImage: "slider.horizontal.3")
-                    }
-                    .buttonStyle(SecretSecondaryButtonStyle())
-                    .frame(width: 170)
-                    Button {
-                        editor = .create
-                    } label: {
-                        Label("Aktion anlegen", systemImage: "plus")
-                    }
-                    .buttonStyle(SecretPrimaryButtonStyle(fullWidth: false))
-                    if !isEmbedded {
-                        Button {
-                            isPresented = false
-                        } label: {
-                            Image(systemName: "xmark")
-                                .font(.title3.bold())
-                                .frame(width: 50, height: 50)
-                                .foregroundStyle(.white)
-                                .background(SecretMatchTheme.surfaceRaised)
-                                .clipShape(RoundedRectangle(cornerRadius: SecretMatchTheme.cornerRadius))
-                        }
-                    }
-                }
+            VStack(spacing: usesCompactLayout ? 14 : 18) {
+                header
 
                 if let operationErrorMessage {
                     Label(operationErrorMessage, systemImage: "exclamationmark.triangle.fill")
@@ -78,35 +43,7 @@ struct AdminActionListView: View {
                         .frame(maxWidth: .infinity, alignment: .leading)
                 }
 
-                HStack(spacing: 12) {
-                    HStack {
-                        Image(systemName: "magnifyingglass")
-                            .foregroundStyle(SecretMatchTheme.muted)
-                        AdminKeyboardTextField(
-                            title: "Sender- oder Zielnummer suchen",
-                            text: $searchText,
-                            keyboard: .number(maxDigits: 10),
-                            keyboardTitle: "Aktionen durchsuchen"
-                        )
-                            .foregroundStyle(.white)
-                    }
-                    .padding(.horizontal, 16)
-                    .frame(minHeight: 54)
-                    .background(Color.black.opacity(0.25))
-                    .clipShape(RoundedRectangle(cornerRadius: SecretMatchTheme.cornerRadius))
-
-                    Picker("Typ", selection: $selectedType) {
-                        Text("Alle").tag("all")
-                        ForEach(api.actionDefinitions) { definition in
-                            Text(definition.displayTitle).tag(definition.id)
-                        }
-                    }
-                    .pickerStyle(.menu)
-                    .tint(.white)
-                    .frame(minWidth: 150, minHeight: 54)
-                    .background(SecretMatchTheme.surfaceRaised)
-                    .clipShape(RoundedRectangle(cornerRadius: SecretMatchTheme.cornerRadius))
-                }
+                filters
 
                 if let loadErrorMessage {
                     loadErrorState(message: loadErrorMessage)
@@ -117,7 +54,7 @@ struct AdminActionListView: View {
                         .frame(maxHeight: .infinity)
                 } else {
                     ScrollView {
-                        LazyVGrid(columns: [GridItem(.adaptive(minimum: 360), spacing: 14)], spacing: 14) {
+                        LazyVGrid(columns: actionGridColumns, spacing: 14) {
                             ForEach(filteredActions) { action in
                                 actionRow(action)
                             }
@@ -128,8 +65,8 @@ struct AdminActionListView: View {
                 }
             }
             .frame(maxWidth: 1040, maxHeight: isEmbedded ? .infinity : 780)
-            .secretCard(padding: 26)
-            .padding(24)
+            .secretCard(padding: usesCompactLayout ? 14 : 26)
+            .padding(usesCompactLayout ? 10 : 24)
         }
         .task {
             await loadActions()
@@ -166,6 +103,149 @@ struct AdminActionListView: View {
 #endif
     }
 
+    private var usesCompactLayout: Bool {
+#if ADMIN_APP
+        true
+#else
+        horizontalSizeClass == .compact
+#endif
+    }
+
+    private var actionGridColumns: [GridItem] {
+        usesCompactLayout
+            ? [GridItem(.flexible())]
+            : [GridItem(.adaptive(minimum: 360), spacing: 14)]
+    }
+
+    @ViewBuilder
+    private var header: some View {
+        if usesCompactLayout {
+            VStack(alignment: .leading, spacing: 14) {
+                HStack(alignment: .top, spacing: 12) {
+                    titleBlock
+                    Spacer(minLength: 0)
+                    closeButton
+                }
+
+                HStack(spacing: 10) {
+                    catalogButton
+                    createButton
+                }
+            }
+        } else {
+            HStack(alignment: .top, spacing: 12) {
+                titleBlock
+                Spacer()
+                catalogButton
+                createButton
+                closeButton
+            }
+        }
+    }
+
+    private var titleBlock: some View {
+        VStack(alignment: .leading, spacing: 5) {
+            Text("EVENT CONTROL · \(filteredActions.count) EINTRÄGE")
+                .font(.caption.bold())
+                .tracking(usesCompactLayout ? 1.2 : 1.8)
+                .foregroundStyle(SecretMatchTheme.secondary)
+            Text("Aktionen verwalten")
+                .font(.system(size: usesCompactLayout ? 27 : 32, weight: .bold, design: .rounded))
+                .foregroundStyle(.white)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+    }
+
+    private var catalogButton: some View {
+        Button {
+            showActionCatalog = true
+        } label: {
+            Label("Aktionsarten", systemImage: "slider.horizontal.3")
+                .lineLimit(1)
+                .minimumScaleFactor(0.85)
+        }
+        .buttonStyle(SecretSecondaryButtonStyle())
+        .frame(width: usesCompactLayout ? nil : 170)
+        .frame(maxWidth: usesCompactLayout ? .infinity : nil)
+    }
+
+    private var createButton: some View {
+        Button {
+            editor = .create
+        } label: {
+            Label(usesCompactLayout ? "Neue Aktion" : "Aktion anlegen", systemImage: "plus")
+                .lineLimit(1)
+                .minimumScaleFactor(0.85)
+        }
+        .buttonStyle(SecretPrimaryButtonStyle(fullWidth: usesCompactLayout))
+        .frame(maxWidth: usesCompactLayout ? .infinity : nil)
+    }
+
+    @ViewBuilder
+    private var closeButton: some View {
+        if !isEmbedded {
+            Button {
+                isPresented = false
+            } label: {
+                Image(systemName: "xmark")
+                    .font(.title3.bold())
+                    .frame(width: 50, height: 50)
+                    .foregroundStyle(.white)
+                    .background(SecretMatchTheme.surfaceRaised)
+                    .clipShape(RoundedRectangle(cornerRadius: SecretMatchTheme.cornerRadius))
+            }
+            .accessibilityLabel("Aktionen schließen")
+        }
+    }
+
+    @ViewBuilder
+    private var filters: some View {
+        if usesCompactLayout {
+            VStack(spacing: 10) {
+                searchField
+                typePicker
+            }
+        } else {
+            HStack(spacing: 12) {
+                searchField
+                typePicker
+            }
+        }
+    }
+
+    private var searchField: some View {
+        HStack {
+            Image(systemName: "magnifyingglass")
+                .foregroundStyle(SecretMatchTheme.muted)
+            AdminKeyboardTextField(
+                title: "Sender- oder Zielnummer suchen",
+                text: $searchText,
+                keyboard: .number(maxDigits: 10),
+                keyboardTitle: "Aktionen durchsuchen"
+            )
+            .foregroundStyle(.white)
+        }
+        .padding(.horizontal, 14)
+        .frame(maxWidth: .infinity, minHeight: 52)
+        .background(Color.black.opacity(0.25))
+        .clipShape(RoundedRectangle(cornerRadius: SecretMatchTheme.cornerRadius))
+    }
+
+    private var typePicker: some View {
+        Picker("Typ", selection: $selectedType) {
+            Text("Alle Aktionsarten").tag("all")
+            ForEach(api.actionDefinitions) { definition in
+                Text(definition.displayTitle).tag(definition.id)
+            }
+        }
+        .pickerStyle(.menu)
+        .tint(.white)
+        .frame(maxWidth: usesCompactLayout ? .infinity : nil, minHeight: 52)
+        .frame(minWidth: usesCompactLayout ? nil : 150)
+        .background(SecretMatchTheme.surfaceRaised)
+        .clipShape(RoundedRectangle(cornerRadius: SecretMatchTheme.cornerRadius))
+    }
+
     private func loadErrorState(message: String) -> some View {
         ContentUnavailableView {
             Label("Aktionen konnten nicht geladen werden", systemImage: "wifi.exclamationmark")
@@ -198,48 +278,96 @@ struct AdminActionListView: View {
     private func actionRow(_ action: AdminAction) -> some View {
         let color = actionColor(for: action.action_type)
 
-        HStack(alignment: .top, spacing: 14) {
+        Group {
+            if usesCompactLayout {
+                VStack(alignment: .leading, spacing: 12) {
+                    actionSummary(action, color: color, compact: true)
+                    Rectangle()
+                        .fill(SecretMatchTheme.border.opacity(0.8))
+                        .frame(height: 1)
+                    HStack(spacing: 10) {
+                        editButton(action, showsLabel: true)
+                        deleteButton(action, showsLabel: true)
+                    }
+                }
+            } else {
+                HStack(alignment: .top, spacing: 14) {
+                    actionSummary(action, color: color, compact: false)
+                    Spacer()
+                    editButton(action, showsLabel: false)
+                    deleteButton(action, showsLabel: false)
+                }
+            }
+        }
+        .padding(usesCompactLayout ? 14 : 16)
+        .background(color.opacity(0.14))
+        .clipShape(RoundedRectangle(cornerRadius: SecretMatchTheme.cornerRadius))
+        .overlay(RoundedRectangle(cornerRadius: SecretMatchTheme.cornerRadius).stroke(color.opacity(0.65), lineWidth: 1.2))
+    }
+
+    private func actionSummary(_ action: AdminAction, color: Color, compact: Bool) -> some View {
+        HStack(alignment: .top, spacing: compact ? 12 : 14) {
             Text(actionEmoji(for: action.action_type))
-                .font(.system(size: 30))
-                .frame(width: 54, height: 54)
+                .font(.system(size: compact ? 26 : 30))
+                .frame(width: compact ? 46 : 54, height: compact ? 46 : 54)
                 .background(color.opacity(0.2))
                 .clipShape(RoundedRectangle(cornerRadius: SecretMatchTheme.cornerRadius))
 
-            VStack(alignment: .leading, spacing: 6) {
+            VStack(alignment: .leading, spacing: 5) {
                 Text(prettyAction(action.action_type))
-                    .font(.system(size: 19, weight: .bold, design: .rounded))
+                    .font(.system(size: compact ? 18 : 19, weight: .bold, design: .rounded))
                     .foregroundStyle(.white)
+                    .fixedSize(horizontal: false, vertical: true)
 
                 Text("Von \(action.sender_number.displayEventNumber) → \(action.receiver_number.displayEventNumber)")
                     .foregroundStyle(SecretMatchTheme.muted)
                     .font(.system(size: 16, weight: .semibold, design: .rounded))
-
+                    .monospacedDigit()
             }
-
-            Spacer()
-
-            Button {
-                editor = .edit(action)
-            } label: {
-                Image(systemName: "pencil")
-                    .font(.title3.bold())
-                    .foregroundStyle(SecretMatchTheme.secondary)
-                    .padding(10)
-            }
-
-            Button(role: .destructive) {
-                pendingDelete = action
-            } label: {
-                Image(systemName: "trash")
-                    .font(.title3.bold())
-                    .foregroundStyle(.red)
-                    .padding(10)
-            }
+            Spacer(minLength: 0)
         }
-        .padding()
-        .background(color.opacity(0.14))
-        .clipShape(RoundedRectangle(cornerRadius: SecretMatchTheme.cornerRadius))
-        .overlay(RoundedRectangle(cornerRadius: SecretMatchTheme.cornerRadius).stroke(color.opacity(0.65), lineWidth: 1.2))
+    }
+
+    private func editButton(_ action: AdminAction, showsLabel: Bool) -> some View {
+        Button {
+            editor = .edit(action)
+        } label: {
+            Group {
+                if showsLabel {
+                    Label("Bearbeiten", systemImage: "pencil")
+                } else {
+                    Image(systemName: "pencil")
+                }
+            }
+            .font(.callout.bold())
+            .foregroundStyle(SecretMatchTheme.secondary)
+            .frame(maxWidth: showsLabel ? .infinity : nil, minHeight: 44)
+            .padding(.horizontal, showsLabel ? 10 : 4)
+            .background(showsLabel ? SecretMatchTheme.surfaceRaised : Color.clear)
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("Aktion bearbeiten")
+    }
+
+    private func deleteButton(_ action: AdminAction, showsLabel: Bool) -> some View {
+        Button(role: .destructive) {
+            pendingDelete = action
+        } label: {
+            Group {
+                if showsLabel {
+                    Label("Löschen", systemImage: "trash")
+                } else {
+                    Image(systemName: "trash")
+                }
+            }
+            .font(.callout.bold())
+            .foregroundStyle(.red)
+            .frame(maxWidth: showsLabel ? .infinity : nil, minHeight: 44)
+            .padding(.horizontal, showsLabel ? 10 : 4)
+            .background(showsLabel ? Color.red.opacity(0.1) : Color.clear)
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("Aktion löschen")
     }
 
     private var filteredActions: [AdminAction] {

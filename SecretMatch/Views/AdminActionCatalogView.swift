@@ -2,6 +2,7 @@ import SwiftUI
 
 struct AdminActionCatalogView: View {
     @EnvironmentObject private var api: APIService
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     @Binding var isPresented: Bool
     @State private var editor: EditorContext?
     @State private var pendingDelete: ActionDefinition?
@@ -28,7 +29,7 @@ struct AdminActionCatalogView: View {
                         catalog
                     }
                 }
-                .padding(22)
+                .padding(usesCompactLayout ? 12 : 22)
             }
             .navigationTitle("Aktionsarten")
             .toolbar {
@@ -67,8 +68,9 @@ struct AdminActionCatalogView: View {
     }
 
     private var catalog: some View {
-        VStack(alignment: .leading, spacing: 14) {
+        VStack(alignment: .leading, spacing: usesCompactLayout ? 10 : 14) {
             Text("Die Reihenfolge und Darstellung gelten gemeinsam für Teilnehmer-App, Adminbereiche und Billboard. Neue Vorschläge sind zunächst ausgeblendet.")
+                .font(usesCompactLayout ? .callout : .body)
                 .foregroundStyle(SecretMatchTheme.muted)
 
             if let errorMessage {
@@ -78,7 +80,7 @@ struct AdminActionCatalogView: View {
             }
 
             ScrollView {
-                LazyVGrid(columns: [GridItem(.adaptive(minimum: 330), spacing: 12)], spacing: 12) {
+                LazyVGrid(columns: catalogColumns, spacing: 12) {
                     ForEach(api.actionDefinitions) { definition in
                         definitionCard(definition)
                     }
@@ -90,11 +92,11 @@ struct AdminActionCatalogView: View {
 
     private func definitionCard(_ definition: ActionDefinition) -> some View {
         let color = Color(hex: definition.color)
-        return VStack(alignment: .leading, spacing: 12) {
+        return VStack(alignment: .leading, spacing: usesCompactLayout ? 10 : 12) {
             HStack(spacing: 12) {
                 Text(definition.emoji.isEmpty ? "✨" : definition.emoji)
-                    .font(.system(size: 30))
-                    .frame(width: 52, height: 52)
+                    .font(.system(size: usesCompactLayout ? 27 : 30))
+                    .frame(width: usesCompactLayout ? 46 : 52, height: usesCompactLayout ? 46 : 52)
                     .background(color.opacity(0.2))
                     .overlay(Rectangle().stroke(color.opacity(0.7), lineWidth: 1))
 
@@ -102,6 +104,7 @@ struct AdminActionCatalogView: View {
                     Text(definition.name)
                         .font(.headline.bold())
                         .foregroundStyle(.white)
+                        .fixedSize(horizontal: false, vertical: true)
                     Text(definition.id)
                         .font(.caption.monospaced())
                         .foregroundStyle(SecretMatchTheme.muted)
@@ -116,11 +119,7 @@ struct AdminActionCatalogView: View {
                 .labelsHidden()
             }
 
-            HStack(spacing: 8) {
-                metadata(categoryTitle(definition.category), color: color)
-                metadata(directionTitle(definition.direction), color: color)
-                metadata(genderTitle(definition.targetGender), color: color)
-            }
+            metadataGrid(definition, color: color)
 
             HStack {
                 Text("Position \(definition.sortOrder)")
@@ -139,7 +138,7 @@ struct AdminActionCatalogView: View {
             }
             .font(.callout.bold())
         }
-        .padding(16)
+        .padding(usesCompactLayout ? 13 : 16)
         .background(color.opacity(0.11))
         .overlay(Rectangle().stroke(color.opacity(0.55), lineWidth: 1))
     }
@@ -152,6 +151,38 @@ struct AdminActionCatalogView: View {
             .padding(.vertical, 5)
             .background(color.opacity(0.12))
             .clipShape(RoundedRectangle(cornerRadius: 4))
+            .frame(maxWidth: usesCompactLayout ? .infinity : nil, alignment: .leading)
+    }
+
+    @ViewBuilder
+    private func metadataGrid(_ definition: ActionDefinition, color: Color) -> some View {
+        if usesCompactLayout {
+            LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], alignment: .leading, spacing: 7) {
+                metadata(categoryTitle(definition.category), color: color)
+                metadata(directionTitle(definition.direction), color: color)
+                metadata(genderTitle(definition.targetGender), color: color)
+            }
+        } else {
+            HStack(spacing: 8) {
+                metadata(categoryTitle(definition.category), color: color)
+                metadata(directionTitle(definition.direction), color: color)
+                metadata(genderTitle(definition.targetGender), color: color)
+            }
+        }
+    }
+
+    private var usesCompactLayout: Bool {
+#if ADMIN_APP
+        true
+#else
+        horizontalSizeClass == .compact
+#endif
+    }
+
+    private var catalogColumns: [GridItem] {
+        usesCompactLayout
+            ? [GridItem(.flexible())]
+            : [GridItem(.adaptive(minimum: 330), spacing: 12)]
     }
 
     @MainActor
@@ -174,7 +205,7 @@ struct AdminActionCatalogView: View {
             try await api.saveAdminActionDefinition(updated, isNew: false)
             errorMessage = nil
         } catch {
-            errorMessage = "Sichtbarkeit konnte nicht geändert werden."
+            errorMessage = error.localizedDescription
         }
     }
 
