@@ -210,7 +210,7 @@ struct HowToUseView: View {
                 }
             }
 
-            Text("Je nach Zielnummer kann Blow- oder Lick-Job automatisch ausgeblendet sein.")
+            Text("Je nach Zielnummer können passend gepflegte Aktionen automatisch ausgeblendet sein.")
                 .font(.caption.weight(.semibold))
                 .foregroundStyle(SecretMatchTheme.muted)
                 .frame(maxWidth: .infinity, alignment: .leading)

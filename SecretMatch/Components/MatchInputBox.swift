@@ -22,6 +22,7 @@ struct MatchInputBox: View {
     @Binding var selectedActions: Set<String>
     @Binding var matchMessage: String
     let quickMessages: [String]
+    var actionDefinitions: [ActionDefinition] = ActionDefinition.fallbacks
     let onSend: () -> Void
     var targetIsConfirmed = false
     var allowedActionTypes: Set<String> = ["bjob", "hjob", "ljob"]
@@ -41,13 +42,15 @@ struct MatchInputBox: View {
     var fillsAvailableSpace = false
     var availableHeight: CGFloat?
 
-    private let options = [
-        ActionOption(type: "normal", title: "Hot Match", emoji: "❤️", color: Color(hex: "#E83E8C")),
-        ActionOption(type: "hot", title: "Fuck Match", emoji: "🍆", color: Color(hex: "#8E63D2")),
-        ActionOption(type: "bjob", title: "Blow-Job", emoji: "👄", color: Color(hex: "#3E9ED6")),
-        ActionOption(type: "hjob", title: "Hand-Job", emoji: "✋", color: Color(hex: "#E6923E")),
-        ActionOption(type: "ljob", title: "Lick-Job", emoji: "👅", color: Color(hex: "#D65C8D"))
-    ]
+    private var options: [ActionOption] {
+        [
+            ActionOption(type: "normal", title: "Hot Match", emoji: "❤️", color: Color(hex: "#E83E8C")),
+            ActionOption(type: "hot", title: "Fuck Match", emoji: "🍆", color: Color(hex: "#8E63D2"))
+        ] + actionDefinitions
+            .filter(\.enabled)
+            .sorted { $0.sortOrder == $1.sortOrder ? $0.name < $1.name : $0.sortOrder < $1.sortOrder }
+            .map { ActionOption(type: $0.id, title: $0.name, emoji: $0.emoji, color: Color(hex: $0.color)) }
+    }
 
     private var matchOptions: [ActionOption] {
         options.filter { $0.type == "normal" || $0.type == "hot" }
@@ -60,7 +63,7 @@ struct MatchInputBox: View {
     }
 
     private var actionColumns: [GridItem] {
-        Array(repeating: GridItem(.flexible()), count: max(1, actionOptions.count))
+        Array(repeating: GridItem(.flexible()), count: min(3, max(1, actionOptions.count)))
     }
 
     private var normalizedScale: CGFloat {
@@ -185,6 +188,11 @@ struct MatchInputBox: View {
                     }
                 }
 
+                Text("Eine Anfrage ist keine Zustimmung – besprecht Grenzen und Details persönlich.")
+                    .font(.system(size: metric(12, 13), weight: .medium, design: .rounded))
+                    .foregroundStyle(SecretMatchTheme.muted)
+                    .fixedSize(horizontal: false, vertical: true)
+
                 Rectangle()
                     .fill(SecretMatchTheme.border.opacity(highContrast ? 1 : 0.75))
                     .frame(height: highContrast ? 2 : 1)
@@ -203,11 +211,11 @@ struct MatchInputBox: View {
                 }
 
                 if usesOfflineSelectionFallback {
-                    Label("Offline-Modus: Alle Aktionen sind sichtbar", systemImage: "wifi.slash")
+                    Label("Offline-Modus: Alle aktiven Aktionen sind sichtbar", systemImage: "wifi.slash")
                         .font(.system(size: metric(13, 14), weight: .bold, design: .rounded))
                         .foregroundStyle(.orange)
                 } else if !usesProfileBasedSelection {
-                    Label("Für diese Zielnummer sind alle Aktionen sichtbar", systemImage: "info.circle.fill")
+                    Label("Für diese Zielnummer sind alle aktiven Aktionen sichtbar", systemImage: "info.circle.fill")
                         .font(.system(size: metric(13, 14), weight: .semibold, design: .rounded))
                         .foregroundStyle(SecretMatchTheme.muted)
                 }

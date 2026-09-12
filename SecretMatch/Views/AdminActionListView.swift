@@ -10,6 +10,7 @@ struct AdminActionListView: View {
     @State private var loadErrorMessage: String?
     @State private var operationErrorMessage: String?
     @State private var editor: Editor?
+    @State private var showActionCatalog = false
 
     private enum Editor: Identifiable {
         case create
@@ -43,6 +44,13 @@ struct AdminActionListView: View {
                             .foregroundStyle(.white)
                     }
                     Spacer()
+                    Button {
+                        showActionCatalog = true
+                    } label: {
+                        Label("Aktionsarten", systemImage: "slider.horizontal.3")
+                    }
+                    .buttonStyle(SecretSecondaryButtonStyle())
+                    .frame(width: 170)
                     Button {
                         editor = .create
                     } label: {
@@ -89,11 +97,9 @@ struct AdminActionListView: View {
 
                     Picker("Typ", selection: $selectedType) {
                         Text("Alle").tag("all")
-                        Text("❤️ Hot").tag("normal")
-                        Text("🍆 Fuck").tag("hot")
-                        Text("👄 Blow-Job").tag("bjob")
-                        Text("✋ Hand-Job").tag("hjob")
-                        Text("👅 Lick-Job").tag("ljob")
+                        ForEach(api.actionDefinitions) { definition in
+                            Text(definition.displayTitle).tag(definition.id)
+                        }
                     }
                     .pickerStyle(.menu)
                     .tint(.white)
@@ -145,6 +151,11 @@ struct AdminActionListView: View {
             actionEditor(editor)
                 .presentationDetents(editorPresentationDetents)
         }
+        .sheet(isPresented: $showActionCatalog) {
+            AdminActionCatalogView(isPresented: $showActionCatalog)
+                .environmentObject(api)
+                .presentationDetents([.large])
+        }
     }
 
     private var editorPresentationDetents: Set<PresentationDetent> {
@@ -175,6 +186,7 @@ struct AdminActionListView: View {
         loadErrorMessage = nil
         do {
             try await api.loadAdminActions()
+            try? await api.loadAdminActionDefinitions()
         } catch {
             loadErrorMessage = "Bitte Admin-Anmeldung und Netzwerkverbindung prüfen."
         }
@@ -243,36 +255,19 @@ struct AdminActionListView: View {
     }
 
     private func actionEmoji(for type: String) -> String {
-        switch type {
-        case "normal": return "❤️"
-        case "hot": return "🍆"
-        case "bjob": return "👄"
-        case "hjob": return "✋"
-        case "ljob": return "👅"
-        default: return "💌"
-        }
+        actionDefinition(for: type).emoji
     }
     
     private func prettyAction(_ type: String) -> String {
-        switch type {
-        case "normal": return "Hot Match"
-        case "hot": return "Fuck Match"
-        case "bjob": return "Blow-Job"
-        case "hjob": return "Hand-Job"
-        case "ljob": return "Lick-Job"
-        default: return type.capitalized
-        }
+        actionDefinition(for: type).name
     }
 
     private func actionColor(for type: String) -> Color {
-        switch type {
-        case "normal": return Color(hex: "#E83E8C")
-        case "hot": return Color(hex: "#8E63D2")
-        case "bjob": return Color(hex: "#3E9ED6")
-        case "hjob": return Color(hex: "#E6923E")
-        case "ljob": return Color(hex: "#D65C8D")
-        default: return SecretMatchTheme.primary
-        }
+        Color(hex: actionDefinition(for: type).color)
+    }
+
+    private func actionDefinition(for type: String) -> ActionDefinition {
+        api.actionDefinitions.first { $0.id == type } ?? ActionDefinition.fallback(for: type)
     }
 
     @ViewBuilder
@@ -308,13 +303,9 @@ struct AdminActionListView: View {
     }
 
     private var actionTypeOptions: [AdminRecordTypeOption] {
-        [
-            .init(value: "normal", title: "❤️ Hot Match"),
-            .init(value: "hot", title: "🍆 Fuck Match"),
-            .init(value: "bjob", title: "👄 Blow-Job"),
-            .init(value: "hjob", title: "✋ Hand-Job"),
-            .init(value: "ljob", title: "👅 Lick-Job")
-        ]
+        api.actionDefinitions.map {
+            .init(value: $0.id, title: $0.displayTitle + ($0.enabled ? "" : " · ausgeblendet"))
+        }
     }
 
     @MainActor

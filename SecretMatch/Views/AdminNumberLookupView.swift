@@ -328,7 +328,10 @@ struct AdminNumberLookupView: View {
     }
 
     private func typeLabel(_ type: String) -> String {
-        ["normal": "Hot", "hot": "Fuck", "bjob": "Blow-Job", "hjob": "Hand-Job", "ljob": "Lick-Job"][type] ?? type
+        if type == "normal" { return "Hot" }
+        if type == "hot" { return "Fuck" }
+        return api.actionDefinitions.first { $0.id == type }?.name
+            ?? ActionDefinition.fallback(for: type).name
     }
 
     private func genderLabel(_ gender: String?) -> String {

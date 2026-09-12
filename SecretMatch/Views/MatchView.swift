@@ -17,7 +17,7 @@ struct MatchView: View {
     @State private var isWithdrawingLastActions = false
     @State private var withdrawalConfirmationMessage: String?
     @State private var targetIsConfirmed = false
-    @State private var allowedActionTypes: Set<String> = ["bjob", "hjob", "ljob"]
+    @State private var allowedActionTypes: Set<String> = Set(ActionDefinition.fallbacks.map(\.id))
     @State private var usesProfileBasedSelection = false
     @State private var usesOfflineSelectionFallback = false
 
@@ -225,6 +225,7 @@ struct MatchView: View {
                         selectedActions: $selectedActions,
                         matchMessage: $matchMessage,
                         quickMessages: api.matchMessageOptions,
+                        actionDefinitions: api.actionDefinitions,
                         onSend: sendInteractions,
                         targetIsConfirmed: targetIsConfirmed,
                         allowedActionTypes: allowedActionTypes,
@@ -258,6 +259,7 @@ struct MatchView: View {
                     selectedActions: $selectedActions,
                     matchMessage: $matchMessage,
                     quickMessages: api.matchMessageOptions,
+                    actionDefinitions: api.actionDefinitions,
                     onSend: sendInteractions,
                     targetIsConfirmed: targetIsConfirmed,
                     allowedActionTypes: allowedActionTypes,
@@ -313,7 +315,7 @@ struct MatchView: View {
                 targetNumber = ""
                 selectedActions = []
                 targetIsConfirmed = false
-                allowedActionTypes = ["bjob", "hjob", "ljob"]
+                allowedActionTypes = activeActionTypes
                 usesProfileBasedSelection = false
                 usesOfflineSelectionFallback = false
                 resetInactivityTimer()
@@ -328,7 +330,7 @@ struct MatchView: View {
             }
 
             do {
-                let orderedTypes = ["normal", "hot", "bjob", "hjob", "ljob"]
+                let orderedTypes = (["normal", "hot"] + api.actionDefinitions.map(\.id))
                     .filter(selectedActions.contains)
                 let result = try await api.submitInteractions(
                     targetNumber: targetNumber,
@@ -365,7 +367,7 @@ struct MatchView: View {
         }
 
         if api.connectionState == .offline || api.connectionState == .serverUnavailable {
-            allowedActionTypes = ["bjob", "hjob", "ljob"]
+            allowedActionTypes = activeActionTypes
             usesProfileBasedSelection = false
             usesOfflineSelectionFallback = true
             withAnimation(.easeOut(duration: 0.2)) {
@@ -400,7 +402,7 @@ struct MatchView: View {
                 submissionFailed = true
                 targetIsConfirmed = false
             } catch InteractionOptionsError.connectivityUnavailable {
-                allowedActionTypes = ["bjob", "hjob", "ljob"]
+                allowedActionTypes = activeActionTypes
                 usesProfileBasedSelection = false
                 usesOfflineSelectionFallback = true
                 selectedActions = Set(selectedActions.filter {
@@ -423,7 +425,7 @@ struct MatchView: View {
         selectedActions = []
         matchMessage = ""
         submissionFailed = false
-        allowedActionTypes = ["bjob", "hjob", "ljob"]
+        allowedActionTypes = activeActionTypes
         usesProfileBasedSelection = false
         usesOfflineSelectionFallback = false
         withAnimation(.easeOut(duration: 0.2)) {
@@ -433,6 +435,10 @@ struct MatchView: View {
             showKeyboard = true
         }
         resetInactivityTimer()
+    }
+
+    private var activeActionTypes: Set<String> {
+        Set(api.actionDefinitions.filter(\.enabled).map(\.id))
     }
 
     private func retryQueuedSends() {

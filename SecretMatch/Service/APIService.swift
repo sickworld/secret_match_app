@@ -17,12 +17,14 @@ class APIService: ObservableObject {
     private static let eventIDKey = "secretmatch.event-id"
     private static let adminPushTokenKey = "secretmatch.admin-push-device-token"
     private static let adminPushEnvironmentKey = "secretmatch.admin-push-environment"
+    private static let actionDefinitionsKey = "secretmatch.action-definitions.v1"
 
     private init() {
         pendingInteractions = Self.loadPendingInteractions()
         pendingTelemetryEvents = Self.loadPendingTelemetryEvents()
         screensaverItems = ScreensaverMediaCache.loadCatalog()
         screensaverIdleSeconds = ScreensaverMediaCache.loadIdleSeconds()
+        actionDefinitions = Self.loadCachedActionDefinitions()
         removeExpiredPendingInteractions()
         removeExpiredTelemetryEvents()
 
@@ -60,6 +62,7 @@ class APIService: ObservableObject {
     @Published private(set) var connectionState: ConnectionState = .checking
     @Published private(set) var isCheckingConnection = false
     @Published private(set) var matchMessageOptions: [String] = []
+    @Published private(set) var actionDefinitions: [ActionDefinition]
     @Published private(set) var screensaverItems: [ScreensaverMediaItem]
     @Published private(set) var screensaverIdleSeconds: Int
     @Published private(set) var adminScreensaverItems: [ScreensaverMediaItem] = []
@@ -206,6 +209,7 @@ class APIService: ObservableObject {
         Task {
             await flushTelemetryEvents()
             try? await loadMatchMessageOptions()
+            try? await loadActionDefinitions()
         }
     }
 
@@ -213,7 +217,7 @@ class APIService: ObservableObject {
         interactionDeliveryErrorMessage = nil
         let senderNumber = number.normalizedEventNumber
         let normalizedTargetNumber = targetNumber.normalizedEventNumber
-        let supportedTypes = Set(["normal", "hot", "bjob", "hjob", "ljob"])
+        let supportedTypes = Set(["normal", "hot"]).union(actionDefinitions.filter(\.enabled).map(\.id))
         guard !senderNumber.isEmpty,
               !normalizedTargetNumber.isEmpty,
               senderNumber != normalizedTargetNumber,
@@ -301,7 +305,10 @@ class APIService: ObservableObject {
             await self?.retryPendingSends()
             await self?.loadScreensaverContent(force: true)
             if self?.isAdmin == true {
+                try? await self?.loadAdminActionDefinitions()
                 await self?.syncAdminPushToken()
+            } else {
+                try? await self?.loadActionDefinitions()
             }
         }
     }
@@ -392,6 +399,17 @@ class APIService: ObservableObject {
         matchMessageOptions = try JSONDecoder().decode(MatchMessageOptionsResponse.self, from: data).options
     }
 
+    func loadActionDefinitions() async throws {
+        let url = baseURL.appendingPathComponent("action-types")
+        let (data, response) = try await URLSession.shared.data(from: url)
+        guard let http = response as? HTTPURLResponse, http.statusCode == 200 else {
+            throw URLError(.badServerResponse)
+        }
+        let definitions = try JSONDecoder().decode(ActionDefinitionsResponse.self, from: data).actions
+        actionDefinitions = definitions.sorted(by: Self.sortActionDefinitions)
+        persistActionDefinitions()
+    }
+
     func loadInteractionOptions(targetNumber: String) async throws -> InteractionOptions {
         let normalizedTarget = targetNumber.normalizedEventNumber
         var components = URLComponents(
@@ -424,9 +442,15 @@ class APIService: ObservableObject {
         }
         if http.statusCode == 200 {
             let decoded = try JSONDecoder().decode(InteractionOptionsResponse.self, from: data)
-            let supported = Set(["bjob", "hjob", "ljob"])
+            if let definitions = decoded.actions, !definitions.isEmpty {
+                mergeActionDefinitions(definitions)
+            }
+            let supported = Set(actionDefinitions.filter(\.enabled).map(\.id))
             let actionTypes = Set(decoded.actionTypes).intersection(supported)
-            return InteractionOptions(actionTypes: actionTypes.isEmpty ? supported : actionTypes)
+            return InteractionOptions(
+                actionTypes: actionTypes,
+                profileBased: decoded.profileBased ?? (actionTypes.count < supported.count)
+            )
         }
 
         let responseError = try? JSONDecoder().decode(InteractionAPIErrorResponse.self, from: data)
@@ -782,6 +806,48 @@ class APIService: ObservableObject {
         }
 
         adminActions = try JSONDecoder().decode([AdminAction].self, from: data)
+    }
+
+    @MainActor
+    func loadAdminActionDefinitions() async throws {
+        let url = baseURL.appendingPathComponent("admin/action-types")
+        let (data, response) = try await URLSession.shared.data(for: adminRequest(url: url))
+        try validateAdminResponse(response)
+        actionDefinitions = try JSONDecoder().decode(ActionDefinitionsResponse.self, from: data).actions
+            .sorted(by: Self.sortActionDefinitions)
+        persistActionDefinitions()
+    }
+
+    func saveAdminActionDefinition(_ definition: ActionDefinition, isNew: Bool) async throws {
+        try await mutateAdminResource(
+            path: isNew ? ["admin", "action-types"] : ["admin", "action-types", definition.id],
+            method: isNew ? "POST" : "PATCH",
+            body: [
+                "id": definition.id,
+                "name": definition.name,
+                "emoji": definition.emoji,
+                "color": definition.color,
+                "category": definition.category,
+                "direction": definition.direction,
+                "target_gender": definition.targetGender,
+                "enabled": definition.enabled,
+                "sort_order": definition.sortOrder
+            ]
+        )
+        try await loadAdminActionDefinitions()
+    }
+
+    func deleteAdminActionDefinition(id: String) async throws {
+        let url = baseURL.appendingPathComponent("admin/action-types").appendingPathComponent(id)
+        var request = try adminRequest(url: url)
+        request.httpMethod = "DELETE"
+        let (data, response) = try await URLSession.shared.data(for: request)
+        guard let http = response as? HTTPURLResponse, (200...299).contains(http.statusCode) else {
+            handleExpiredAdminToken(response)
+            let responseError = try? JSONDecoder().decode(AdminMutationResponseError.self, from: data)
+            throw AdminMutationError(message: responseError?.message ?? "Aktionsart konnte nicht gelöscht werden.")
+        }
+        try await loadAdminActionDefinitions()
     }
     
     @MainActor
@@ -1550,6 +1616,7 @@ class APIService: ObservableObject {
     func refreshAdminControlData() async throws {
         try await loadAdminDashboard()
         try await loadAdminParticipants()
+        try? await loadAdminActionDefinitions()
         try? await loadAdminScreensaverContent()
     }
 
@@ -2055,6 +2122,34 @@ class APIService: ObservableObject {
         updateQueuedSendCount()
     }
 
+    private func persistActionDefinitions() {
+        guard let data = try? JSONEncoder().encode(actionDefinitions) else { return }
+        UserDefaults.standard.set(data, forKey: Self.actionDefinitionsKey)
+    }
+
+    private static func loadCachedActionDefinitions() -> [ActionDefinition] {
+        guard let data = UserDefaults.standard.data(forKey: actionDefinitionsKey),
+              let definitions = try? JSONDecoder().decode([ActionDefinition].self, from: data) else {
+            return ActionDefinition.fallbacks
+        }
+        return definitions.sorted(by: sortActionDefinitions)
+    }
+
+    private func mergeActionDefinitions(_ definitions: [ActionDefinition]) {
+        var merged = Dictionary(uniqueKeysWithValues: actionDefinitions.map { ($0.id, $0) })
+        for definition in definitions {
+            merged[definition.id] = definition
+        }
+        actionDefinitions = merged.values.sorted(by: Self.sortActionDefinitions)
+        persistActionDefinitions()
+    }
+
+    private static func sortActionDefinitions(_ left: ActionDefinition, _ right: ActionDefinition) -> Bool {
+        left.sortOrder == right.sortOrder
+            ? left.name.localizedCaseInsensitiveCompare(right.name) == .orderedAscending
+            : left.sortOrder < right.sortOrder
+    }
+
     private static func loadPendingInteractions() -> [PendingInteraction] {
         guard let data = UserDefaults.standard.data(forKey: pendingInteractionsKey),
               let interactions = try? JSONDecoder().decode([PendingInteraction].self, from: data) else {
@@ -2346,9 +2441,13 @@ private struct MatchMessageOptionsResponse: Decodable {
 
 private struct InteractionOptionsResponse: Decodable {
     let actionTypes: [String]
+    let actions: [ActionDefinition]?
+    let profileBased: Bool?
 
     private enum CodingKeys: String, CodingKey {
         case actionTypes = "action_types"
+        case actions
+        case profileBased = "profile_based"
     }
 }
 

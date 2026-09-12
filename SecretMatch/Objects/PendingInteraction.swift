@@ -46,8 +46,7 @@ struct ActionWithdrawalError: LocalizedError {
 
 struct InteractionOptions {
     let actionTypes: Set<String>
-
-    var profileBased: Bool { actionTypes.count < 3 }
+    let profileBased: Bool
 }
 
 enum InteractionOptionsError: LocalizedError {

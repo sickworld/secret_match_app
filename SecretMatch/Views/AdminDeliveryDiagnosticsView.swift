@@ -204,7 +204,11 @@ struct AdminDeliveryDiagnosticsView: View {
     }
 
     private func typeLabel(_ type: String) -> String {
-        ["normal": "Hot Match", "hot": "Fuck Match", "bjob": "Blow-Job", "hjob": "Hand-Job", "ljob": "Lick-Job"][type] ?? (type.isEmpty ? "Interaktion" : type)
+        if type == "normal" { return "Hot Match" }
+        if type == "hot" { return "Fuck Match" }
+        if type.isEmpty { return "Interaktion" }
+        return api.actionDefinitions.first { $0.id == type }?.name
+            ?? ActionDefinition.fallback(for: type).name
     }
 
     private func stepColor(_ step: AdminEventLogEntry) -> Color {

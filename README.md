@@ -4,7 +4,7 @@ In allen sichtbaren App-Texten, Exporten und Benachrichtigungen lautet der Produ
 
 ## Admin-CRUD
 
-Die Admin-Bereiche auf iPhone und iPad können Aktionen und Matches anlegen, bearbeiten und löschen sowie Match-Requests einsehen und verwalten. In der Teilnehmerverwaltung lassen sich Nummern freigeben und sperren sowie Gender-Angaben setzen oder zurücksetzen. Jede Gender-Änderung und jeder Reset widerruft die aktive Sitzung der betroffenen Nummer; nach einem Reset erscheint die Gender-Auswahl beim nächsten Login erneut. Feedback bleibt als anonymer, unveränderlicher Datensatz bewusst auf Lesen und Löschen begrenzt.
+Die Admin-Bereiche auf iPhone und iPad können Aktionen und Matches anlegen, bearbeiten und löschen sowie Match-Requests einsehen und verwalten. Über **Aktionen → Aktionsarten** pflegen beide Adminoberflächen denselben zentralen Aktionskatalog mit Bezeichnung, Emoji, Farbe, Kategorie, Richtung, Zielgeschlecht, Reihenfolge und Sichtbarkeit. Neue Arten erscheinen ohne App-Neubau in der Teilnehmerauswahl, den Adminlisten und auf dem Billboard; die App speichert den letzten Katalog für den Offlinebetrieb. Bereits verwendete Arten lassen sich ausblenden, aber nicht löschen, damit historische Auswertungen verständlich bleiben. In der Teilnehmerverwaltung lassen sich Nummern freigeben und sperren sowie Gender-Angaben setzen oder zurücksetzen. Jede Gender-Änderung und jeder Reset widerruft die aktive Sitzung der betroffenen Nummer; nach einem Reset erscheint die Gender-Auswahl beim nächsten Login erneut. Feedback bleibt als anonymer, unveränderlicher Datensatz bewusst auf Lesen und Löschen begrenzt.
 
 iPads und Billboards besitzen ebenfalls eine vollständige Verwaltung für ihre technisch sinnvollen Lebenszyklen: iPads registrieren sich automatisch per Heartbeat und können danach umbenannt oder einzeln aus der Liste entfernt werden. Billboards lassen sich mit einem benannten Einmal-Link anlegen, direkt öffnen, umbenennen und einzeln widerrufen. Das zentrale manuelle Billboard-Passwort gilt für alle, während jeder geöffnete Zugang eine eigene löschbare Sitzung erhält.
 
@@ -38,7 +38,7 @@ Die bestehende dunkle Match&Play-Gestaltung verwendet für Karten, Buttons, Eing
 
 Das kompakte Menü der iPhone-Admin-App bleibt flächig und neutral. Bereichsfarben erscheinen nur an den Icons sowie dezent am aktiven Eintrag; eine linke Markierung und ein Häkchen kennzeichnen die Auswahl zusätzlich unabhängig von der Farbe. Der Logout bleibt als destruktive Aktion rot.
 
-Diese Funktionen benötigen das WordPress-Modul ab Version `2026.09.10.6`; das Modul muss vor oder zusammen mit diesem App-Build veröffentlicht werden.
+Diese Funktionen benötigen das WordPress-Modul ab Version `2026.09.12.1`; das Modul muss vor oder zusammen mit diesem App-Build veröffentlicht werden.
 
 ## Eingehende Interessen
 
@@ -94,15 +94,15 @@ Freie Match-Nachrichten werden über eine appinterne QWERTZ-Tastatur mit Umlaute
 - **Phase:** Implementiert
 - **Akzeptanzkriterium:** Die Teilnehmeransicht zeigt zunächst ausschließlich die Zielnummer. Die Bestätigungstaste der appinternen Zahlentastatur öffnet ohne zusätzlichen Weiter-Button direkt Match-Wünsche und Aktionen; **Nummer ändern** verwirft die bisherige Zielnummer sowie die zugehörige Auswahl und öffnet die Zahlentastatur mit einem leeren Feld.
 - **Layout:** Überschrift und Nummerneingabe beginnen in der iPad-Ansicht mit einem ruhigen zusätzlichen Abstand zum oberen Rand. Nach der Bestätigung bleibt die kompakte Aktionsansicht an ihrer bisherigen Position; der kurze Positionswechsel wird weich animiert und für 100 %, 115 % sowie 130 % Zoom angepasst.
-- **Passende Aktionen:** Das WordPress-Modul liefert nur die für das Zielprofil sichtbaren Aktionstypen. Bei einem männlich hinterlegten Ziel wird Lick-Job, bei einem weiblich hinterlegten Ziel Blow-Job ausgeblendet. Das Geschlecht selbst wird nicht an die App übertragen. Erfolgreiches Filtern benötigt keinen zusätzlichen Statushinweis; nur Offline-Fallback oder fehlende Profildaten werden sichtbar erklärt.
-- **Offline-Fallback:** Fehlen Profildaten, zeigt die App alle Aktionen und kennzeichnet diesen Zustand. Bei einer bereits erkannten Offline-Verbindung öffnet sich die Auswahl sofort. Falls ein veralteter Online-Status vorliegt, erzwingt die App ausschließlich für die interaktive Zielprofilabfrage nach einer Sekunde einen harten Gesamtabbruch und öffnet automatisch den sichtbar gekennzeichneten Offline-Modus; Queue- und Hintergrund-Retries behalten ihre längeren Timeouts. HTTP-, Sitzungs- oder Antwortfehler öffnen die ungefilterte Auswahl weiterhin nicht still. Match-Wünsche und Hand-Job bleiben immer verfügbar.
+- **Passende Aktionen:** Das WordPress-Modul liefert nur die aktiven, für das Zielprofil gepflegten Aktionstypen. Der Katalog bestimmt je Aktion, ob sie allen, Männern oder Frauen angeboten wird; das Geschlecht selbst wird nicht an die App übertragen. Erfolgreiches Filtern benötigt keinen zusätzlichen Statushinweis; nur Offline-Fallback oder fehlende Profildaten werden sichtbar erklärt.
+- **Offline-Fallback:** Fehlen Profildaten, zeigt die App den zuletzt geladenen aktiven Aktionskatalog und kennzeichnet diesen Zustand. Bei einer bereits erkannten Offline-Verbindung öffnet sich die Auswahl sofort. Falls ein veralteter Online-Status vorliegt, erzwingt die App ausschließlich für die interaktive Zielprofilabfrage nach einer Sekunde einen harten Gesamtabbruch und öffnet automatisch den sichtbar gekennzeichneten Offline-Modus; Queue- und Hintergrund-Retries behalten ihre längeren Timeouts. HTTP-, Sitzungs- oder Antwortfehler öffnen die ungefilterte Auswahl weiterhin nicht still. Match-Wünsche bleiben unabhängig vom Aktionskatalog verfügbar.
 - **Anleitung:** Die geführte Demo und die Spielregeln verwenden denselben Nummer-zuerst-Ablauf, trennen Match-Wünsche von Aktionen und erklären die automatisch passende Auswahl sowie den Rückzug gesendeter Aktionen.
 
 ### Anforderung SM-ACT-WITHDRAW-001
 
 - **Priorität:** P1
 - **Phase:** Implementiert
-- **Akzeptanzkriterium:** Ein Teilnehmer kann eine selbst gesendete Blow-, Hand- oder Lick-Job-Aktion unmittelbar nach dem Versand oder aus der Liste **Von dir gesendet** zurückziehen. Wartende Queue-Einträge werden lokal entfernt; bereits zugestellte Aktionen werden serverseitig widerrufen und beim Empfänger nach der nächsten Aktualisierung nicht mehr angezeigt.
+- **Akzeptanzkriterium:** Ein Teilnehmer kann jede selbst gesendete katalogbasierte Aktion unmittelbar nach dem Versand oder aus der Liste **Von dir gesendet** zurückziehen. Wartende Queue-Einträge werden lokal entfernt; bereits zugestellte Aktionen werden serverseitig widerrufen und beim Empfänger nach der nächsten Aktualisierung nicht mehr angezeigt.
 - **Retry-Sicherheit:** Der Server behält die `request_id` einer zurückgezogenen Aktion als Widerrufsmarkierung. Ein verspäteter Retry bestätigt den Widerruf, ohne die Aktion erneut sichtbar zu machen.
 - **Zugriffsschutz:** Der Server leitet den Absender aus der Teilnehmer-Sitzung ab. Fremde oder empfangene Aktionen können nicht zurückgezogen werden. Matches und Match-Requests bleiben unverändert.
 

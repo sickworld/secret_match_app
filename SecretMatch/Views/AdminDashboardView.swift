@@ -447,10 +447,10 @@ struct AdminDashboardView: View {
             LiveFeedEntry(
                 id: "action-\(action.id)",
                 createdAt: action.created_at,
-                emoji: actionEmoji(action.action_type),
-                title: actionTitle(action.action_type),
+                emoji: actionEmoji(action),
+                title: actionTitle(action),
                 detail: "\(action.sender_number.displayEventNumber) → \(action.receiver_number.displayEventNumber)",
-                color: actionColor(action.action_type)
+                color: actionColor(action)
             )
         }
         let matches = api.adminMatches.map { match in
@@ -467,37 +467,17 @@ struct AdminDashboardView: View {
         return (actions + matches).sorted { $0.createdAt > $1.createdAt }
     }
 
-    private func actionEmoji(_ type: String) -> String {
-        switch type {
-        case "normal": return "❤️"
-        case "hot": return "🍆"
-        case "bjob": return "👄"
-        case "hjob": return "✋"
-        case "ljob": return "👅"
-        default: return "💌"
-        }
+    private func actionEmoji(_ action: AdminAction) -> String {
+        action.action_emoji ?? api.actionDefinitions.first { $0.id == action.action_type }?.emoji ?? ActionDefinition.fallback(for: action.action_type).emoji
     }
 
-    private func actionTitle(_ type: String) -> String {
-        switch type {
-        case "normal": return "Hot-Aktion gesendet"
-        case "hot": return "Fuck-Aktion gesendet"
-        case "bjob": return "Blow-Job-Aktion gesendet"
-        case "hjob": return "Hand-Job-Aktion gesendet"
-        case "ljob": return "Lick-Job-Aktion gesendet"
-        default: return "Aktion gesendet"
-        }
+    private func actionTitle(_ action: AdminAction) -> String {
+        let name = action.action_name ?? api.actionDefinitions.first { $0.id == action.action_type }?.name ?? ActionDefinition.fallback(for: action.action_type).name
+        return "\(name)-Aktion gesendet"
     }
 
-    private func actionColor(_ type: String) -> Color {
-        switch type {
-        case "normal": return Color(hex: "#E83E8C")
-        case "hot": return Color(hex: "#8E63D2")
-        case "bjob": return Color(hex: "#3E9ED6")
-        case "hjob": return Color(hex: "#E6923E")
-        case "ljob": return Color(hex: "#D65C8D")
-        default: return SecretMatchTheme.primary
-        }
+    private func actionColor(_ action: AdminAction) -> Color {
+        Color(hex: action.action_color ?? api.actionDefinitions.first { $0.id == action.action_type }?.color ?? ActionDefinition.fallback(for: action.action_type).color)
     }
 
     private var controls: some View {

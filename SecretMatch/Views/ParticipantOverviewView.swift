@@ -132,9 +132,9 @@ struct ParticipantOverviewView: View {
                         selectedForegroundColor: .black
                     )
                     if selectedSection == .actions {
-                        filterButton("👄 Blow-Job \(count(for: "bjob"))", type: "bjob", color: Color(hex: "#3E9ED6"))
-                        filterButton("✋ Hand-Job \(count(for: "hjob"))", type: "hjob", color: Color(hex: "#E6923E"))
-                        filterButton("👅 Lick-Job \(count(for: "ljob"))", type: "ljob", color: Color(hex: "#D65C8D"))
+                        ForEach(actionFilterDefinitions) { definition in
+                            filterButton("\(definition.displayTitle) \(count(for: definition.id))", type: definition.id, color: Color(hex: definition.color))
+                        }
                     } else {
                         filterButton("❤️ Hot \(count(for: "normal"))", type: "normal", color: Color(hex: "#E83E8C"))
                         filterButton("🍆 Fuck \(count(for: "hot"))", type: "hot", color: Color(hex: "#8E63D2"))
@@ -392,6 +392,12 @@ struct ParticipantOverviewView: View {
         activeEntries.filter { $0.type == type }.count
     }
 
+    private var actionFilterDefinitions: [ActionDefinition] {
+        let presentTypes = Set(activeEntries.map(\.type))
+        return presentTypes.map(actionDefinition(for:))
+            .sorted { $0.sortOrder == $1.sortOrder ? $0.name < $1.name : $0.sortOrder < $1.sortOrder }
+    }
+
     private var isLoadingActiveSection: Bool {
         switch selectedSection {
         case .matches: return isLoadingMatches
@@ -472,10 +478,7 @@ struct ParticipantOverviewView: View {
         switch type {
         case "normal": return "Hot"
         case "hot": return "Fuck"
-        case "bjob": return "Blow-Job"
-        case "hjob": return "Hand-Job"
-        case "ljob": return "Lick-Job"
-        default: return "Andere"
+        default: return actionDefinition(for: type).name
         }
     }
 
@@ -483,10 +486,7 @@ struct ParticipantOverviewView: View {
         switch type {
         case "normal": return "❤️"
         case "hot": return "🍆"
-        case "bjob": return "👄"
-        case "hjob": return "✋"
-        case "ljob": return "👅"
-        default: return "✨"
+        default: return actionDefinition(for: type).emoji
         }
     }
 
@@ -494,11 +494,30 @@ struct ParticipantOverviewView: View {
         switch type {
         case "normal": return Color(hex: "#E83E8C")
         case "hot": return Color(hex: "#8E63D2")
-        case "bjob": return Color(hex: "#3E9ED6")
-        case "hjob": return Color(hex: "#E6923E")
-        case "ljob": return Color(hex: "#D65C8D")
-        default: return SecretMatchTheme.secondary
+        default: return Color(hex: actionDefinition(for: type).color)
         }
+    }
+
+    private func actionDefinition(for type: String) -> ActionDefinition {
+        if let definition = api.actionDefinitions.first(where: { $0.id == type }) {
+            return definition
+        }
+        if let action = actions.first(where: { $0.action_type == type }),
+           let name = action.action_name,
+           let color = action.action_color {
+            return ActionDefinition(
+                id: type,
+                name: name,
+                emoji: action.action_emoji ?? "✨",
+                color: color,
+                category: action.action_category ?? "play",
+                direction: action.action_direction ?? "neutral",
+                targetGender: "any",
+                enabled: false,
+                sortOrder: 999
+            )
+        }
+        return ActionDefinition.fallback(for: type)
     }
 
     @MainActor
