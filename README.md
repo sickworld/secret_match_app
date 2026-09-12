@@ -2,9 +2,15 @@
 
 In allen sichtbaren App-Texten, Exporten und Benachrichtigungen lautet der Produktname **Match&Play**. Interne Bezeichner wie API-Pfade, Bundle-IDs und technische Klassen bleiben aus Kompatibilitätsgründen unverändert.
 
+## Match-Typen-Katalog (Build 138)
+
+Hot- und Fuck-Match werden beim Serverupdate in einen zentralen Match-Typen-Katalog übernommen. Match-Typen können in WordPress, der externen Webverwaltung sowie in der gemeinsamen iPhone-/iPad-Adminansicht angelegt, umbenannt, eingefärbt, sortiert, ein-/ausgeblendet und – solange unbenutzt – gelöscht werden. Teilnehmerauswahl, Interessen, Matches, Adminlisten, Statistik und Billboard verwenden denselben Katalog und speichern ihn für den Offline-Betrieb lokal zwischen. Mindestens ein Typ bleibt aktiv; bestehende `normal`-/`hot`-Daten und der historische Wert `F-` bleiben kompatibel.
+
+Gleiche gegenseitige Wünsche erzeugen den gewählten Typ. Treffen unterschiedliche Typen aufeinander, entsteht der erste aktive Typ in der gepflegten Reihenfolge; ein bestehendes Match wird nur auf einen höher sortierten Typ hochgestuft.
+
 ## Admin-CRUD
 
-Die Admin-Bereiche auf iPhone und iPad können Aktionen und Matches anlegen, bearbeiten und löschen sowie Match-Requests einsehen und verwalten. Über **Aktionen → Aktionsarten** pflegen beide Adminoberflächen denselben zentralen Aktionskatalog mit Bezeichnung, Emoji, Farbe, Kategorie, Richtung, Zielgeschlecht, Reihenfolge und Sichtbarkeit. Neue Arten erscheinen ohne App-Neubau in der Teilnehmerauswahl, den Adminlisten und auf dem Billboard; die App speichert den letzten Katalog für den Offlinebetrieb. Bereits verwendete Arten lassen sich ausblenden, aber nicht löschen, damit historische Auswertungen verständlich bleiben. In der Teilnehmerverwaltung lassen sich Nummern freigeben und sperren sowie Gender-Angaben setzen oder zurücksetzen. Jede Gender-Änderung und jeder Reset widerruft die aktive Sitzung der betroffenen Nummer; nach einem Reset erscheint die Gender-Auswahl beim nächsten Login erneut. Feedback bleibt als anonymer, unveränderlicher Datensatz bewusst auf Lesen und Löschen begrenzt.
+Die Admin-Bereiche auf iPhone und iPad können Aktionen und Matches anlegen, bearbeiten und löschen sowie Match-Requests einsehen und verwalten. Über **Aktionen → Aktionsarten** pflegen beide Adminoberflächen denselben zentralen Aktionskatalog mit Bezeichnung, Emoji, Farbe, Kategorie, Richtung, Zielgeschlecht, Reihenfolge und Sichtbarkeit. In **Matches → Match-Typen** steht der entsprechende gemeinsame Match-Katalog bereit. Neue Arten erscheinen ohne App-Neubau in der Teilnehmerauswahl, den Adminlisten und auf dem Billboard; die App speichert den letzten Katalog für den Offlinebetrieb. Bereits verwendete Arten lassen sich ausblenden, aber nicht löschen, damit historische Auswertungen verständlich bleiben. In der Teilnehmerverwaltung lassen sich Nummern freigeben und sperren sowie Gender-Angaben setzen oder zurücksetzen. Jede Gender-Änderung und jeder Reset widerruft die aktive Sitzung der betroffenen Nummer; nach einem Reset erscheint die Gender-Auswahl beim nächsten Login erneut. Feedback bleibt als anonymer, unveränderlicher Datensatz bewusst auf Lesen und Löschen begrenzt.
 
 Die Aktionen-Verwaltung verwendet auf dem iPhone einen eigenen kompakten Aufbau: Seitentitel und Hauptaktionen stehen untereinander, Suche und Typfilter erhalten jeweils die volle Breite und Bearbeiten/Löschen liegen als gut lesbare Zeile unter den Aktionsdaten. Der Aktionskatalog reduziert auf eine Spalte und ordnet Metadaten in einem zweispaltigen Raster an. Das iPad behält den breiteren Mehrspaltenaufbau.
 
@@ -40,11 +46,11 @@ Die bestehende dunkle Match&Play-Gestaltung verwendet für Karten, Buttons, Eing
 
 Das kompakte Menü der iPhone-Admin-App bleibt flächig und neutral. Bereichsfarben erscheinen nur an den Icons sowie dezent am aktiven Eintrag; eine linke Markierung und ein Häkchen kennzeichnen die Auswahl zusätzlich unabhängig von der Farbe. Der Logout bleibt als destruktive Aktion rot.
 
-Diese Funktionen benötigen das WordPress-Modul ab Version `2026.09.12.1`; das Modul muss vor oder zusammen mit diesem App-Build veröffentlicht werden.
+Diese Funktionen benötigen das WordPress-Modul ab Version `2026.09.12.3`; das Modul muss vor oder zusammen mit diesem App-Build veröffentlicht werden.
 
 ## Eingehende Interessen
 
-Die Reiter **Matches** und **Interesse** in der Teilnehmerübersicht unterscheiden gegenseitige Matches von noch offenen, eingehenden Match-Wünschen. `GET /wp-json/secretmatch/v1/interests` liefert ausschließlich Wünsche an die aktuell angemeldete Eventnummer, für die noch kein gegenseitiges Match besteht. Mehrere Wünsche derselben Nummer werden zu einem Eintrag zusammengefasst; ein Fuck-Wunsch hat dabei Vorrang. Das aktualisierte WordPress-Modul muss vor oder zusammen mit diesem App-Build veröffentlicht werden.
+Die Reiter **Matches** und **Interesse** in der Teilnehmerübersicht unterscheiden gegenseitige Matches von noch offenen, eingehenden Match-Wünschen. `GET /wp-json/secretmatch/v1/interests` liefert ausschließlich Wünsche an die aktuell angemeldete Eventnummer, für die noch kein gegenseitiges Match besteht. Mehrere Wünsche derselben Nummer werden zu einem Eintrag zusammengefasst; der am höchsten sortierte konfigurierte Match-Typ hat dabei Vorrang. Das aktualisierte WordPress-Modul muss vor oder zusammen mit diesem App-Build veröffentlicht werden.
 
 ## Verbindungsstatus
 

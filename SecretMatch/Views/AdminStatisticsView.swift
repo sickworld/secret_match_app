@@ -273,10 +273,10 @@ struct AdminStatisticsView: View {
                 valueMetric("Ø bis zum Match", duration(stats.averageMatchMinutes ?? 0), detail: "Median \(duration(stats.medianMatchMinutes ?? 0))", color: Color(hex: "#E83E8C"))
                 ForEach(stats.matchTypePerformance ?? []) { item in
                     valueMetric(
-                        "\(label(for: item.name))-Quote",
+                        "\(item.label ?? label(for: item.name))-Quote",
                         percent(item.ratePercent),
                         detail: "\(item.matches) von \(item.requests) Wünschen erfolgreich",
-                        color: item.name == "hot" ? SecretMatchTheme.primary : SecretMatchTheme.secondary
+                        color: Color(hex: item.color ?? api.matchDefinitions.first(where: { $0.id == MatchDefinition.normalizedID(item.name) })?.color ?? "#E83E8C")
                     )
                 }
             }
@@ -730,7 +730,8 @@ struct AdminStatisticsView: View {
     }
 
     private func label(for type: String) -> String {
-        [
+        if let match = api.matchDefinitions.first(where: { $0.id == MatchDefinition.normalizedID(type) }) { return match.name }
+        return [
             "normal": "Hot",
             "hot": "Fuck",
             "bjob": "Blow-Job",

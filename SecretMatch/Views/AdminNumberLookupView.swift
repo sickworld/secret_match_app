@@ -313,8 +313,8 @@ struct AdminNumberLookupView: View {
     private func activityTitle(_ activity: AdminNumberActivity) -> String {
         let type = typeLabel(activity.type)
         switch activity.kind {
-        case "match": return "\(type)-Match"
-        case "request": return activity.direction == "sent" ? "\(type)-Request gesendet" : "\(type)-Request erhalten"
+        case "match": return "\(type) entstanden"
+        case "request": return activity.direction == "sent" ? "\(type) gesendet" : "\(type) erhalten"
         default: return activity.direction == "sent" ? "\(type) gesendet" : "\(type) erhalten"
         }
     }
@@ -328,8 +328,7 @@ struct AdminNumberLookupView: View {
     }
 
     private func typeLabel(_ type: String) -> String {
-        if type == "normal" { return "Hot" }
-        if type == "hot" { return "Fuck" }
+        if let match = api.matchDefinitions.first(where: { $0.id == MatchDefinition.normalizedID(type) }) { return match.name }
         return api.actionDefinitions.first { $0.id == type }?.name
             ?? ActionDefinition.fallback(for: type).name
     }

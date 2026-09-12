@@ -119,6 +119,10 @@ struct AdminEventLogEntry: Identifiable, Decodable {
             "wp_admin_callmebot_updated": "WordPress: CallMeBot geändert",
             "wp_admin_telegram_fuck_test_sent": "WordPress: Fuck-Match-Test gesendet",
             "wp_admin_telegram_hot_test_sent": "WordPress: Hot-Match-Test gesendet",
+            "wp_admin_telegram_match_test_sent": "WordPress: Match-Test gesendet",
+            "admin_match_definition_created_success": "Admin: Match-Typ angelegt",
+            "admin_match_definition_updated_success": "Admin: Match-Typ geändert",
+            "admin_match_definition_deleted_success": "Admin: Match-Typ gelöscht",
             "wp_admin_apns_test_sent": "WordPress: Push-Test gesendet",
             "wp_admin_telegram_settings_updated": "WordPress: Telegram geändert",
             "wp_admin_telegram_settings_deleted": "WordPress: Telegram gelöscht",
@@ -346,6 +350,9 @@ struct AdminEventStatistics: Decodable {
 
 struct AdminMatchTypePerformance: Decodable, Identifiable {
     let name: String
+    let label: String?
+    let emoji: String?
+    let color: String?
     let requests: Int
     let matches: Int
     let ratePercent: Double
@@ -353,7 +360,7 @@ struct AdminMatchTypePerformance: Decodable, Identifiable {
     var id: String { name }
 
     private enum CodingKeys: String, CodingKey {
-        case name, requests, matches
+        case name, label, emoji, color, requests, matches
         case ratePercent = "rate_percent"
     }
 }

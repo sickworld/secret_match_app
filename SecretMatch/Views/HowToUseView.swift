@@ -10,6 +10,7 @@ private struct DemoActionOption: Identifiable {
 }
 
 struct HowToUseView: View {
+    @EnvironmentObject private var api: APIService
     @Binding var isPresented: Bool
     var registerActivity: () -> Void
 
@@ -20,20 +21,19 @@ struct HowToUseView: View {
     @State private var isDemoKeyboardDismissed = false
 
     private let maxStep = 5
-    private let options = [
-        DemoActionOption(type: "normal", title: "Hot Match", emoji: "❤️", color: Color(hex: "#E83E8C")),
-        DemoActionOption(type: "hot", title: "Fuck Match", emoji: "🍆", color: Color(hex: "#8E63D2")),
-        DemoActionOption(type: "bjob", title: "Blow-Job", emoji: "👄", color: Color(hex: "#3E9ED6")),
-        DemoActionOption(type: "hjob", title: "Hand-Job", emoji: "✋", color: Color(hex: "#E6923E")),
-        DemoActionOption(type: "ljob", title: "Lick-Job", emoji: "👅", color: Color(hex: "#D65C8D"))
-    ]
+    private var options: [DemoActionOption] {
+        api.matchDefinitions.filter(\.enabled).map { .init(type: $0.id, title: $0.name, emoji: $0.emoji, color: Color(hex: $0.color)) }
+        + api.actionDefinitions.filter(\.enabled).map { .init(type: $0.id, title: $0.name, emoji: $0.emoji, color: Color(hex: $0.color)) }
+    }
 
     private var matchOptions: [DemoActionOption] {
-        options.filter { $0.type == "normal" || $0.type == "hot" }
+        let ids = Set(api.matchDefinitions.map(\.id))
+        return options.filter { ids.contains($0.type) }
     }
 
     private var actionOptions: [DemoActionOption] {
-        options.filter { $0.type != "normal" && $0.type != "hot" }
+        let ids = Set(api.actionDefinitions.map(\.id))
+        return options.filter { ids.contains($0.type) }
     }
 
     var body: some View {

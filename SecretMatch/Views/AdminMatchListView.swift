@@ -2,6 +2,7 @@ import SwiftUI
 
 struct AdminMatchListView: View {
     @EnvironmentObject var api: APIService
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     @Binding var isPresented: Bool
     var isEmbedded = false
     @State private var searchText = ""
@@ -10,6 +11,7 @@ struct AdminMatchListView: View {
     @State private var loadErrorMessage: String?
     @State private var operationErrorMessage: String?
     @State private var editor: Editor?
+    @State private var showMatchCatalog = false
 
     private enum Editor: Identifiable {
         case create
@@ -32,36 +34,7 @@ struct AdminMatchListView: View {
             }
 
             VStack(spacing: 18) {
-                HStack(alignment: .top) {
-                    VStack(alignment: .leading, spacing: 5) {
-                        Text("EVENT CONTROL · \(filteredMatches.count) EINTRÄGE")
-                            .font(.caption.bold())
-                            .tracking(1.8)
-                            .foregroundStyle(SecretMatchTheme.secondary)
-                        Text("Matches verwalten")
-                            .font(.system(size: 32, weight: .bold, design: .rounded))
-                            .foregroundStyle(.white)
-                    }
-                    Spacer()
-                    Button {
-                        editor = .create
-                    } label: {
-                        Label("Match anlegen", systemImage: "plus")
-                    }
-                    .buttonStyle(SecretPrimaryButtonStyle(fullWidth: false))
-                    if !isEmbedded {
-                        Button {
-                            isPresented = false
-                        } label: {
-                            Image(systemName: "xmark")
-                                .font(.title3.bold())
-                                .frame(width: 50, height: 50)
-                                .foregroundStyle(.white)
-                                .background(SecretMatchTheme.surfaceRaised)
-                                .clipShape(RoundedRectangle(cornerRadius: SecretMatchTheme.cornerRadius))
-                        }
-                    }
-                }
+                header
 
                 if let operationErrorMessage {
                     Label(operationErrorMessage, systemImage: "exclamationmark.triangle.fill")
@@ -89,10 +62,12 @@ struct AdminMatchListView: View {
 
                     Picker("Typ", selection: $selectedType) {
                         Text("Alle").tag("all")
-                        Text("❤️ Hot").tag("normal")
-                        Text("🍆 Fuck").tag("hot")
+                        ForEach(api.matchDefinitions) { definition in
+                            Text(definition.displayTitle).tag(definition.id)
+                        }
                     }
-                    .pickerStyle(.segmented)
+                    .pickerStyle(.menu)
+                    .tint(.white)
                     .frame(maxWidth: 330)
                 }
 
@@ -139,6 +114,55 @@ struct AdminMatchListView: View {
             matchEditor(editor)
                 .presentationDetents([.medium, .large])
         }
+        .sheet(isPresented: $showMatchCatalog) {
+            AdminMatchCatalogView(isPresented: $showMatchCatalog)
+                .environmentObject(api)
+        }
+    }
+
+    @ViewBuilder
+    private var header: some View {
+        if usesCompactHeader {
+            VStack(alignment: .leading, spacing: 12) {
+                headerTitle
+                HStack(spacing: 10) { catalogButton; createButton; Spacer(minLength: 0); closeButton }
+            }
+        } else {
+            HStack(alignment: .top, spacing: 12) { headerTitle; Spacer(); catalogButton; createButton; closeButton }
+        }
+    }
+
+    private var headerTitle: some View {
+        VStack(alignment: .leading, spacing: 5) {
+            Text("EVENT CONTROL · \(filteredMatches.count) EINTRÄGE").font(.caption.bold()).tracking(1.8).foregroundStyle(SecretMatchTheme.secondary)
+            Text("Matches verwalten").font(.system(size: 32, weight: .bold, design: .rounded)).foregroundStyle(.white)
+        }
+    }
+
+    private var catalogButton: some View {
+        Button { showMatchCatalog = true } label: { Label("Match-Typen", systemImage: "slider.horizontal.3") }
+            .buttonStyle(SecretSecondaryButtonStyle())
+    }
+
+    private var createButton: some View {
+        Button { editor = .create } label: { Label("Match anlegen", systemImage: "plus") }
+            .buttonStyle(SecretPrimaryButtonStyle(fullWidth: false))
+    }
+
+    @ViewBuilder private var closeButton: some View {
+        if !isEmbedded {
+            Button { isPresented = false } label: {
+                Image(systemName: "xmark").font(.title3.bold()).frame(width: 50, height: 50).foregroundStyle(.white).background(SecretMatchTheme.surfaceRaised).clipShape(RoundedRectangle(cornerRadius: SecretMatchTheme.cornerRadius))
+            }
+        }
+    }
+
+    private var usesCompactHeader: Bool {
+#if ADMIN_APP
+        true
+#else
+        horizontalSizeClass == .compact
+#endif
     }
 
     private func loadErrorState(message: String) -> some View {
@@ -160,6 +184,7 @@ struct AdminMatchListView: View {
     private func loadMatches() async {
         loadErrorMessage = nil
         do {
+            try await api.loadAdminMatchDefinitions()
             try await api.loadAdminMatches()
         } catch {
             loadErrorMessage = "Bitte Admin-Anmeldung und Netzwerkverbindung prüfen."
@@ -231,30 +256,20 @@ struct AdminMatchListView: View {
     // MARK: - Mapping
 
     private func prettyMatchType(_ type: String) -> String {
-        switch type {
-        case "hot", "F-":
-            return "Fuck-Match"
-        case "normal":
-            return "Hot-Match"
-        default:
-            return type.capitalized
-        }
+        matchDefinition(type).name
     }
 
     private func matchEmoji(for type: String) -> String {
-        switch type {
-        case "hot", "F-": return "🍆"
-        case "normal": return "❤️"
-        default: return "✨"
-        }
+        matchDefinition(type).emoji
     }
 
     private func matchColor(for type: String) -> Color {
-        switch type {
-        case "hot", "F-": return Color(hex: "#8E63D2")
-        case "normal": return Color(hex: "#E83E8C")
-        default: return SecretMatchTheme.secondary
-        }
+        Color(hex: matchDefinition(type).color)
+    }
+
+    private func matchDefinition(_ type: String) -> MatchDefinition {
+        let id = MatchDefinition.normalizedID(type)
+        return api.matchDefinitions.first(where: { $0.id == id }) ?? .fallback(for: id)
     }
 
     @ViewBuilder
@@ -285,10 +300,7 @@ struct AdminMatchListView: View {
     }
 
     private var matchTypeOptions: [AdminRecordTypeOption] {
-        [
-            .init(value: "normal", title: "❤️ Hot Match"),
-            .init(value: "hot", title: "🍆 Fuck Match")
-        ]
+        api.matchDefinitions.map { .init(value: $0.id, title: $0.displayTitle + ($0.enabled ? "" : " · ausgeblendet")) }
     }
 
     @MainActor

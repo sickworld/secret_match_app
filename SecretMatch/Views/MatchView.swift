@@ -225,6 +225,7 @@ struct MatchView: View {
                         selectedActions: $selectedActions,
                         matchMessage: $matchMessage,
                         quickMessages: api.matchMessageOptions,
+                        matchDefinitions: api.matchDefinitions,
                         actionDefinitions: api.actionDefinitions,
                         onSend: sendInteractions,
                         targetIsConfirmed: targetIsConfirmed,
@@ -259,6 +260,7 @@ struct MatchView: View {
                     selectedActions: $selectedActions,
                     matchMessage: $matchMessage,
                     quickMessages: api.matchMessageOptions,
+                    matchDefinitions: api.matchDefinitions,
                     actionDefinitions: api.actionDefinitions,
                     onSend: sendInteractions,
                     targetIsConfirmed: targetIsConfirmed,
@@ -330,7 +332,7 @@ struct MatchView: View {
             }
 
             do {
-                let orderedTypes = (["normal", "hot"] + api.actionDefinitions.map(\.id))
+                let orderedTypes = (api.matchDefinitions.map(\.id) + api.actionDefinitions.map(\.id))
                     .filter(selectedActions.contains)
                 let result = try await api.submitInteractions(
                     targetNumber: targetNumber,
@@ -392,7 +394,7 @@ struct MatchView: View {
                 usesProfileBasedSelection = options.profileBased
                 usesOfflineSelectionFallback = false
                 selectedActions = Set(selectedActions.filter {
-                    $0 == "normal" || $0 == "hot" || options.actionTypes.contains($0)
+                    options.matchTypes.contains($0) || options.actionTypes.contains($0)
                 })
                 withAnimation(.easeOut(duration: 0.2)) {
                     targetIsConfirmed = true
@@ -406,7 +408,7 @@ struct MatchView: View {
                 usesProfileBasedSelection = false
                 usesOfflineSelectionFallback = true
                 selectedActions = Set(selectedActions.filter {
-                    $0 == "normal" || $0 == "hot" || allowedActionTypes.contains($0)
+                    Set(api.matchDefinitions.filter(\.enabled).map(\.id)).contains($0) || allowedActionTypes.contains($0)
                 })
                 withAnimation(.easeOut(duration: 0.2)) {
                     targetIsConfirmed = true

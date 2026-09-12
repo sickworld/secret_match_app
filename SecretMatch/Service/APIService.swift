@@ -18,6 +18,7 @@ class APIService: ObservableObject {
     private static let adminPushTokenKey = "secretmatch.admin-push-device-token"
     private static let adminPushEnvironmentKey = "secretmatch.admin-push-environment"
     private static let actionDefinitionsKey = "secretmatch.action-definitions.v1"
+    private static let matchDefinitionsKey = "secretmatch.match-definitions.v1"
 
     private init() {
         pendingInteractions = Self.loadPendingInteractions()
@@ -25,6 +26,7 @@ class APIService: ObservableObject {
         screensaverItems = ScreensaverMediaCache.loadCatalog()
         screensaverIdleSeconds = ScreensaverMediaCache.loadIdleSeconds()
         actionDefinitions = Self.loadCachedActionDefinitions()
+        matchDefinitions = Self.loadCachedMatchDefinitions()
         removeExpiredPendingInteractions()
         removeExpiredTelemetryEvents()
 
@@ -63,6 +65,7 @@ class APIService: ObservableObject {
     @Published private(set) var isCheckingConnection = false
     @Published private(set) var matchMessageOptions: [String] = []
     @Published private(set) var actionDefinitions: [ActionDefinition]
+    @Published private(set) var matchDefinitions: [MatchDefinition]
     @Published private(set) var screensaverItems: [ScreensaverMediaItem]
     @Published private(set) var screensaverIdleSeconds: Int
     @Published private(set) var adminScreensaverItems: [ScreensaverMediaItem] = []
@@ -210,6 +213,7 @@ class APIService: ObservableObject {
             await flushTelemetryEvents()
             try? await loadMatchMessageOptions()
             try? await loadActionDefinitions()
+            try? await loadMatchDefinitions()
         }
     }
 
@@ -217,7 +221,8 @@ class APIService: ObservableObject {
         interactionDeliveryErrorMessage = nil
         let senderNumber = number.normalizedEventNumber
         let normalizedTargetNumber = targetNumber.normalizedEventNumber
-        let supportedTypes = Set(["normal", "hot"]).union(actionDefinitions.filter(\.enabled).map(\.id))
+        let activeMatchTypes = Set(matchDefinitions.filter(\.enabled).map(\.id))
+        let supportedTypes = activeMatchTypes.union(actionDefinitions.filter(\.enabled).map(\.id))
         guard !senderNumber.isEmpty,
               !normalizedTargetNumber.isEmpty,
               senderNumber != normalizedTargetNumber,
@@ -236,8 +241,8 @@ class APIService: ObservableObject {
                 senderNumber: senderNumber,
                 targetNumber: normalizedTargetNumber,
                 type: type,
-                kind: type == "normal" || type == "hot" ? .match : .action,
-                message: type == "normal" || type == "hot" ? cleanMessage : nil,
+                kind: activeMatchTypes.contains(type) ? .match : .action,
+                message: activeMatchTypes.contains(type) ? cleanMessage : nil,
                 createdAt: now,
                 retryCount: 0,
                 nextAttemptAt: now
@@ -306,9 +311,11 @@ class APIService: ObservableObject {
             await self?.loadScreensaverContent(force: true)
             if self?.isAdmin == true {
                 try? await self?.loadAdminActionDefinitions()
+                try? await self?.loadAdminMatchDefinitions()
                 await self?.syncAdminPushToken()
             } else {
                 try? await self?.loadActionDefinitions()
+                try? await self?.loadMatchDefinitions()
             }
         }
     }
@@ -410,6 +417,14 @@ class APIService: ObservableObject {
         persistActionDefinitions()
     }
 
+    func loadMatchDefinitions() async throws {
+        let url = baseURL.appendingPathComponent("match-types")
+        let (data, response) = try await URLSession.shared.data(from: url)
+        guard let http = response as? HTTPURLResponse, http.statusCode == 200 else { throw URLError(.badServerResponse) }
+        matchDefinitions = try JSONDecoder().decode(MatchDefinitionsResponse.self, from: data).matches.sorted(by: Self.sortMatchDefinitions)
+        persistMatchDefinitions()
+    }
+
     func loadInteractionOptions(targetNumber: String) async throws -> InteractionOptions {
         let normalizedTarget = targetNumber.normalizedEventNumber
         var components = URLComponents(
@@ -445,9 +460,13 @@ class APIService: ObservableObject {
             if let definitions = decoded.actions, !definitions.isEmpty {
                 mergeActionDefinitions(definitions)
             }
+            if let definitions = decoded.matches, !definitions.isEmpty {
+                mergeMatchDefinitions(definitions)
+            }
             let supported = Set(actionDefinitions.filter(\.enabled).map(\.id))
             let actionTypes = Set(decoded.actionTypes).intersection(supported)
             return InteractionOptions(
+                matchTypes: Set(decoded.matchTypes ?? matchDefinitions.filter(\.enabled).map(\.id)).intersection(Set(matchDefinitions.filter(\.enabled).map(\.id))),
                 actionTypes: actionTypes,
                 profileBased: decoded.profileBased ?? (actionTypes.count < supported.count)
             )
@@ -816,6 +835,36 @@ class APIService: ObservableObject {
         actionDefinitions = try JSONDecoder().decode(ActionDefinitionsResponse.self, from: data).actions
             .sorted(by: Self.sortActionDefinitions)
         persistActionDefinitions()
+    }
+
+    @MainActor
+    func loadAdminMatchDefinitions() async throws {
+        let url = baseURL.appendingPathComponent("admin/match-types")
+        let (data, response) = try await URLSession.shared.data(for: adminRequest(url: url))
+        try validateAdminResponse(response)
+        matchDefinitions = try JSONDecoder().decode(MatchDefinitionsResponse.self, from: data).matches.sorted(by: Self.sortMatchDefinitions)
+        persistMatchDefinitions()
+    }
+
+    func saveAdminMatchDefinition(_ definition: MatchDefinition, isNew: Bool) async throws {
+        try await mutateAdminResource(
+            path: isNew ? ["admin", "match-types"] : ["admin", "match-types", definition.id],
+            method: isNew ? "POST" : "PATCH",
+            body: ["id": definition.id, "name": definition.name, "emoji": definition.emoji, "color": definition.color, "enabled": definition.enabled, "sort_order": definition.sortOrder]
+        )
+        try await loadAdminMatchDefinitions()
+    }
+
+    func deleteAdminMatchDefinition(id: String) async throws {
+        let url = baseURL.appendingPathComponent("admin/match-types").appendingPathComponent(id)
+        var request = try adminRequest(url: url); request.httpMethod = "DELETE"
+        let (data, response) = try await URLSession.shared.data(for: request)
+        guard let http = response as? HTTPURLResponse, (200...299).contains(http.statusCode) else {
+            handleExpiredAdminToken(response)
+            let responseError = try? JSONDecoder().decode(AdminMutationResponseError.self, from: data)
+            throw AdminMutationError(message: responseError?.message ?? "Match-Typ konnte nicht gelöscht werden.")
+        }
+        try await loadAdminMatchDefinitions()
     }
 
     func saveAdminActionDefinition(_ definition: ActionDefinition, isNew: Bool) async throws {
@@ -1617,6 +1666,7 @@ class APIService: ObservableObject {
         try await loadAdminDashboard()
         try await loadAdminParticipants()
         try? await loadAdminActionDefinitions()
+        try? await loadAdminMatchDefinitions()
         try? await loadAdminScreensaverContent()
     }
 
@@ -2127,12 +2177,23 @@ class APIService: ObservableObject {
         UserDefaults.standard.set(data, forKey: Self.actionDefinitionsKey)
     }
 
+    private func persistMatchDefinitions() {
+        guard let data = try? JSONEncoder().encode(matchDefinitions) else { return }
+        UserDefaults.standard.set(data, forKey: Self.matchDefinitionsKey)
+    }
+
     private static func loadCachedActionDefinitions() -> [ActionDefinition] {
         guard let data = UserDefaults.standard.data(forKey: actionDefinitionsKey),
               let definitions = try? JSONDecoder().decode([ActionDefinition].self, from: data) else {
             return ActionDefinition.fallbacks
         }
         return definitions.sorted(by: sortActionDefinitions)
+    }
+
+    private static func loadCachedMatchDefinitions() -> [MatchDefinition] {
+        guard let data = UserDefaults.standard.data(forKey: matchDefinitionsKey),
+              let definitions = try? JSONDecoder().decode([MatchDefinition].self, from: data) else { return MatchDefinition.fallbacks }
+        return definitions.sorted(by: sortMatchDefinitions)
     }
 
     private func mergeActionDefinitions(_ definitions: [ActionDefinition]) {
@@ -2148,6 +2209,17 @@ class APIService: ObservableObject {
         left.sortOrder == right.sortOrder
             ? left.name.localizedCaseInsensitiveCompare(right.name) == .orderedAscending
             : left.sortOrder < right.sortOrder
+    }
+
+    private func mergeMatchDefinitions(_ definitions: [MatchDefinition]) {
+        var merged = Dictionary(uniqueKeysWithValues: matchDefinitions.map { ($0.id, $0) })
+        for definition in definitions { merged[definition.id] = definition }
+        matchDefinitions = merged.values.sorted(by: Self.sortMatchDefinitions)
+        persistMatchDefinitions()
+    }
+
+    private static func sortMatchDefinitions(_ left: MatchDefinition, _ right: MatchDefinition) -> Bool {
+        left.sortOrder == right.sortOrder ? left.name.localizedCaseInsensitiveCompare(right.name) == .orderedAscending : left.sortOrder < right.sortOrder
     }
 
     private static func loadPendingInteractions() -> [PendingInteraction] {
@@ -2440,13 +2512,16 @@ private struct MatchMessageOptionsResponse: Decodable {
 }
 
 private struct InteractionOptionsResponse: Decodable {
+    let matchTypes: [String]?
+    let matches: [MatchDefinition]?
     let actionTypes: [String]
     let actions: [ActionDefinition]?
     let profileBased: Bool?
 
     private enum CodingKeys: String, CodingKey {
+        case matchTypes = "match_types"
         case actionTypes = "action_types"
-        case actions
+        case matches, actions
         case profileBased = "profile_based"
     }
 }

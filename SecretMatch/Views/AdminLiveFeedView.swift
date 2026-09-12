@@ -125,12 +125,12 @@ struct AdminLiveFeedView: View {
                   detail: "\(action.sender_number.displayEventNumber) → \(action.receiver_number.displayEventNumber)", color: actionColor(action))
         }
         let matches = api.adminMatches.map { match in
-            let isHot = match.type == "hot" || match.type == "F-"
+            let definition = api.matchDefinitions.first(where: { $0.id == MatchDefinition.normalizedID(match.type) }) ?? .fallback(for: match.type)
             return Entry(id: "match-\(match.id)", createdAt: match.created_at,
-                         emoji: isHot ? "🍆" : "❤️",
-                         title: isHot ? "Fuck-Match entstanden" : "Hot-Match entstanden",
+                         emoji: definition.emoji,
+                         title: "\(definition.name) entstanden",
                          detail: "\(match.number_a.displayEventNumber) ↔ \(match.number_b.displayEventNumber)",
-                         color: isHot ? Color(hex: "#8E63D2") : Color(hex: "#E83E8C"))
+                         color: Color(hex: definition.color))
         }
         return (actions + matches).sorted { $0.createdAt > $1.createdAt }
     }
@@ -142,6 +142,7 @@ struct AdminLiveFeedView: View {
             isRefreshing = false
             isInitialLoading = false
         }
+        try? await api.loadAdminMatchDefinitions()
         try? await api.loadAdminActions()
         try? await api.loadAdminMatches()
     }

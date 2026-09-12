@@ -136,8 +136,9 @@ struct ParticipantOverviewView: View {
                             filterButton("\(definition.displayTitle) \(count(for: definition.id))", type: definition.id, color: Color(hex: definition.color))
                         }
                     } else {
-                        filterButton("❤️ Hot \(count(for: "normal"))", type: "normal", color: Color(hex: "#E83E8C"))
-                        filterButton("🍆 Fuck \(count(for: "hot"))", type: "hot", color: Color(hex: "#8E63D2"))
+                        ForEach(matchFilterDefinitions) { definition in
+                            filterButton("\(definition.displayTitle) \(count(for: definition.id))", type: definition.id, color: Color(hex: definition.color))
+                        }
                     }
                 }
             }
@@ -475,27 +476,29 @@ struct ParticipantOverviewView: View {
     }
 
     private func typeTitle(for type: String) -> String {
-        switch type {
-        case "normal": return "Hot"
-        case "hot": return "Fuck"
-        default: return actionDefinition(for: type).name
-        }
+        selectedSection == .actions
+            ? actionDefinition(for: type).name
+            : matchDefinition(for: type).name
     }
 
     private func typeEmoji(for type: String) -> String {
-        switch type {
-        case "normal": return "❤️"
-        case "hot": return "🍆"
-        default: return actionDefinition(for: type).emoji
-        }
+        selectedSection == .actions ? actionDefinition(for: type).emoji : matchDefinition(for: type).emoji
     }
 
     private func typeColor(for type: String) -> Color {
-        switch type {
-        case "normal": return Color(hex: "#E83E8C")
-        case "hot": return Color(hex: "#8E63D2")
-        default: return Color(hex: actionDefinition(for: type).color)
-        }
+        selectedSection == .actions ? Color(hex: actionDefinition(for: type).color) : Color(hex: matchDefinition(for: type).color)
+    }
+
+    private var matchFilterDefinitions: [MatchDefinition] {
+        let used = Set(activeEntries.map(\.type).map(MatchDefinition.normalizedID))
+        var values = api.matchDefinitions.filter { $0.enabled || used.contains($0.id) }
+        for id in used where !values.contains(where: { $0.id == id }) { values.append(.fallback(for: id)) }
+        return values.sorted { $0.sortOrder < $1.sortOrder }
+    }
+
+    private func matchDefinition(for type: String) -> MatchDefinition {
+        let id = MatchDefinition.normalizedID(type)
+        return api.matchDefinitions.first(where: { $0.id == id }) ?? .fallback(for: id)
     }
 
     private func actionDefinition(for type: String) -> ActionDefinition {

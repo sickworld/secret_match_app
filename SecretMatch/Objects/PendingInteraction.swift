@@ -45,6 +45,7 @@ struct ActionWithdrawalError: LocalizedError {
 }
 
 struct InteractionOptions {
+    let matchTypes: Set<String>
     let actionTypes: Set<String>
     let profileBased: Bool
 }

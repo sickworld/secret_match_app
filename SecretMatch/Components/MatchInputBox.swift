@@ -22,6 +22,7 @@ struct MatchInputBox: View {
     @Binding var selectedActions: Set<String>
     @Binding var matchMessage: String
     let quickMessages: [String]
+    var matchDefinitions: [MatchDefinition] = MatchDefinition.fallbacks
     var actionDefinitions: [ActionDefinition] = ActionDefinition.fallbacks
     let onSend: () -> Void
     var targetIsConfirmed = false
@@ -43,27 +44,32 @@ struct MatchInputBox: View {
     var availableHeight: CGFloat?
 
     private var options: [ActionOption] {
-        [
-            ActionOption(type: "normal", title: "Hot Match", emoji: "❤️", color: Color(hex: "#E83E8C")),
-            ActionOption(type: "hot", title: "Fuck Match", emoji: "🍆", color: Color(hex: "#8E63D2"))
-        ] + actionDefinitions
+        matchDefinitions
+            .filter(\.enabled)
+            .sorted { $0.sortOrder == $1.sortOrder ? $0.name < $1.name : $0.sortOrder < $1.sortOrder }
+            .map { ActionOption(type: $0.id, title: $0.name, emoji: $0.emoji, color: Color(hex: $0.color)) }
+        + actionDefinitions
             .filter(\.enabled)
             .sorted { $0.sortOrder == $1.sortOrder ? $0.name < $1.name : $0.sortOrder < $1.sortOrder }
             .map { ActionOption(type: $0.id, title: $0.name, emoji: $0.emoji, color: Color(hex: $0.color)) }
     }
 
     private var matchOptions: [ActionOption] {
-        options.filter { $0.type == "normal" || $0.type == "hot" }
+        let ids = Set(matchDefinitions.map(\.id))
+        return options.filter { ids.contains($0.type) }
     }
 
     private var actionOptions: [ActionOption] {
-        options.filter {
-            $0.type != "normal" && $0.type != "hot" && allowedActionTypes.contains($0.type)
-        }
+        let ids = Set(actionDefinitions.map(\.id))
+        return options.filter { ids.contains($0.type) && allowedActionTypes.contains($0.type) }
     }
 
     private var actionColumns: [GridItem] {
         Array(repeating: GridItem(.flexible()), count: min(3, max(1, actionOptions.count)))
+    }
+
+    private var matchColumns: [GridItem] {
+        Array(repeating: GridItem(.flexible()), count: min(2, max(1, matchOptions.count)))
     }
 
     private var normalizedScale: CGFloat {
@@ -180,7 +186,7 @@ struct MatchInputBox: View {
                 panelSectionTitle("MATCH-WÜNSCHE")
 
                 LazyVGrid(
-                    columns: [GridItem(.flexible()), GridItem(.flexible())],
+                    columns: matchColumns,
                     spacing: metric(9, 10)
                 ) {
                     ForEach(matchOptions) { option in
@@ -223,7 +229,7 @@ struct MatchInputBox: View {
             .padding(.horizontal, metric(16, 17))
             .padding(.vertical, metric(14, 14))
 
-            if selectedActions.contains("normal") || selectedActions.contains("hot") {
+            if !selectedActions.isDisjoint(with: Set(matchDefinitions.map(\.id))) {
                 panelDivider
 
                 optionalMessageSection
@@ -519,7 +525,8 @@ struct MatchInputBox: View {
     }
 
     private var sendButtonTitle: String {
-        let matchCount = selectedActions.filter { $0 == "normal" || $0 == "hot" }.count
+        let matchIDs = Set(matchDefinitions.map(\.id))
+        let matchCount = selectedActions.filter(matchIDs.contains).count
         let actionCount = selectedActions.count - matchCount
 
         if selectedActions.isEmpty {

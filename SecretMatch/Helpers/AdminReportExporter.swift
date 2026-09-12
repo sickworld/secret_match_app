@@ -68,7 +68,7 @@ enum AdminReportExporter {
         rows.append([])
         rows.append(["Match-Typ", "Wünsche", "Erfolgreiche Wünsche", "Quote Prozent"])
         rows.append(contentsOf: (statistics.matchTypePerformance ?? []).map {
-            [$0.name, String($0.requests), String($0.matches), String($0.ratePercent)]
+            [$0.label ?? $0.name, String($0.requests), String($0.matches), String($0.ratePercent)]
         })
         rows.append([])
         rows.append(["Aktionstyp", "Anzahl"])

@@ -204,9 +204,8 @@ struct AdminDeliveryDiagnosticsView: View {
     }
 
     private func typeLabel(_ type: String) -> String {
-        if type == "normal" { return "Hot Match" }
-        if type == "hot" { return "Fuck Match" }
         if type.isEmpty { return "Interaktion" }
+        if let match = api.matchDefinitions.first(where: { $0.id == MatchDefinition.normalizedID(type) }) { return match.name }
         return api.actionDefinitions.first { $0.id == type }?.name
             ?? ActionDefinition.fallback(for: type).name
     }

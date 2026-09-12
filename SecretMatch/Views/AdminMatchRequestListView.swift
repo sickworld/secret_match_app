@@ -76,7 +76,7 @@ struct AdminMatchRequestListView: View {
             Text("Der Request wird dauerhaft entfernt. Ein bereits entstandener Match bleibt bestehen.")
         }
         .sheet(item: $editingRequest) { request in
-            AdminMatchRequestEditorView(request: request) { participantA, participantB, type, message in
+            AdminMatchRequestEditorView(request: request, matchDefinitions: api.matchDefinitions) { participantA, participantB, type, message in
                 try await api.updateAdminMatchRequest(
                     id: request.id,
                     participantA: participantA,
@@ -148,8 +148,7 @@ struct AdminMatchRequestListView: View {
     private var typePicker: some View {
         Picker("Typ", selection: $selectedType) {
             Text("Alle Typen").tag("all")
-            Text("❤️ Hot").tag("normal")
-            Text("🍆 Fuck").tag("hot")
+            ForEach(api.matchDefinitions) { definition in Text(definition.displayTitle).tag(definition.id) }
         }
         .pickerStyle(.menu)
         .tint(.white)
@@ -185,18 +184,19 @@ struct AdminMatchRequestListView: View {
     }
 
     private func requestRow(_ request: AdminMatchRequest) -> some View {
-        let color = request.type == "hot" ? Color(hex: "#8E63D2") : Color(hex: "#E83E8C")
+        let definition = matchDefinition(request.type)
+        let color = Color(hex: definition.color)
 
         return VStack(alignment: .leading, spacing: 12) {
             HStack(alignment: .top, spacing: 14) {
-                Text(request.type == "hot" ? "🍆" : "❤️")
+                Text(definition.emoji)
                     .font(.system(size: 30))
                     .frame(width: 54, height: 54)
                     .background(color.opacity(0.2))
                     .clipShape(RoundedRectangle(cornerRadius: SecretMatchTheme.cornerRadius))
 
                 VStack(alignment: .leading, spacing: 6) {
-                    Text(request.type == "hot" ? "Fuck-Request" : "Hot-Request")
+                    Text("\(definition.name) · Request")
                         .font(.system(size: 19, weight: .bold, design: .rounded))
                         .foregroundStyle(.white)
                     Text("\(request.participantA.displayEventNumber) → \(request.participantB.displayEventNumber)")
@@ -255,7 +255,7 @@ struct AdminMatchRequestListView: View {
 
     private var filteredRequests: [AdminMatchRequest] {
         api.adminMatchRequests.filter { request in
-            let matchesType = selectedType == "all" || request.type == selectedType
+            let matchesType = selectedType == "all" || MatchDefinition.normalizedID(request.type) == selectedType
             let matchesStatus = selectedStatus == "all"
                 || (selectedStatus == "matched" && request.isMatched)
                 || (selectedStatus == "open" && !request.isMatched)
@@ -268,10 +268,16 @@ struct AdminMatchRequestListView: View {
         }
     }
 
+    private func matchDefinition(_ type: String) -> MatchDefinition {
+        let id = MatchDefinition.normalizedID(type)
+        return api.matchDefinitions.first(where: { $0.id == id }) ?? .fallback(for: id)
+    }
+
     @MainActor
     private func loadRequests() async {
         loadErrorMessage = nil
         do {
+            try await api.loadAdminMatchDefinitions()
             try await api.loadAdminMatchRequests()
         } catch {
             loadErrorMessage = "Bitte Admin-Anmeldung und Netzwerkverbindung prüfen."
@@ -293,6 +299,7 @@ private struct AdminMatchRequestEditorView: View {
     @Environment(\.dismiss) private var dismiss
 
     let request: AdminMatchRequest
+    let matchDefinitions: [MatchDefinition]
     let onSave: (String, String, String, String) async throws -> Void
 
     @State private var participantA: String
@@ -304,13 +311,15 @@ private struct AdminMatchRequestEditorView: View {
 
     init(
         request: AdminMatchRequest,
+        matchDefinitions: [MatchDefinition],
         onSave: @escaping (String, String, String, String) async throws -> Void
     ) {
         self.request = request
+        self.matchDefinitions = matchDefinitions
         self.onSave = onSave
         _participantA = State(initialValue: request.participantA.displayEventNumber)
         _participantB = State(initialValue: request.participantB.displayEventNumber)
-        _type = State(initialValue: request.type)
+        _type = State(initialValue: MatchDefinition.normalizedID(request.type))
         _message = State(initialValue: request.message)
     }
 
@@ -336,8 +345,7 @@ private struct AdminMatchRequestEditorView: View {
 
                 Section("Typ") {
                     Picker("Typ", selection: $type) {
-                        Text("❤️ Hot Match").tag("normal")
-                        Text("🍆 Fuck Match").tag("hot")
+                        ForEach(matchDefinitions) { definition in Text(definition.displayTitle).tag(definition.id) }
                     }
                     .pickerStyle(.inline)
                 }
@@ -404,7 +412,7 @@ private struct AdminMatchRequestEditorView: View {
         isValidNumber(participantA)
             && isValidNumber(participantB)
             && !sameNumber
-            && ["normal", "hot"].contains(type)
+            && matchDefinitions.contains(where: { $0.id == MatchDefinition.normalizedID(type) })
             && message.count <= 180
     }
 
