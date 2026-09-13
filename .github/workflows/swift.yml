@@ -42,13 +42,13 @@ jobs:
       - name: Prepare reports
         run: |
           mkdir -p artifacts
-          touch artifacts/participant-build.log artifacts/admin-build.log artifacts/tests.log artifacts/swiftlint.log
+          touch artifacts/participant-build.log artifacts/admin-build.log artifacts/tests.log artifacts/swiftformat.log
 
       - name: Show toolchain
         run: |
           set -euo pipefail
           xcodebuild -version
-          swiftlint version
+          swiftformat --version
           xcbeautify --version
 
       - name: Check repository hygiene and project versions
@@ -84,18 +84,24 @@ jobs:
           xcodebuild -list -project "$PROJECT"
           echo "Build $build_versions / Version $marketing_versions" | tee artifacts/project-version.txt
 
-      - name: Run SwiftLint (advisory)
+      - name: Run SwiftFormat lint (advisory)
         run: |
           set -o pipefail
           set +e
-          swiftlint lint --config .swiftlint.yml --quiet --reporter github-actions-logging | tee artifacts/swiftlint.log
-          lint_status=${PIPESTATUS[0]}
+          swiftformat \
+            --lint \
+            --lenient \
+            --config .swiftformat \
+            --reporter github-actions-log \
+            SecretMatch SecretMatchTests \
+            | tee artifacts/swiftformat.log
+          format_status=${PIPESTATUS[0]}
           set -e
 
-          lint_issues="$(awk '/^::(warning|error)/ { count++ } END { print count + 0 }' artifacts/swiftlint.log)"
-          printf '%s\n' "$lint_issues" > artifacts/swiftlint-issue-count.txt
-          if [[ "$lint_status" -ne 0 ]]; then
-            echo "::warning::SwiftLint meldet $lint_issues bestehende Qualitätsprobleme. Der Check ist vorerst informativ."
+          format_issues="$(awk '/^::(warning|error)/ { count++ } END { print count + 0 }' artifacts/swiftformat.log)"
+          printf '%s\n' "$format_issues" > artifacts/swiftformat-issue-count.txt
+          if [[ "$format_status" -ne 0 ]]; then
+            echo "::warning::SwiftFormat konnte nicht vollständig ausgeführt werden. Der Check ist vorerst informativ."
           fi
 
       - name: Build participant app
@@ -202,8 +208,8 @@ jobs:
 
           coverage="–"
           [[ -f artifacts/coverage-percent.txt ]] && coverage="$(tr -d '\n' < artifacts/coverage-percent.txt)%"
-          lint_issues="–"
-          [[ -f artifacts/swiftlint-issue-count.txt ]] && lint_issues="$(tr -d '\n' < artifacts/swiftlint-issue-count.txt)"
+          format_issues="–"
+          [[ -f artifacts/swiftformat-issue-count.txt ]] && format_issues="$(tr -d '\n' < artifacts/swiftformat-issue-count.txt)"
           compiler_warnings="$(awk '/warning:/ { count++ } END { print count + 0 }' artifacts/*build.log artifacts/tests.log 2>/dev/null || true)"
 
           {
@@ -215,7 +221,7 @@ jobs:
             echo "| Admin-App | $admin |"
             echo "| Tests | $tests · $passed_tests bestanden / $failed_tests fehlgeschlagen |"
             echo "| Zeilenabdeckung | $coverage · Mindestwert ${COVERAGE_THRESHOLD}% |"
-            echo "| SwiftLint | $lint_issues Hinweise · informativ |"
+            echo "| SwiftFormat | $format_issues Hinweise · informativ |"
             echo "| Compiler | $compiler_warnings Warnungen |"
             echo
             echo "Vollständige Logs, Coverage-Daten und das Xcode-Ergebnisbundle liegen im Artefakt **ios-quality-reports**."

@@ -1,0 +1,10 @@
+# Bestehenden vier Leerzeichen und manuelle Zeilenumbrüche respektieren.
+--indent 4
+--linebreaks lf
+--maxwidth none
+--wraparguments preserve
+--wrapcollections preserve
+--trimwhitespace always
+
+# Keine semantische Bereinigung in einem reinen Format-Check.
+--disable redundantSelf

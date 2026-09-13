@@ -16,9 +16,9 @@ xcodebuild -project SecretMatch.xcodeproj -scheme SecretMatch -configuration Deb
 
 ## GitHub Actions
 
-Der Workflow `iOS Quality` läuft bei Pushes und Pull Requests auf `main` sowie manuell. Er prüft die Repository-Hygiene und synchrone App-Versionen, führt SwiftLint aus, baut die Teilnehmer- und Admin-App, startet die vollständige Testsuite auf einem verfügbaren iPad-Simulator und erzwingt mindestens 70 % Zeilenabdeckung für `SecretMatch.app`.
+Der Workflow `iOS Quality` läuft bei Pushes und Pull Requests auf `main` sowie manuell. Er prüft die Repository-Hygiene und synchrone App-Versionen, führt SwiftFormat im Prüfmodus aus, baut die Teilnehmer- und Admin-App, startet die vollständige Testsuite auf einem verfügbaren iPad-Simulator und erzwingt mindestens 70 % Zeilenabdeckung für `SecretMatch.app`.
 
-Build- und Testdiagnosen werden direkt in GitHub dargestellt. Eine Zusammenfassung mit Testanzahl, Coverage, SwiftLint-Hinweisen und Compiler-Warnungen erscheint im Job Summary. Rohlogs, Coverage-Berichte und das Xcode-Ergebnisbundle werden 14 Tage lang als Artefakt `ios-quality-reports` gespeichert. SwiftLint ist zunächst informativ, damit bestehende Stilprobleme sichtbar werden, ohne die Pipeline zu blockieren; Builds, Tests, Versionskonsistenz, Repository-Hygiene und die Coverage-Schwelle sind verpflichtend.
+Build- und Testdiagnosen werden direkt in GitHub dargestellt. Eine Zusammenfassung mit Testanzahl, Coverage, SwiftFormat-Hinweisen und Compiler-Warnungen erscheint im Job Summary. Rohlogs, Coverage-Berichte und das Xcode-Ergebnisbundle werden 14 Tage lang als Artefakt `ios-quality-reports` gespeichert. SwiftFormat ist zunächst informativ, damit bestehende Stilprobleme sichtbar werden, ohne die Pipeline zu blockieren; Builds, Tests, Versionskonsistenz, Repository-Hygiene und die Coverage-Schwelle sind verpflichtend.
 
 Die Tests verändern weder den Produktivserver noch gespeicherte Eventdaten. Netzwerk-, vollständige UI- und End-to-End-Abläufe benötigen weiterhin eigene Integrations- beziehungsweise UI-Tests.
 
