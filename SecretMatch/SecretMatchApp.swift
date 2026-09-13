@@ -17,6 +17,7 @@ struct SecretMatchApp: App {
 #endif
         }
         .onChange(of: scenePhase, initial: true) { _, phase in
+            guard !isRunningUnitTests else { return }
             switch phase {
             case .active:
                 UIApplication.shared.isIdleTimerDisabled = true
@@ -27,6 +28,10 @@ struct SecretMatchApp: App {
                 break
             }
         }
+    }
+
+    private var isRunningUnitTests: Bool {
+        ProcessInfo.processInfo.environment["SECRET_MATCH_UNIT_TESTS"] == "1"
     }
 
     private var applicationContent: some View {

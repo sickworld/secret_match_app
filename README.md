@@ -2,6 +2,18 @@
 
 In allen sichtbaren App-Texten, Exporten und Benachrichtigungen lautet der Produktname **Match&Play**. Interne Bezeichner wie API-Pfade, Bundle-IDs und technische Klassen bleiben aus Kompatibilitätsgründen unverändert.
 
+## Automatisierte Tests (Build 146)
+
+Das Xcode-Projekt enthält das Unit-Test-Target `SecretMatchTests`. Die Tests prüfen ohne produktive Serverzugriffe unter anderem Eventnummernformatierung, Match- und Aktionsdefinitionen, Queue-Texte, lokale Codable-Persistenz sowie zentrale JSON-Verträge für Login, Bildschirmschoner, Event-Mitteilungen und Admin-Anzeigen. Code Coverage ist im gemeinsamen `SecretMatch`-Scheme aktiviert.
+
+Die Suite kann auf einem installierten iPad-Simulator ausgeführt werden:
+
+```bash
+xcodebuild -project SecretMatch.xcodeproj -scheme SecretMatch -configuration Debug -destination 'platform=iOS Simulator,name=iPad (A16),OS=26.0' -enableCodeCoverage YES CODE_SIGNING_ALLOWED=NO test
+```
+
+Die Tests verändern weder den Produktivserver noch gespeicherte Eventdaten. Netzwerk-, vollständige UI- und End-to-End-Abläufe benötigen weiterhin eigene Integrations- beziehungsweise UI-Tests.
+
 ## Automatischer PIN-Login (Build 144)
 
 Beim normalen Teilnehmer-Login startet der Anmeldeversuch direkt nach Eingabe der zweiten PIN-Ziffer. Die sichtbare **Anmelden**-Taste bleibt als verständliche Rückfall- und Bedienmöglichkeit erhalten. Ein synchroner Ladeschutz verhindert doppelte Login-Requests, wenn gleichzeitig die Bestätigungstaste betätigt wird. Die erstmalige PIN-Anlage mit Wiederholung bleibt unverändert und wird weiterhin ausdrücklich gespeichert.
