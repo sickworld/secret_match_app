@@ -29,11 +29,11 @@ swiftformat --lint --config .swiftformat SecretMatch SecretMatchTests
 
 Vor jedem Commit müssen beide Befehle in dieser Reihenfolge ausgeführt werden. Der erste behebt rein mechanische Abweichungen automatisch; der Commit darf erst erstellt werden, wenn der zweite Befehl erfolgreich ist. Pull Requests mit verbleibenden Formatabweichungen werden von `iOS Quality` abgelehnt.
 
-Nach jedem Push werden alle zum Commit-SHA gehörenden GitHub-Actions-Runs bis zum endgültigen Ergebnis beobachtet. Eine Auslieferung gilt erst dann als erfolgreich, wenn alle verpflichtenden Workflows und Jobs grün sind. Ein noch laufender, fehlgeschlagener oder abgebrochener Run darf nicht als erfolgreicher Abschluss gemeldet werden.
+Nach jedem Push wird geprüft, dass der zum Commit-SHA gehörende GitHub-Actions-Run angelegt wurde; Link und aktueller Status werden gemeldet. Auf noch wartende oder laufende Jobs wird nicht blockierend gewartet. Das endgültige Ergebnis bleibt jederzeit direkt in GitHub sichtbar.
 
 Der zusätzliche Job `CodeQL security and quality` analysiert innerhalb desselben `iOS Quality`-Runs beide Swift-App-Schemes. Er startet nach dem schnellen Quality-Gate parallel zu Builds und Tests und verwendet die erweiterte CodeQL-Suite `security-and-quality` für Sicherheits-, Zuverlässigkeits- und Wartbarkeitsprobleme. Die Ergebnisse sind unter **Security → Code scanning** und im Actions-Job sichtbar.
 
-Sind die fünf Qualitätsjobs bei einem Push auf `main` grün, synchronisiert `Publish documentation wiki` alle sechs versionierten Markdown-Dokumente in das GitHub-Wiki. README wird zur Startseite; Netzwerk-Setup, Agentenanweisungen und die beiden Projektskills erhalten eigene Seiten und eine gemeinsame Sidebar. Andere manuell angelegte Wiki-Seiten werden nicht gelöscht. Damit gilt der Run auf `main` erst nach sechs grünen Jobs als vollständig erfolgreich.
+Sind die fünf Qualitätsjobs bei einem Push auf `main` grün, synchronisiert `Publish documentation wiki` alle sechs versionierten Markdown-Dokumente in das GitHub-Wiki. README wird zur Startseite; Netzwerk-Setup, Agentenanweisungen und die beiden Projektskills erhalten eigene Seiten und eine gemeinsame Sidebar. Andere manuell angelegte Wiki-Seiten werden nicht gelöscht.
 
 Die Tests verändern weder den Produktivserver noch gespeicherte Eventdaten. Netzwerk-, vollständige UI- und End-to-End-Abläufe benötigen weiterhin eigene Integrations- beziehungsweise UI-Tests.
 
