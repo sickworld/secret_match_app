@@ -47,24 +47,6 @@ struct LoginView: View {
                             showAdminLogin = true
                         }
 
-                    VStack(spacing: 12) {
-                        Text("DEIN EVENT. DEIN MATCH.")
-                            .font(.system(size: 12, weight: .bold, design: .rounded))
-                            .tracking(2.2)
-                            .foregroundStyle(SecretMatchTheme.secondary)
-
-                        Text("Bereit für Match&Play?")
-                            .font(.system(size: isHeightConstrained ? 34 : 40, weight: .bold, design: .rounded))
-                            .foregroundStyle(SecretMatchTheme.text)
-
-                        Text(requiresLoginPIN
-                             ? "Gib jetzt deine persönliche PIN ein."
-                             : "Gib zuerst deine Event-Nummer ein.")
-                            .font(.system(size: isHeightConstrained ? 18 : 20, weight: .medium, design: .rounded))
-                            .foregroundStyle(SecretMatchTheme.muted)
-                            .multilineTextAlignment(.center)
-                    }
-
                     VStack(alignment: .leading, spacing: 14) {
                         if requiresLoginPIN {
                             HStack {

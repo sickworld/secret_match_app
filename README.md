@@ -2,6 +2,10 @@
 
 In allen sichtbaren App-Texten, Exporten und Benachrichtigungen lautet der Produktname **Match&Play**. Interne Bezeichner wie API-Pfade, Bundle-IDs und technische Klassen bleiben aus Kompatibilitätsgründen unverändert.
 
+## Kompakter Teilnehmer-Login (Build 142)
+
+Der normale Teilnehmer-Login zeigt nach dem Logo direkt die Eingabe für Eventnummer beziehungsweise PIN. Der bisherige Introblock mit Claim, „Bereit für Match&Play?“ und dem zusätzlichen Eingabehinweis entfällt; Validierungsfehler, Feldbeschriftungen und der zweistufige Loginablauf bleiben erhalten.
+
 ## Event-Mitteilungen (Build 140)
 
 Unter **Event-Mitteilungen** verwalten iPhone- und iPad-Adminbereich denselben zentralen Hinweisbestand wie WordPress und die externe Webverwaltung. Eine Mitteilung besitzt bis zu 160 Zeichen, die Darstellungsstufe Info, Highlight oder Dringend, einen Sichtbarkeitsschalter sowie optional Start- und Endzeit. Alle aktiven Hinweise erscheinen innerhalb des regulären zehnsekündigen Abgleichs auf jedem angemeldeten Billboard, wechseln bei mehreren Einträgen unabhängig von Matches und Aktionen und bleiben auch im Top-16-Modus sichtbar.
