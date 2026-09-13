@@ -31,7 +31,7 @@ Vor jedem Commit müssen beide Befehle in dieser Reihenfolge ausgeführt werden.
 
 Nach jedem Push werden alle zum Commit-SHA gehörenden GitHub-Actions-Runs bis zum endgültigen Ergebnis beobachtet. Eine Auslieferung gilt erst dann als erfolgreich, wenn alle verpflichtenden Workflows und Jobs grün sind. Ein noch laufender, fehlgeschlagener oder abgebrochener Run darf nicht als erfolgreicher Abschluss gemeldet werden.
 
-Der getrennte Workflow `CodeQL Security and Quality` analysiert bei Pushes und Pull Requests auf `main`, manuell sowie wöchentlich beide Swift-App-Schemes. Er verwendet die erweiterte CodeQL-Suite `security-and-quality` für Sicherheits-, Zuverlässigkeits- und Wartbarkeitsprobleme. Die Ergebnisse sind unter **Security → Code scanning** und im jeweiligen Actions-Run sichtbar. Nach einem Push müssen sowohl `iOS Quality` als auch `CodeQL Security and Quality` für denselben Commit-SHA vollständig grün sein.
+Der zusätzliche Job `CodeQL security and quality` analysiert innerhalb desselben `iOS Quality`-Runs beide Swift-App-Schemes. Er startet nach dem schnellen Quality-Gate parallel zu Builds und Tests und verwendet die erweiterte CodeQL-Suite `security-and-quality` für Sicherheits-, Zuverlässigkeits- und Wartbarkeitsprobleme. Die Ergebnisse sind unter **Security → Code scanning** und im Actions-Job sichtbar. Nach einem Push müssen alle fünf Jobs desselben Runs vollständig grün sein.
 
 Die Tests verändern weder den Produktivserver noch gespeicherte Eventdaten. Netzwerk-, vollständige UI- und End-to-End-Abläufe benötigen weiterhin eigene Integrations- beziehungsweise UI-Tests.
 
