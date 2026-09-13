@@ -1,5 +1,7 @@
 # secret_match_app
 
+[![iOS Quality](https://github.com/sickworld/secret_match_app/actions/workflows/swift.yml/badge.svg?branch=main)](https://github.com/sickworld/secret_match_app/actions/workflows/swift.yml)
+
 In allen sichtbaren App-Texten, Exporten und Benachrichtigungen lautet der Produktname **Match&Play**. Interne Bezeichner wie API-Pfade, Bundle-IDs und technische Klassen bleiben aus Kompatibilitätsgründen unverändert.
 
 ## Automatisierte Tests (Build 148)
@@ -11,6 +13,12 @@ Die Suite kann auf einem installierten iPad-Simulator ausgeführt werden:
 ```bash
 xcodebuild -project SecretMatch.xcodeproj -scheme SecretMatch -configuration Debug -destination 'platform=iOS Simulator,name=iPad (A16),OS=26.0' -enableCodeCoverage YES CODE_SIGNING_ALLOWED=NO test
 ```
+
+## GitHub Actions
+
+Der Workflow `iOS Quality` läuft bei Pushes und Pull Requests auf `main` sowie manuell. Er prüft die Repository-Hygiene und synchrone App-Versionen, führt SwiftLint aus, baut die Teilnehmer- und Admin-App, startet die vollständige Testsuite auf einem verfügbaren iPad-Simulator und erzwingt mindestens 70 % Zeilenabdeckung für `SecretMatch.app`.
+
+Build- und Testdiagnosen werden direkt in GitHub dargestellt. Eine Zusammenfassung mit Testanzahl, Coverage, SwiftLint-Hinweisen und Compiler-Warnungen erscheint im Job Summary. Rohlogs, Coverage-Berichte und das Xcode-Ergebnisbundle werden 14 Tage lang als Artefakt `ios-quality-reports` gespeichert. SwiftLint ist zunächst informativ, damit bestehende Stilprobleme sichtbar werden, ohne die Pipeline zu blockieren; Builds, Tests, Versionskonsistenz, Repository-Hygiene und die Coverage-Schwelle sind verpflichtend.
 
 Die Tests verändern weder den Produktivserver noch gespeicherte Eventdaten. Netzwerk-, vollständige UI- und End-to-End-Abläufe benötigen weiterhin eigene Integrations- beziehungsweise UI-Tests.
 

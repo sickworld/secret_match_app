@@ -1,22 +1,231 @@
-# This workflow will build a Swift project
-# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-swift
-
-name: Swift
+name: iOS Quality
 
 on:
   push:
-    branches: [ "main" ]
+    branches:
+      - main
   pull_request:
-    branches: [ "main" ]
+    branches:
+      - main
+  workflow_dispatch:
+
+concurrency:
+  group: ios-quality-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  PROJECT: SecretMatch.xcodeproj
+  PARTICIPANT_SCHEME: SecretMatch
+  ADMIN_SCHEME: SecretMatch Admin
+  COVERAGE_THRESHOLD: "70.0"
+  DEVELOPER_DIR: /Applications/Xcode_26.6.app/Contents/Developer
 
 jobs:
-  build:
+  build-test-quality:
+    name: Build, tests and quality
+    runs-on: macos-26
+    timeout-minutes: 30
 
-    runs-on: macos-latest
+    defaults:
+      run:
+        shell: bash
 
     steps:
-    - uses: actions/checkout@v4
-    - name: Build
-      run: swift build -v
-    - name: Run tests
-      run: swift test -v
+      - name: Check out repository
+        uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Prepare reports
+        run: |
+          mkdir -p artifacts
+          touch artifacts/participant-build.log artifacts/admin-build.log artifacts/tests.log artifacts/swiftlint.log
+
+      - name: Show toolchain
+        run: |
+          set -euo pipefail
+          xcodebuild -version
+          swiftlint version
+          xcbeautify --version
+
+      - name: Check repository hygiene and project versions
+        run: |
+          set -euo pipefail
+
+          forbidden_files="$(git ls-files | grep -E '(^|/)xcuserdata/|\.xcuserstate$|\.p12$|\.mobileprovision$' || true)"
+          if [[ -n "$forbidden_files" ]]; then
+            echo "::error::Unzulässige lokale oder Signing-Dateien sind versioniert."
+            printf '%s\n' "$forbidden_files"
+            exit 1
+          fi
+
+          if git grep -n -E '^(<<<<<<<|>>>>>>>)' -- '*.swift' '*.yml' '*.yaml' '*.md'; then
+            echo "::error::Nicht aufgelöste Merge-Marker gefunden."
+            exit 1
+          fi
+
+          build_versions="$(sed -n 's/.*CURRENT_PROJECT_VERSION = \([^;]*\);/\1/p' "$PROJECT/project.pbxproj" | sort -u)"
+          marketing_versions="$(sed -n 's/.*MARKETING_VERSION = \([^;]*\);/\1/p' "$PROJECT/project.pbxproj" | sort -u)"
+          build_count="$(grep -c 'CURRENT_PROJECT_VERSION =' "$PROJECT/project.pbxproj")"
+          marketing_count="$(grep -c 'MARKETING_VERSION =' "$PROJECT/project.pbxproj")"
+
+          if [[ "$(printf '%s\n' "$build_versions" | wc -l | tr -d ' ')" -ne 1 || "$build_count" -ne 4 ]]; then
+            echo "::error::Die Buildnummern beider Targets und Konfigurationen sind nicht synchron."
+            exit 1
+          fi
+          if [[ "$(printf '%s\n' "$marketing_versions" | wc -l | tr -d ' ')" -ne 1 || "$marketing_count" -ne 4 ]]; then
+            echo "::error::Die Marketing-Versionen beider Targets und Konfigurationen sind nicht synchron."
+            exit 1
+          fi
+
+          xcodebuild -list -project "$PROJECT"
+          echo "Build $build_versions / Version $marketing_versions" | tee artifacts/project-version.txt
+
+      - name: Run SwiftLint (advisory)
+        run: |
+          set -o pipefail
+          set +e
+          swiftlint lint --config .swiftlint.yml --quiet --reporter github-actions-logging | tee artifacts/swiftlint.log
+          lint_status=${PIPESTATUS[0]}
+          set -e
+
+          lint_issues="$(awk '/^::(warning|error)/ { count++ } END { print count + 0 }' artifacts/swiftlint.log)"
+          printf '%s\n' "$lint_issues" > artifacts/swiftlint-issue-count.txt
+          if [[ "$lint_status" -ne 0 ]]; then
+            echo "::warning::SwiftLint meldet $lint_issues bestehende Qualitätsprobleme. Der Check ist vorerst informativ."
+          fi
+
+      - name: Build participant app
+        run: |
+          set -euo pipefail
+          xcodebuild \
+            -project "$PROJECT" \
+            -scheme "$PARTICIPANT_SCHEME" \
+            -configuration Debug \
+            -destination 'generic/platform=iOS Simulator' \
+            -derivedDataPath "$RUNNER_TEMP/SecretMatchParticipant" \
+            CODE_SIGNING_ALLOWED=NO \
+            build 2>&1 | tee artifacts/participant-build.log | xcbeautify --renderer github-actions
+          touch artifacts/participant-build.passed
+
+      - name: Build admin app
+        run: |
+          set -euo pipefail
+          xcodebuild \
+            -project "$PROJECT" \
+            -scheme "$ADMIN_SCHEME" \
+            -configuration Debug \
+            -destination 'generic/platform=iOS Simulator' \
+            -derivedDataPath "$RUNNER_TEMP/SecretMatchAdmin" \
+            CODE_SIGNING_ALLOWED=NO \
+            build 2>&1 | tee artifacts/admin-build.log | xcbeautify --renderer github-actions
+          touch artifacts/admin-build.passed
+
+      - name: Select an available iPad simulator
+        run: |
+          set -euo pipefail
+          runtime="$(xcrun simctl list devices available -j | jq -r '.devices | keys | map(select(contains("iOS"))) | sort | last // empty')"
+          simulator_id="$(xcrun simctl list devices available -j | jq -r --arg runtime "$runtime" '[.devices[$runtime][] | select(.name | startswith("iPad"))][0].udid // empty')"
+
+          if [[ -z "$runtime" || -z "$simulator_id" ]]; then
+            echo "::error::Kein verfügbarer iPad-Simulator gefunden."
+            xcrun simctl list devices available
+            exit 1
+          fi
+
+          echo "SIMULATOR_ID=$simulator_id" >> "$GITHUB_ENV"
+          echo "Simulator-Runtime: $runtime" | tee artifacts/simulator.txt
+          xcrun simctl list devices available | grep "$simulator_id" | tee -a artifacts/simulator.txt
+
+      - name: Run complete test suite with coverage
+        run: |
+          set -euo pipefail
+          xcodebuild test \
+            -project "$PROJECT" \
+            -scheme "$PARTICIPANT_SCHEME" \
+            -configuration Debug \
+            -destination "platform=iOS Simulator,id=$SIMULATOR_ID" \
+            -derivedDataPath "$RUNNER_TEMP/SecretMatchTests" \
+            -enableCodeCoverage YES \
+            -parallel-testing-enabled NO \
+            -resultBundlePath artifacts/SecretMatchTests.xcresult \
+            CODE_SIGNING_ALLOWED=NO \
+            2>&1 | tee artifacts/tests.log | xcbeautify --renderer github-actions
+          touch artifacts/tests.passed
+
+      - name: Extract test and coverage reports
+        run: |
+          set -euo pipefail
+          xcrun xcresulttool get test-results summary \
+            --path artifacts/SecretMatchTests.xcresult \
+            > artifacts/test-summary.json
+          xcrun xccov view \
+            --report artifacts/SecretMatchTests.xcresult \
+            --only-targets \
+            | tee artifacts/coverage.txt
+          xcrun xccov view \
+            --report artifacts/SecretMatchTests.xcresult \
+            --json \
+            > artifacts/coverage.json
+
+          coverage="$(awk '$2 == "SecretMatch.app" { value = $4; gsub(/%/, "", value); print value }' artifacts/coverage.txt)"
+          if [[ -z "$coverage" ]]; then
+            echo "::error::Die App-Coverage konnte nicht aus dem Testbericht gelesen werden."
+            exit 1
+          fi
+          printf '%s\n' "$coverage" > artifacts/coverage-percent.txt
+
+          if ! awk -v actual="$coverage" -v minimum="$COVERAGE_THRESHOLD" 'BEGIN { exit !(actual + 0 >= minimum + 0) }'; then
+            echo "::error::Code Coverage ${coverage}% liegt unter dem Mindestwert von ${COVERAGE_THRESHOLD}%."
+            exit 1
+          fi
+
+      - name: Publish quality summary
+        if: always()
+        run: |
+          participant="❌"
+          admin="❌"
+          tests="❌"
+          [[ -f artifacts/participant-build.passed ]] && participant="✅"
+          [[ -f artifacts/admin-build.passed ]] && admin="✅"
+          [[ -f artifacts/tests.passed ]] && tests="✅"
+
+          passed_tests="–"
+          failed_tests="–"
+          if [[ -f artifacts/test-summary.json ]]; then
+            passed_tests="$(jq -r '.passedTests // 0' artifacts/test-summary.json)"
+            failed_tests="$(jq -r '.failedTests // 0' artifacts/test-summary.json)"
+          fi
+
+          coverage="–"
+          [[ -f artifacts/coverage-percent.txt ]] && coverage="$(tr -d '\n' < artifacts/coverage-percent.txt)%"
+          lint_issues="–"
+          [[ -f artifacts/swiftlint-issue-count.txt ]] && lint_issues="$(tr -d '\n' < artifacts/swiftlint-issue-count.txt)"
+          compiler_warnings="$(awk '/warning:/ { count++ } END { print count + 0 }' artifacts/*build.log artifacts/tests.log 2>/dev/null || true)"
+
+          {
+            echo "## iOS-Qualitätsbericht"
+            echo
+            echo "| Prüfung | Ergebnis |"
+            echo "| --- | --- |"
+            echo "| Teilnehmer-App | $participant |"
+            echo "| Admin-App | $admin |"
+            echo "| Tests | $tests · $passed_tests bestanden / $failed_tests fehlgeschlagen |"
+            echo "| Zeilenabdeckung | $coverage · Mindestwert ${COVERAGE_THRESHOLD}% |"
+            echo "| SwiftLint | $lint_issues Hinweise · informativ |"
+            echo "| Compiler | $compiler_warnings Warnungen |"
+            echo
+            echo "Vollständige Logs, Coverage-Daten und das Xcode-Ergebnisbundle liegen im Artefakt **ios-quality-reports**."
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload logs and Xcode reports
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: ios-quality-reports
+          path: artifacts/
+          if-no-files-found: warn
+          retention-days: 14
