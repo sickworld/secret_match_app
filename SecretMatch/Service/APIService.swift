@@ -82,6 +82,7 @@ class APIService: ObservableObject {
     private var retryTask: Task<Void, Never>?
     private var connectionPollingTask: Task<Void, Never>?
     private var heartbeatTask: Task<Void, Never>?
+    private var participantLogoutTask: Task<Void, Never>?
     private var isLoadingScreensaverContent = false
     private var lastScreensaverContentRefreshAt: Date?
     private let networkMonitor = NWPathMonitor()
@@ -89,6 +90,10 @@ class APIService: ObservableObject {
 
     func login(number: String, pin: String) async throws -> ParticipantLoginRequirements {
         if isAdmin { return ParticipantLoginRequirements(needsPin: false, needsGender: false) }
+        if let pendingLogout = participantLogoutTask {
+            participantLogoutTask = nil
+            await pendingLogout.value
+        }
         guard isNetworkAvailable else {
             setConnectionState(.offline)
             throw ParticipantLoginError.connectionUnavailable
@@ -1757,8 +1762,9 @@ class APIService: ObservableObject {
             var logoutRequest = URLRequest(url: baseURL.appendingPathComponent("logout"))
             logoutRequest.httpMethod = "POST"
             logoutRequest.timeoutInterval = 3
-            Task {
-                _ = try? await URLSession.shared.data(for: logoutRequest)
+            participantLogoutTask?.cancel()
+            participantLogoutTask = Task {
+                _ = try? await Self.performTimedRequest(logoutRequest, hardTimeout: 3)
             }
         }
 

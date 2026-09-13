@@ -146,9 +146,9 @@ struct AdminLoginView: View {
     private func performLogin() {
         guard !password.isEmpty, !isLoading else { return }
 
+        isLoading = true
         errorMessage = nil
         Task {
-            isLoading = true
             let result = await api.adminLogin(password: password)
             isLoading = false
 

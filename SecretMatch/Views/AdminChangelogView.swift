@@ -126,7 +126,9 @@ private struct AdminChangelogRelease: Identifiable {
             date: "13.09.2026",
             changes: [
                 "Der neue Changelog macht Änderungen und die installierte App-Version direkt im Admin sichtbar.",
-                "Event-Mitteilungen lassen sich zentral erstellen und auf allen Billboards anzeigen."
+                "Event-Mitteilungen lassen sich zentral erstellen und auf allen Billboards anzeigen.",
+                "Mehrfaches Tippen löst keine doppelten Matches, Aktionen oder Admin-Anmeldungen mehr aus.",
+                "Login, Logout, App-Start und Rücknahmehinweise laufen zuverlässiger."
             ]
         ),
         AdminChangelogRelease(

@@ -25,6 +25,7 @@ struct MatchInputBox: View {
     var matchDefinitions: [MatchDefinition] = MatchDefinition.fallbacks
     var actionDefinitions: [ActionDefinition] = ActionDefinition.fallbacks
     let onSend: () -> Void
+    var isSending = false
     var targetIsConfirmed = false
     var allowedActionTypes: Set<String> = ["bjob", "hjob", "ljob"]
     var usesOfflineSelectionFallback = false
@@ -515,8 +516,8 @@ struct MatchInputBox: View {
             fontSize: metric(21, 23),
             minHeight: metric(68, 74)
         ))
-        .disabled(selectedActions.isEmpty || targetNumber.isEmpty)
-        .opacity(selectedActions.isEmpty || targetNumber.isEmpty ? 0.5 : 1)
+        .disabled(isSending || selectedActions.isEmpty || targetNumber.isEmpty)
+        .opacity(isSending || selectedActions.isEmpty || targetNumber.isEmpty ? 0.5 : 1)
     }
 
     private var sendButtonTitle: String {

@@ -16,6 +16,7 @@ struct MatchView: View {
     @State private var lastWithdrawableActionIDs: [UUID] = []
     @State private var isWithdrawingLastActions = false
     @State private var withdrawalConfirmationMessage: String?
+    @State private var withdrawalConfirmationTask: Task<Void, Never>?
     @State private var targetIsConfirmed = false
     @State private var allowedActionTypes: Set<String> = Set(ActionDefinition.fallbacks.map(\.id))
     @State private var usesOfflineSelectionFallback = false
@@ -218,6 +219,8 @@ struct MatchView: View {
         .onDisappear {
             autoLogoutTask?.cancel()
             autoLogoutTask = nil
+            withdrawalConfirmationTask?.cancel()
+            withdrawalConfirmationTask = nil
         }
         .preference(
             key: SecretMatchAccessibilityControlsHiddenPreferenceKey.self,
@@ -247,6 +250,7 @@ struct MatchView: View {
                         matchDefinitions: api.matchDefinitions,
                         actionDefinitions: api.actionDefinitions,
                         onSend: sendInteractions,
+                        isSending: isLoading,
                         targetIsConfirmed: targetIsConfirmed,
                         allowedActionTypes: allowedActionTypes,
                         usesOfflineSelectionFallback: usesOfflineSelectionFallback,
@@ -281,6 +285,7 @@ struct MatchView: View {
                     matchDefinitions: api.matchDefinitions,
                     actionDefinitions: api.actionDefinitions,
                     onSend: sendInteractions,
+                    isSending: isLoading,
                     targetIsConfirmed: targetIsConfirmed,
                     allowedActionTypes: allowedActionTypes,
                     usesOfflineSelectionFallback: usesOfflineSelectionFallback,
@@ -321,14 +326,20 @@ struct MatchView: View {
     }
 
     func sendInteractions() {
-        Task {
-            guard !targetNumber.isEmpty, !selectedActions.isEmpty else { return }
-            submissionFailed = false
-            lastWithdrawableActionIDs = []
-            withdrawalConfirmationMessage = nil
-            pauseInactivityTimer()
-            isLoading = true
+        guard !isLoading, !targetNumber.isEmpty, !selectedActions.isEmpty else { return }
 
+        let submittedTargetNumber = targetNumber
+        let submittedActions = selectedActions
+        let submittedMessage = matchMessage
+        submissionFailed = false
+        lastWithdrawableActionIDs = []
+        withdrawalConfirmationTask?.cancel()
+        withdrawalConfirmationTask = nil
+        withdrawalConfirmationMessage = nil
+        pauseInactivityTimer()
+        isLoading = true
+
+        Task {
             defer {
                 isLoading = false
                 targetNumber = ""
@@ -341,7 +352,7 @@ struct MatchView: View {
                 showTextKeyboard = false
             }
 
-            if targetNumber.normalizedEventNumber == api.number.normalizedEventNumber {
+            if submittedTargetNumber.normalizedEventNumber == api.number.normalizedEventNumber {
                 responseMessage = "Du kannst keine Aktion an dich selbst senden 😅"
                 submissionFailed = true
                 return
@@ -349,11 +360,11 @@ struct MatchView: View {
 
             do {
                 let orderedTypes = (api.matchDefinitions.map(\.id) + api.actionDefinitions.map(\.id))
-                    .filter(selectedActions.contains)
+                    .filter(submittedActions.contains)
                 let result = try await api.submitInteractions(
-                    targetNumber: targetNumber,
+                    targetNumber: submittedTargetNumber,
                     types: orderedTypes,
-                    message: matchMessage
+                    message: submittedMessage
                 )
                 responseMessage = result.userMessage
                 lastWithdrawableActionIDs = result.actionRequestIDs
@@ -480,9 +491,16 @@ struct MatchView: View {
                 withdrawalConfirmationMessage = count == 1
                     ? "Die Aktion wurde zurückgezogen."
                     : "Die Aktionen wurden zurückgezogen."
-                Task { @MainActor in
-                    try? await Task.sleep(for: .seconds(4))
+                withdrawalConfirmationTask?.cancel()
+                withdrawalConfirmationTask = Task { @MainActor in
+                    do {
+                        try await Task.sleep(for: .seconds(4))
+                    } catch {
+                        return
+                    }
+                    guard !Task.isCancelled else { return }
                     withdrawalConfirmationMessage = nil
+                    withdrawalConfirmationTask = nil
                 }
             } catch {
                 responseMessage = (error as? LocalizedError)?.errorDescription

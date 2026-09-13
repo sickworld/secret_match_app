@@ -16,7 +16,7 @@ struct SecretMatchApp: App {
             }
 #endif
         }
-        .onChange(of: scenePhase) { _, phase in
+        .onChange(of: scenePhase, initial: true) { _, phase in
             switch phase {
             case .active:
                 UIApplication.shared.isIdleTimerDisabled = true
@@ -65,9 +65,6 @@ struct SecretMatchApp: App {
             )
             .zIndex(100)
             .animation(.easeInOut(duration: 0.2), value: api.connectionState)
-        }
-        .task {
-            api.applicationDidBecomeActive()
         }
     }
 }
