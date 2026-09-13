@@ -2,6 +2,10 @@
 
 In allen sichtbaren App-Texten, Exporten und Benachrichtigungen lautet der Produktname **Match&Play**. Interne Bezeichner wie API-Pfade, Bundle-IDs und technische Klassen bleiben aus Kompatibilitätsgründen unverändert.
 
+## Zuverlässiger Teilnehmer-Auto-Logout (Build 143)
+
+Der 30-Sekunden-Countdown wird jetzt bei jeder Berührung im angemeldeten Teilnehmerbereich neu gestartet – auch bei SwiftUI-Buttons, Auswahlfeldern und beim Scrollen in Overlays wie **Deine Übersicht**. Bewusst pausierte Phasen, etwa während laufender Serveranfragen oder in der Supportansicht, bleiben pausiert und werden durch darüberliegende Gesten nicht versehentlich reaktiviert. Ohne weitere Aktivität meldet die App den Teilnehmer weiterhin automatisch ab.
+
 ## Kompakter Teilnehmer-Login (Build 142)
 
 Der normale Teilnehmer-Login zeigt nach dem Logo direkt die Eingabe für Eventnummer beziehungsweise PIN. Der bisherige Introblock mit Claim, „Bereit für Match&Play?“ und dem zusätzlichen Eingabehinweis entfällt; Validierungsfehler, Feldbeschriftungen und der zweistufige Loginablauf bleiben erhalten.

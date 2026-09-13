@@ -24,6 +24,7 @@ struct MatchView: View {
     // Inactivity / Auto-Logout
     @State private var autoLogoutTask: Task<Void, Never>?
     @State private var secondsRemaining = 30
+    @State private var isInactivityTimerPaused = false
     private let autoLogoutSeconds = 30
 
     // UI State
@@ -37,6 +38,7 @@ struct MatchView: View {
     
     func resetInactivityTimer() {
         autoLogoutTask?.cancel()
+        isInactivityTimerPaused = false
         secondsRemaining = autoLogoutSeconds
 
         autoLogoutTask = Task { @MainActor in
@@ -56,8 +58,15 @@ struct MatchView: View {
         }
     }
 
+    func registerUserActivity() {
+        guard !isInactivityTimerPaused else { return }
+        resetInactivityTimer()
+    }
+
     func pauseInactivityTimer() {
+        isInactivityTimerPaused = true
         autoLogoutTask?.cancel()
+        autoLogoutTask = nil
     }
 
     // MARK: - View
@@ -85,7 +94,7 @@ struct MatchView: View {
                     .ignoresSafeArea()
                     .onTapGesture {
                         showKeyboard = false
-                        resetInactivityTimer()
+                        registerUserActivity()
                     }
                     .zIndex(20)
                 VStack {
@@ -93,10 +102,10 @@ struct MatchView: View {
 
                     CustomNumberKeyboard(
                         text: $targetNumber,
-                        onActivity: resetInactivityTimer,
+                        onActivity: registerUserActivity,
                         onClose: {
                             showKeyboard = false
-                            resetInactivityTimer()
+                            registerUserActivity()
                         }
                     ) {
                         confirmTargetNumber()
@@ -116,7 +125,7 @@ struct MatchView: View {
                     .ignoresSafeArea()
                     .onTapGesture {
                         showTextKeyboard = false
-                        resetInactivityTimer()
+                        registerUserActivity()
                     }
                     .zIndex(20)
 
@@ -124,10 +133,10 @@ struct MatchView: View {
                     Spacer(minLength: 12)
                     CustomTextKeyboard(
                         text: $matchMessage,
-                        onActivity: resetInactivityTimer,
+                        onActivity: registerUserActivity,
                         onClose: {
                             showTextKeyboard = false
-                            resetInactivityTimer()
+                            registerUserActivity()
                         }
                     )
                     .padding(18)
@@ -156,12 +165,12 @@ struct MatchView: View {
                     .ignoresSafeArea()
                     .onTapGesture {
                         showGuideOverlay = false
-                        resetInactivityTimer()
+                        registerUserActivity()
                     }
 
                 HowToUseView(
                     isPresented: $showGuideOverlay,
-                    registerActivity: resetInactivityTimer
+                    registerActivity: registerUserActivity
                 )
                 .zIndex(5)
             }
@@ -171,12 +180,12 @@ struct MatchView: View {
                     .ignoresSafeArea()
                     .onTapGesture {
                         showRulesOverlay = false
-                        resetInactivityTimer()
+                        registerUserActivity()
                     }
 
                 RulesSlideshowView(
                     isPresented: $showRulesOverlay,
-                    registerActivity: resetInactivityTimer
+                    registerActivity: registerUserActivity
                 )
                 .zIndex(5)
             }
@@ -193,11 +202,22 @@ struct MatchView: View {
             withAnimation {
                 showKeyboard = false
                 showTextKeyboard = false
-                resetInactivityTimer()
+                registerUserActivity()
             }
         }
+        .simultaneousGesture(
+            TapGesture().onEnded {
+                registerUserActivity()
+            }
+        )
+        .simultaneousGesture(
+            DragGesture(minimumDistance: 8).onEnded { _ in
+                registerUserActivity()
+            }
+        )
         .onDisappear {
             autoLogoutTask?.cancel()
+            autoLogoutTask = nil
         }
         .preference(
             key: SecretMatchAccessibilityControlsHiddenPreferenceKey.self,
@@ -287,7 +307,7 @@ struct MatchView: View {
     private func sidebar(isCompact: Bool, isShort: Bool, availableHeight: CGFloat) -> some View {
         SidebarView(
             secondsRemaining: secondsRemaining,
-            registerActivity: resetInactivityTimer,
+            registerActivity: registerUserActivity,
             logout: { api.logout() },
             showOverviewOverlay: $showOverviewOverlay,
             selectedOverviewSection: $selectedOverviewSection,
