@@ -48,6 +48,8 @@ Do not add or commit `xcuserdata`, breakpoints, or `UserInterfaceState.xcusersta
 
 Review the final diff with `../secretmatch-review/SKILL.md`.
 
+Every new feature or behavior change must add or update automated tests in the same delivery. Choose the closest useful level: pure unit tests for formatting and state logic, Codable fixtures for API contracts, network-free render tests for SwiftUI composition, and integration or UI tests when behavior cannot be proven below that level. Cover the main success path and relevant edge or error states, then run the affected suite. A successful build does not satisfy this requirement. Omitting tests requires explicit user approval and must be reported as a remaining risk.
+
 For code or Xcode project changes run:
 
 ```bash

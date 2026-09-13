@@ -13,6 +13,7 @@ Load the matching project skill when the task touches its area:
 - Before editing, inspect the relevant code and run `git status --short`.
 - Preserve existing user changes and never revert unrelated work.
 - Keep changes small, thematic, and consistent with the existing SwiftUI architecture.
+- Every new feature or behavior change must include suitable automated test coverage in the same delivery. The feature is not complete until those tests pass. Skipping coverage requires the user's explicit approval and must be reported as a remaining risk.
 - Review every completed code change before delivery.
 - Run the smallest relevant checks; for app changes, build the `SecretMatch` scheme.
 - For every delivered app-code, UI, API-integration, model, asset, or Xcode-project change, set `MARKETING_VERSION` to the current date in `YYYY.MM.DD` format and increment `CURRENT_PROJECT_VERSION`. If another delivery occurs on the same date, keep the date version and increment the build number again. Keep the `SecretMatch` and `SecretMatch Admin` targets on the same values in every build configuration. Documentation-only changes do not require a version bump.

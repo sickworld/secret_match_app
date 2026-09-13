@@ -35,6 +35,14 @@ Diese Datei enthält die verbindlichen Arbeitsregeln für Agenten in diesem Repo
 - Bei Änderungen an API-Requests immer Request-Methode, Content-Type, Encoding, Response-Modell, Fehlerfälle und Serverkompatibilität gemeinsam prüfen.
 - Debug-Ausgaben mit Response-Inhalten vor Auslieferung entfernen oder auf nicht sensible Diagnosen begrenzen.
 
+## Automatisierte Tests
+
+- Jedes neue Feature und jede Änderung am App-Verhalten muss im selben Arbeitspaket durch passende automatisierte Tests abgedeckt werden. Ohne erfolgreich ausgeführte Tests gilt das Feature nicht als fertig.
+- Die Tests sollen das beobachtbare Verhalten absichern und mindestens den zentralen Erfolgsfall sowie fachlich relevante Rand- oder Fehlerfälle prüfen.
+- Je nach Änderung sind insbesondere Unit-Tests für Modelle und Zustandslogik, Codable-Vertragstests für API-Daten sowie netzwerkfreie SwiftUI-Render- oder UI-Tests zu ergänzen.
+- Bestehende Tests müssen nach der Änderung weiterhin vollständig erfolgreich laufen. Ein erfolgreicher Build ersetzt keinen Testlauf.
+- Testabdeckung darf nur mit ausdrücklicher Zustimmung des Users ausgelassen werden. Der konkrete Grund und das verbleibende Risiko müssen dann im Abschluss genannt werden.
+
 ## Dokumentation
 
 `README.md` aktualisieren, wenn sich Setup, unterstützte Plattformen, Bedienung, API-Vertrag, Konfiguration oder Build-Ablauf ändern.
@@ -81,7 +89,7 @@ git diff --check
 
 Bei reinen Markdown-Änderungen reichen normalerweise Inhaltsprüfung, Skill-Validierung und `git diff --check`.
 
-Wenn Tests ergänzt werden, den kleinsten passenden Test-Plan oder gezielte Tests ausführen. Eine erfolgreiche Kompilierung nicht als Testabdeckung ausgeben.
+Für jedes neue Feature oder geänderte Verhalten die neu ergänzten Tests und mindestens die betroffene bestehende Testsuite ausführen. Eine erfolgreiche Kompilierung nicht als Testabdeckung ausgeben.
 
 ## Git und Commit
 

@@ -14,6 +14,8 @@ xcodebuild -project SecretMatch.xcodeproj -scheme SecretMatch -configuration Deb
 
 Die Tests verändern weder den Produktivserver noch gespeicherte Eventdaten. Netzwerk-, vollständige UI- und End-to-End-Abläufe benötigen weiterhin eigene Integrations- beziehungsweise UI-Tests.
 
+**Projektregel:** Jedes neue Feature und jede Änderung am App-Verhalten wird im selben Arbeitspaket mit passenden automatisierten Tests ausgeliefert. Ohne erfolgreich ausgeführte Tests gilt die Änderung nicht als abgeschlossen; eine Ausnahme ist nur nach ausdrücklicher Zustimmung zulässig.
+
 ## Automatischer PIN-Login (Build 144)
 
 Beim normalen Teilnehmer-Login startet der Anmeldeversuch direkt nach Eingabe der zweiten PIN-Ziffer. Die sichtbare **Anmelden**-Taste bleibt als verständliche Rückfall- und Bedienmöglichkeit erhalten. Ein synchroner Ladeschutz verhindert doppelte Login-Requests, wenn gleichzeitig die Bestätigungstaste betätigt wird. Die erstmalige PIN-Anlage mit Wiederholung bleibt unverändert und wird weiterhin ausdrücklich gespeichert.

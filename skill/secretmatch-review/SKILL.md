@@ -29,7 +29,8 @@ Check in this order:
 4. API contract: URL construction, method, content type, percent encoding, status codes, decoding, and error mapping.
 5. SwiftUI UX: loading, empty, success and error states; iPad layout; accessibility; destructive action confirmation.
 6. Xcode configuration: signing, bundle ID, team, deployment target, target membership, device family, and untracked user files.
-7. Maintainability: unnecessary duplication, dead code, misleading names, and divergence from existing components.
+7. Automated coverage: every new feature or behavior change has suitable tests for its main success path and relevant edge or error states, and the affected suite was actually executed. Missing coverage without explicit user approval is a release-readiness finding.
+8. Maintainability: unnecessary duplication, dead code, misleading names, and divergence from existing components.
 
 Treat an issue as a finding only when it is specific, reproducible from the code, and materially useful to fix.
 
