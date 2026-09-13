@@ -110,7 +110,7 @@ Nach abgeschlossener und geprüfter Arbeit:
 4. Den staged Diff mit `git diff --cached` abschließend reviewen.
 5. Aussagekräftig committen.
 6. Auf den aktuellen Branch pushen, sofern der User nichts anderes sagt.
-7. Den zum gepushten Commit-SHA gehörenden GitHub-Actions-Lauf bis zum finalen Ergebnis überwachen. Der Task gilt erst als erfolgreich, wenn alle verpflichtenden Jobs grün sind. Bei Fehler oder Abbruch die Ursache untersuchen und beheben oder den exakten Job und Blocker melden.
+7. Alle zum gepushten Commit-SHA gehörenden GitHub-Actions-Läufe bis zum finalen Ergebnis überwachen. Der Task gilt erst als erfolgreich, wenn alle verpflichtenden Workflows und Jobs – einschließlich `iOS Quality` und `CodeQL Security and Quality` – grün sind. Bei Fehler oder Abbruch die Ursache untersuchen und beheben oder den exakten Job und Blocker melden.
 8. Final `git status --short` prüfen.
 
 Commit-Messages beschreiben die fachliche Änderung, zum Beispiel:

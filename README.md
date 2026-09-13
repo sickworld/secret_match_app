@@ -29,7 +29,9 @@ swiftformat --lint --config .swiftformat SecretMatch SecretMatchTests
 
 Vor jedem Commit müssen beide Befehle in dieser Reihenfolge ausgeführt werden. Der erste behebt rein mechanische Abweichungen automatisch; der Commit darf erst erstellt werden, wenn der zweite Befehl erfolgreich ist. Pull Requests mit verbleibenden Formatabweichungen werden von `iOS Quality` abgelehnt.
 
-Nach jedem Push wird der zum Commit-SHA gehörende `iOS Quality`-Run bis zum endgültigen Ergebnis beobachtet. Eine Auslieferung gilt erst dann als erfolgreich, wenn alle verpflichtenden Jobs grün sind. Ein noch laufender, fehlgeschlagener oder abgebrochener Run darf nicht als erfolgreicher Abschluss gemeldet werden.
+Nach jedem Push werden alle zum Commit-SHA gehörenden GitHub-Actions-Runs bis zum endgültigen Ergebnis beobachtet. Eine Auslieferung gilt erst dann als erfolgreich, wenn alle verpflichtenden Workflows und Jobs grün sind. Ein noch laufender, fehlgeschlagener oder abgebrochener Run darf nicht als erfolgreicher Abschluss gemeldet werden.
+
+Der getrennte Workflow `CodeQL Security and Quality` analysiert bei Pushes und Pull Requests auf `main`, manuell sowie wöchentlich beide Swift-App-Schemes. Er verwendet die erweiterte CodeQL-Suite `security-and-quality` für Sicherheits-, Zuverlässigkeits- und Wartbarkeitsprobleme. Die Ergebnisse sind unter **Security → Code scanning** und im jeweiligen Actions-Run sichtbar. Nach einem Push müssen sowohl `iOS Quality` als auch `CodeQL Security and Quality` für denselben Commit-SHA vollständig grün sein.
 
 Die Tests verändern weder den Produktivserver noch gespeicherte Eventdaten. Netzwerk-, vollständige UI- und End-to-End-Abläufe benötigen weiterhin eigene Integrations- beziehungsweise UI-Tests.
 

@@ -1,0 +1,92 @@
+name: CodeQL Security and Quality
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  schedule:
+    - cron: "17 2 * * 1"
+  workflow_dispatch:
+
+concurrency:
+  group: codeql-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  actions: read
+  contents: read
+  packages: read
+  security-events: write
+
+env:
+  PROJECT: SecretMatch.xcodeproj
+  PARTICIPANT_SCHEME: SecretMatch
+  ADMIN_SCHEME: SecretMatch Admin
+  DEVELOPER_DIR: /Applications/Xcode_26.6.app/Contents/Developer
+
+jobs:
+  analyze-swift:
+    name: Analyze Swift
+    runs-on: macos-26
+    timeout-minutes: 30
+
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v4
+        with:
+          languages: swift
+          build-mode: manual
+          queries: security-and-quality
+
+      - name: Build apps for CodeQL
+        run: |
+          set -euo pipefail
+
+          xcodebuild \
+            -project "$PROJECT" \
+            -scheme "$PARTICIPANT_SCHEME" \
+            -configuration Debug \
+            -destination 'generic/platform=iOS Simulator' \
+            -derivedDataPath "$RUNNER_TEMP/CodeQLParticipant" \
+            ARCHS=arm64 \
+            ONLY_ACTIVE_ARCH=YES \
+            CODE_SIGNING_ALLOWED=NO \
+            build
+
+          xcodebuild \
+            -project "$PROJECT" \
+            -scheme "$ADMIN_SCHEME" \
+            -configuration Debug \
+            -destination 'generic/platform=iOS Simulator' \
+            -derivedDataPath "$RUNNER_TEMP/CodeQLAdmin" \
+            ARCHS=arm64 \
+            ONLY_ACTIVE_ARCH=YES \
+            CODE_SIGNING_ALLOWED=NO \
+            build
+
+      - name: Analyze Swift security and quality
+        uses: github/codeql-action/analyze@v4
+        with:
+          category: /language:swift
+
+      - name: Publish CodeQL summary
+        if: always()
+        run: |
+          {
+            echo "## CodeQL Security and Quality"
+            echo
+            echo "Die Swift-Analyse verwendet die Query-Suite \`security-and-quality\`."
+            echo "Ergebnisse: **Security → Code scanning** im Repository."
+          } >> "$GITHUB_STEP_SUMMARY"
