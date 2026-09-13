@@ -18,7 +18,7 @@ xcodebuild -project SecretMatch.xcodeproj -scheme SecretMatch -configuration Deb
 
 Der Workflow `iOS Quality` läuft bei Pushes und Pull Requests auf `main` sowie manuell. Er zeigt getrennte Jobs für Code-Qualität, Teilnehmer-Build, Admin-Build sowie Tests und Coverage. Der Quality-Job prüft zuerst die Repository-Hygiene, synchrone App-Versionen und SwiftFormat; nur nach seinem Erfolg starten die übrigen drei Jobs parallel. Die Tests laufen auf einem verfügbaren iPad-Simulator und erzwingen mindestens 70 % Zeilenabdeckung für `SecretMatch.app`.
 
-Build- und Testdiagnosen werden direkt in GitHub dargestellt. Jeder Job schreibt eine eigene Zusammenfassung; Rohlogs, Coverage-Berichte und das Xcode-Ergebnisbundle werden 14 Tage lang als getrennte Artefakte gespeichert. SwiftFormat, Builds, Tests, Versionskonsistenz, Repository-Hygiene und die Coverage-Schwelle sind verpflichtend.
+Die Code-Qualität ist in GitHub unter **Actions → iOS Quality → gewünschter Run → Code quality** sichtbar. Details stehen in den einzelnen Steps und in der Run-Zusammenfassung; der herunterladbare Bericht heißt `code-quality-report`. Build- und Testdiagnosen werden ebenfalls direkt im jeweiligen Job dargestellt. Jeder Job schreibt eine eigene Zusammenfassung; Rohlogs, Coverage-Berichte und das Xcode-Ergebnisbundle werden 14 Tage lang als getrennte Artefakte gespeichert. SwiftFormat, Builds, Tests, Versionskonsistenz, Repository-Hygiene und die Coverage-Schwelle sind verpflichtend.
 
 Vor einem Commit kann SwiftFormat alle rein mechanischen Stilabweichungen automatisch beheben und anschließend verbindlich prüfen:
 
@@ -27,7 +27,9 @@ swiftformat --config .swiftformat SecretMatch SecretMatchTests
 swiftformat --lint --config .swiftformat SecretMatch SecretMatchTests
 ```
 
-Erst wenn der zweite Befehl ohne Abweichung beendet wird, sollte der Commit erstellt werden. Pull Requests mit verbleibenden Formatabweichungen werden von `iOS Quality` abgelehnt.
+Vor jedem Commit müssen beide Befehle in dieser Reihenfolge ausgeführt werden. Der erste behebt rein mechanische Abweichungen automatisch; der Commit darf erst erstellt werden, wenn der zweite Befehl erfolgreich ist. Pull Requests mit verbleibenden Formatabweichungen werden von `iOS Quality` abgelehnt.
+
+Nach jedem Push wird der zum Commit-SHA gehörende `iOS Quality`-Run bis zum endgültigen Ergebnis beobachtet. Eine Auslieferung gilt erst dann als erfolgreich, wenn alle verpflichtenden Jobs grün sind. Ein noch laufender, fehlgeschlagener oder abgebrochener Run darf nicht als erfolgreicher Abschluss gemeldet werden.
 
 Die Tests verändern weder den Produktivserver noch gespeicherte Eventdaten. Netzwerk-, vollständige UI- und End-to-End-Abläufe benötigen weiterhin eigene Integrations- beziehungsweise UI-Tests.
 

@@ -18,9 +18,11 @@ Load the matching project skill when the task touches its area:
 - Run the smallest relevant checks; for app changes, build the `SecretMatch` scheme.
 - For every delivered app-code, UI, API-integration, model, asset, or Xcode-project change, set `MARKETING_VERSION` to the current date in `YYYY.MM.DD` format and increment `CURRENT_PROJECT_VERSION`. If another delivery occurs on the same date, keep the date version and increment the build number again. Keep the `SecretMatch` and `SecretMatch Admin` targets on the same values in every build configuration. Documentation-only changes do not require a version bump.
 - When an app change affects an API request, response, authentication flow, feedback behavior, event reset, or other server-side contract, inspect and update the matching SecretMatch WordPress module under `../../wordpress/wordpress/wp-content/plugins/secretmatch` as needed. Keep its plugin version, README, and changelog consistent, run PHP lint and relevant module checks, and follow that repository's own `AGENTS.md` and Git rules.
+- Before every commit, run `swiftformat --config .swiftformat SecretMatch SecretMatchTests` and then `swiftformat --lint --config .swiftformat SecretMatch SecretMatchTests`. Create the commit only after the lint command succeeds. Review and stage any formatter changes as part of the task; never hide unrelated changes in the commit.
 - Run `git diff --check` before committing.
 - Stage only task-related files and exclude Xcode user-state files.
 - Commit with a clear product-level message and push the current branch unless the user explicitly says not to.
+- After every push, identify the GitHub Actions run for the pushed commit SHA and wait until it reaches a final result. A delivery is successful only when every required job is green. If the pipeline fails or is cancelled, investigate and fix it where possible; otherwise report the exact failed job and blocker. Do not report the task as successfully completed while its pipeline is queued or running.
 - Never commit credentials, passwords, tokens, signing material, or local Xcode state.
 - If review, build, commit, or push cannot be completed, report the exact blocker and next action.
 

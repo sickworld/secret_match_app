@@ -91,6 +91,15 @@ Bei reinen Markdown-Änderungen reichen normalerweise Inhaltsprüfung, Skill-Val
 
 Für jedes neue Feature oder geänderte Verhalten die neu ergänzten Tests und mindestens die betroffene bestehende Testsuite ausführen. Eine erfolgreiche Kompilierung nicht als Testabdeckung ausgeben.
 
+Vor jedem Commit SwiftFormat zuerst korrigierend und danach als verbindlichen Lint ausführen:
+
+```bash
+swiftformat --config .swiftformat SecretMatch SecretMatchTests
+swiftformat --lint --config .swiftformat SecretMatch SecretMatchTests
+```
+
+Ein Commit darf erst erstellt werden, wenn der Lint ohne Abweichung erfolgreich ist. Alle Formatter-Änderungen vor dem Staging prüfen und ausschließlich aufgabenzugehörige Änderungen übernehmen.
+
 ## Git und Commit
 
 Nach abgeschlossener und geprüfter Arbeit:
@@ -101,7 +110,8 @@ Nach abgeschlossener und geprüfter Arbeit:
 4. Den staged Diff mit `git diff --cached` abschließend reviewen.
 5. Aussagekräftig committen.
 6. Auf den aktuellen Branch pushen, sofern der User nichts anderes sagt.
-7. Final `git status --short` prüfen.
+7. Den zum gepushten Commit-SHA gehörenden GitHub-Actions-Lauf bis zum finalen Ergebnis überwachen. Der Task gilt erst als erfolgreich, wenn alle verpflichtenden Jobs grün sind. Bei Fehler oder Abbruch die Ursache untersuchen und beheben oder den exakten Job und Blocker melden.
+8. Final `git status --short` prüfen.
 
 Commit-Messages beschreiben die fachliche Änderung, zum Beispiel:
 
