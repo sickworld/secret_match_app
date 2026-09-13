@@ -2,9 +2,9 @@
 
 In allen sichtbaren App-Texten, Exporten und Benachrichtigungen lautet der Produktname **Match&Play**. Interne Bezeichner wie API-Pfade, Bundle-IDs und technische Klassen bleiben aus Kompatibilitätsgründen unverändert.
 
-## Automatisierte Tests (Build 146)
+## Automatisierte Tests (Build 147)
 
-Das Xcode-Projekt enthält das Unit-Test-Target `SecretMatchTests`. Die Tests prüfen ohne produktive Serverzugriffe unter anderem Eventnummernformatierung, Match- und Aktionsdefinitionen, Queue-Texte, lokale Codable-Persistenz sowie zentrale JSON-Verträge für Login, Bildschirmschoner, Event-Mitteilungen und Admin-Anzeigen. Code Coverage ist im gemeinsamen `SecretMatch`-Scheme aktiviert.
+Das Xcode-Projekt enthält das Unit-Test-Target `SecretMatchTests`. Die Tests prüfen ohne produktive Serverzugriffe unter anderem Eventnummernformatierung, Match- und Aktionsdefinitionen, Queue-Texte, lokale Codable-Persistenz, zentrale JSON-Verträge für Login und Admin-Daten sowie den anonymen CSV-/PDF-Export. Netzwerkfreie Offscreen-Renderings decken zusätzlich die statischen Info-, Regel-, Feedback-, Login- und Eingabeansichten in iPad-Größe ab. Code Coverage ist im gemeinsamen `SecretMatch`-Scheme aktiviert.
 
 Die Suite kann auf einem installierten iPad-Simulator ausgeführt werden:
 
