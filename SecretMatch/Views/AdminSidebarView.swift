@@ -25,23 +25,23 @@ struct AdminSidebarView: View {
 
             Divider().background(Color.white.opacity(0.3))
 
-#if ADMIN_APP
-            navigationButton(.overview, title: "Dashboard")
-            ForEach(AdminDashboardSection.featureSections) { section in
-                navigationButton(section)
-            }
-#else
-            navigationButton(.overview, title: "Aktionen")
-#endif
+            #if ADMIN_APP
+                navigationButton(.overview, title: "Dashboard")
+                ForEach(AdminDashboardSection.featureSections) { section in
+                    navigationButton(section)
+                }
+            #else
+                navigationButton(.overview, title: "Aktionen")
+            #endif
 
-#if !ADMIN_APP
-            Button {
-                showBillboard = true
-            } label: {
-                Label("Billboard Vollbild", systemImage: "rectangle.inset.filled")
-            }
-            .buttonStyle(SidebarButtonStyle())
-#endif
+            #if !ADMIN_APP
+                Button {
+                    showBillboard = true
+                } label: {
+                    Label("Billboard Vollbild", systemImage: "rectangle.inset.filled")
+                }
+                .buttonStyle(SidebarButtonStyle())
+            #endif
 
             Divider().background(Color.white.opacity(0.3))
 
@@ -77,27 +77,27 @@ struct AdminSidebarView: View {
         let managedItems = api.screensaverItems.filter { $0.enabled && $0.showAsSponsor }
         if managedItems.isEmpty {
             HStack(alignment: .center, spacing: 5) {
-                    Image("hot-chili")
-                        .resizable()
-                        .scaledToFit()
-                        .frame(width: isCompact ? 64 : 48, height: isCompact ? 48 : 38)
-                        .accessibilityLabel("Hot Chili Events")
+                Image("hot-chili")
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: isCompact ? 64 : 48, height: isCompact ? 48 : 38)
+                    .accessibilityLabel("Hot Chili Events")
 
-                    Image("ficken-logo")
-                        .resizable()
-                        .scaledToFit()
-                        .frame(width: isCompact ? 68 : 54, height: isCompact ? 38 : 30)
-                        .padding(.horizontal, 5)
-                        .padding(.vertical, 3)
-                        .background(Color.white.opacity(0.94))
-                        .clipShape(RoundedRectangle(cornerRadius: SecretMatchTheme.cornerRadius))
-                        .accessibilityLabel("FICKEN Likör")
+                Image("ficken-logo")
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: isCompact ? 68 : 54, height: isCompact ? 38 : 30)
+                    .padding(.horizontal, 5)
+                    .padding(.vertical, 3)
+                    .background(Color.white.opacity(0.94))
+                    .clipShape(RoundedRectangle(cornerRadius: SecretMatchTheme.cornerRadius))
+                    .accessibilityLabel("FICKEN Likör")
 
-                    Image("club2020")
-                        .resizable()
-                        .scaledToFit()
-                        .frame(width: isCompact ? 108 : 88, height: isCompact ? 74 : 62)
-                        .accessibilityLabel("Club 2020")
+                Image("club2020")
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: isCompact ? 108 : 88, height: isCompact ? 74 : 62)
+                    .accessibilityLabel("Club 2020")
             }
         } else {
             TimelineView(.periodic(from: .now, by: 6)) { context in

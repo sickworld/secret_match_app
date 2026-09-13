@@ -375,7 +375,7 @@ struct AdminDashboardView: View {
                         ? "Event steuern, Teilnehmer verwalten und den Systemzustand prüfen."
                         : "Live-Status, Geräte und Kennzahlen auf einen Blick."
                 )
-                    .foregroundStyle(SecretMatchTheme.muted)
+                .foregroundStyle(SecretMatchTheme.muted)
             }
             Spacer()
             Button {
@@ -491,8 +491,8 @@ struct AdminDashboardView: View {
         LazyVGrid(columns: [GridItem(.adaptive(minimum: 330), spacing: 16)], spacing: 16) {
             controlCard(title: "🖼️ Bildschirmschoner & Sponsoren", subtitle: "Startzeit, Bilder, Texte und Sichtbarkeit gemeinsam pflegen") {
                 Text(api.adminScreensaverItems.isEmpty
-                     ? "Standardbilder sind aktiv."
-                     : "\(api.adminScreensaverItems.count) eigene Medien im Katalog.")
+                    ? "Standardbilder sind aktiv."
+                    : "\(api.adminScreensaverItems.count) eigene Medien im Katalog.")
                     .foregroundStyle(SecretMatchTheme.muted)
 
                 Button("Medien verwalten") {
@@ -511,7 +511,7 @@ struct AdminDashboardView: View {
                 }
                 .buttonStyle(SecretSecondaryButtonStyle())
 
-                Stepper("Match-Einblendung: \(rotationSeconds) Sekunden", value: $rotationSeconds, in: 5...8)
+                Stepper("Match-Einblendung: \(rotationSeconds) Sekunden", value: $rotationSeconds, in: 5 ... 8)
                     .foregroundStyle(.white)
                 Text("Neue Matches werden kurz groß gezeigt. Die Live-Ansicht selbst bleibt ruhig stehen.")
                     .font(.caption)
@@ -543,14 +543,14 @@ struct AdminDashboardView: View {
                     maxCharacters: 647,
                     allowsNewlines: true
                 )
-                    .frame(minHeight: 150)
-                    .foregroundStyle(.primary)
-                    .clipShape(RoundedRectangle(cornerRadius: SecretMatchTheme.cornerRadius))
-                    .onChange(of: quickMessagesText) { _, _ in
-                        if quickMessagesSaveState != .saving {
-                            quickMessagesSaveState = .idle
-                        }
+                .frame(minHeight: 150)
+                .foregroundStyle(.primary)
+                .clipShape(RoundedRectangle(cornerRadius: SecretMatchTheme.cornerRadius))
+                .onChange(of: quickMessagesText) { _, _ in
+                    if quickMessagesSaveState != .saving {
+                        quickMessagesSaveState = .idle
                     }
+                }
 
                 Button { Task { await saveQuickMessages() } } label: {
                     HStack(spacing: 10) {
@@ -563,8 +563,8 @@ struct AdminDashboardView: View {
                         Text(quickMessagesSaveState == .saving ? "Wird gespeichert…" : "Schnelltexte speichern")
                     }
                 }
-                    .buttonStyle(SecretPrimaryButtonStyle())
-                    .disabled(isWorking || quickMessagesSaveState == .saving)
+                .buttonStyle(SecretPrimaryButtonStyle())
+                .disabled(isWorking || quickMessagesSaveState == .saving)
 
                 switch quickMessagesSaveState {
                 case .idle, .saving:
@@ -622,12 +622,12 @@ struct AdminDashboardView: View {
                         keyboard: .number(maxDigits: 5),
                         keyboardTitle: "Nummernbereich festlegen"
                     )
-                        .textFieldStyle(.plain)
-                        .secretAdminInput()
-                        .onChange(of: participantRangeMax) { _, value in
-                            participantRangeMax = String(value.filter(\.isNumber).prefix(5))
-                            participantRangeConfirmation = ""
-                        }
+                    .textFieldStyle(.plain)
+                    .secretAdminInput()
+                    .onChange(of: participantRangeMax) { _, value in
+                        participantRangeMax = String(value.filter(\.isNumber).prefix(5))
+                        participantRangeConfirmation = ""
+                    }
                     Button(numbersRemovedByRange > 0 ? "Bereich verkleinern" : "Bereich ergänzen") {
                         Task { await reconcileParticipantRange() }
                     }
@@ -651,9 +651,9 @@ struct AdminDashboardView: View {
                         keyboardTitle: "Änderung bestätigen",
                         forcesUppercase: true
                     )
-                        .textFieldStyle(.plain)
-                        .secretAdminInput()
-                        .textInputAutocapitalization(.characters)
+                    .textFieldStyle(.plain)
+                    .secretAdminInput()
+                    .textInputAutocapitalization(.characters)
                 }
                 Text("Die Testnummern 901–916 bleiben bei diesem Abgleich unverändert.")
                     .font(.caption)
@@ -670,8 +670,8 @@ struct AdminDashboardView: View {
                     keyboard: .number(maxDigits: 10),
                     keyboardTitle: "Teilnehmernummer freigeben"
                 )
-                    .textFieldStyle(.plain)
-                    .secretAdminInput()
+                .textFieldStyle(.plain)
+                .secretAdminInput()
                 Button {
                     Task { await addParticipant() }
                 } label: {
@@ -687,8 +687,8 @@ struct AdminDashboardView: View {
                 keyboard: .number(maxDigits: 10),
                 keyboardTitle: "Teilnehmer suchen"
             )
-                .textFieldStyle(.plain)
-                .secretAdminInput(highlighted: !participantSearch.isEmpty)
+            .textFieldStyle(.plain)
+            .secretAdminInput(highlighted: !participantSearch.isEmpty)
 
             if filteredParticipants.isEmpty {
                 Text("Keine passende Nummer gefunden.")
@@ -778,12 +778,12 @@ struct AdminDashboardView: View {
                             .foregroundStyle(SecretMatchTheme.secondary)
                             .accessibilityLabel(person.genderSymbol == "–" ? "Keine Angabe" : "Geschlecht angegeben")
                     }
-                        .font(.headline.monospacedDigit())
-                        .foregroundStyle(.white)
-                        .padding(10)
-                        .frame(maxWidth: .infinity)
-                        .background(SecretMatchTheme.primary.opacity(0.16))
-                        .clipShape(RoundedRectangle(cornerRadius: SecretMatchTheme.cornerRadius))
+                    .font(.headline.monospacedDigit())
+                    .foregroundStyle(.white)
+                    .padding(10)
+                    .frame(maxWidth: .infinity)
+                    .background(SecretMatchTheme.primary.opacity(0.16))
+                    .clipShape(RoundedRectangle(cornerRadius: SecretMatchTheme.cornerRadius))
                 }
             }
             if api.adminDashboard?.topPeople?.isEmpty != false {
@@ -901,8 +901,8 @@ struct AdminDashboardView: View {
                     .font(.title3.bold())
                     .foregroundStyle(.white)
                 Text(billboard.online
-                     ? "Online · \(billboard.resolution) · \(billboard.modeLabel)"
-                     : "Offline · \(billboard.lastSeenDescription)")
+                    ? "Online · \(billboard.resolution) · \(billboard.modeLabel)"
+                    : "Offline · \(billboard.lastSeenDescription)")
                     .font(.caption.bold())
                     .foregroundStyle(color)
             }
@@ -953,7 +953,7 @@ struct AdminDashboardView: View {
                         keyboardTitle: "Neue zweistellige PIN",
                         isSecure: true
                     )
-                        .onChange(of: pinDraft) { _, value in pinDraft = String(value.filter(\.isNumber).prefix(2)) }
+                    .onChange(of: pinDraft) { _, value in pinDraft = String(value.filter(\.isNumber).prefix(2)) }
                     Text("Die Nummer wird beim Speichern auf allen Geräten abgemeldet.")
                 }
             }
@@ -979,9 +979,9 @@ struct AdminDashboardView: View {
                         keyboard: .text(maxCharacters: 40),
                         keyboardTitle: "Anzeigename"
                     )
-                        .onChange(of: equipmentNameDraft) { _, value in
-                            equipmentNameDraft = String(value.prefix(40))
-                        }
+                    .onChange(of: equipmentNameDraft) { _, value in
+                        equipmentNameDraft = String(value.prefix(40))
+                    }
                     Text("Dieser Name erscheint im Dashboard sowie in Ausfall- und Entwarnungsmeldungen.")
                 }
             }
@@ -1010,10 +1010,10 @@ struct AdminDashboardView: View {
                         keyboard: .text(maxCharacters: 40),
                         keyboardTitle: "Billboard benennen"
                     )
-                        .onChange(of: billboardNameDraft) { _, value in
-                            billboardNameDraft = String(value.prefix(40))
-                            generatedBillboardURL = nil
-                        }
+                    .onChange(of: billboardNameDraft) { _, value in
+                        billboardNameDraft = String(value.prefix(40))
+                        generatedBillboardURL = nil
+                    }
                     Text("Der Name erscheint in Status, Warnungen und der Billboard-Verwaltung.")
                 }
 
@@ -1101,7 +1101,7 @@ struct AdminDashboardView: View {
                         keyboardTitle: "Eventabschluss bestätigen",
                         forcesUppercase: true
                     )
-                        .textInputAutocapitalization(.characters)
+                    .textInputAutocapitalization(.characters)
                     Button("Event abschließen und archivieren", role: .destructive) {
                         Task { await performReset() }
                     }
@@ -1134,9 +1134,9 @@ struct AdminDashboardView: View {
             statusRow("Telegram", api.adminDashboard?.telegramConfigured == true ? "Konfiguriert" : "Nicht konfiguriert",
                       good: api.adminDashboard?.telegramConfigured == true)
             statusRow("Admin-App-Warnungen", api.adminDashboard?.apnsConfigured == true
-                      ? "Konfiguriert · \(api.adminDashboard?.adminPushDevices ?? 0) Gerät(e)"
-                      : "APNs nicht konfiguriert",
-                      good: api.adminDashboard?.apnsConfigured == true)
+                ? "Konfiguriert · \(api.adminDashboard?.adminPushDevices ?? 0) Gerät(e)"
+                : "APNs nicht konfiguriert",
+                good: api.adminDashboard?.apnsConfigured == true)
             if api.adminDashboard?.apnsConfigured != true,
                let diagnostics = api.adminDashboard?.apnsDiagnostics {
                 Divider().overlay(SecretMatchTheme.muted.opacity(0.35))
@@ -1165,7 +1165,7 @@ struct AdminDashboardView: View {
             statusRow("Billboard-Sessions", "\(api.adminDashboard?.billboardSessions ?? 0)")
             statusRow("WordPress-Zeit", api.adminDashboard?.wordpressTime ?? "–")
             statusRow("Letzte Aktivität", api.adminDashboard?.latestActivity.isEmpty == false
-                      ? api.adminDashboard!.latestActivity : "Noch keine")
+                ? api.adminDashboard!.latestActivity : "Noch keine")
             if let statusMessage {
                 Text(statusMessage).foregroundStyle(.green).font(.callout.bold())
             }
@@ -1313,7 +1313,7 @@ struct AdminDashboardView: View {
     }
 
     private var participantRangeTarget: Int? {
-        guard let value = Int(participantRangeMax), (1...10_000).contains(value) else { return nil }
+        guard let value = Int(participantRangeMax), (1 ... 10_000).contains(value) else { return nil }
         return value
     }
 
@@ -1325,13 +1325,13 @@ struct AdminDashboardView: View {
         let name = adminCredentialName.trimmingCharacters(in: .whitespacesAndNewlines)
         return !name.isEmpty
             && name.count <= 60
-            && (4...128).contains(adminCredentialPassword.count)
+            && (4 ... 128).contains(adminCredentialPassword.count)
             && adminCredentialPassword == adminCredentialConfirmation
             && api.adminCredentials.count < 20
     }
 
     private var dummyNumbers: Set<String> {
-        Set((901...916).map(String.init))
+        Set((901 ... 916).map(String.init))
     }
 
     private var numbersRemovedByRange: Int {
@@ -1343,7 +1343,7 @@ struct AdminDashboardView: View {
 
     private func rangePreview(target: Int) -> String {
         let allowed = Set(api.adminParticipants.allowed)
-        let additions = (1...target).lazy.map(String.init).filter { !allowed.contains($0) }.count
+        let additions = (1 ... target).lazy.map(String.init).filter { !allowed.contains($0) }.count
         if numbersRemovedByRange > 0 {
             return "\(additions) hinzufügen · \(numbersRemovedByRange) entfernen (inklusive Profil, PIN und Sitzung)"
         }

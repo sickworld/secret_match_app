@@ -137,7 +137,7 @@ struct AdminMatchRequestListView: View {
                 keyboard: .number(maxDigits: 10),
                 keyboardTitle: "Match-Requests durchsuchen"
             )
-                .foregroundStyle(.white)
+            .foregroundStyle(.white)
         }
         .padding(.horizontal, 16)
         .frame(minWidth: 240, maxWidth: .infinity, minHeight: 54)
@@ -356,12 +356,12 @@ private struct AdminMatchRequestEditorView: View {
                         text: $message,
                         maxCharacters: 180
                     )
-                        .frame(minHeight: 90)
-                        .onChange(of: message) { _, value in
-                            if value.count > 180 {
-                                message = String(value.prefix(180))
-                            }
+                    .frame(minHeight: 90)
+                    .onChange(of: message) { _, value in
+                        if value.count > 180 {
+                            message = String(value.prefix(180))
                         }
+                    }
                     Text("\(message.count)/180")
                         .font(.caption.monospacedDigit())
                         .foregroundStyle(.secondary)

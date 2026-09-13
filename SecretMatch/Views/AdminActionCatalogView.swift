@@ -172,11 +172,11 @@ struct AdminActionCatalogView: View {
     }
 
     private var usesCompactLayout: Bool {
-#if ADMIN_APP
-        true
-#else
-        horizontalSizeClass == .compact
-#endif
+        #if ADMIN_APP
+            true
+        #else
+            horizontalSizeClass == .compact
+        #endif
     }
 
     private var catalogColumns: [GridItem] {
@@ -305,7 +305,7 @@ private struct ActionDefinitionEditorView: View {
                         Text("Mann").tag("male")
                         Text("Frau").tag("female")
                     }
-                    Stepper("Position \(sortOrder)", value: $sortOrder, in: 0...999, step: 10)
+                    Stepper("Position \(sortOrder)", value: $sortOrder, in: 0 ... 999, step: 10)
                     Toggle("In der Teilnehmer-App aktiv", isOn: $enabled)
                 }
 

@@ -152,8 +152,8 @@ struct ParticipantOverviewView: View {
                     keyboard: .number(maxDigits: 10),
                     keyboardTitle: "Übersicht nach Eventnummer filtern"
                 )
-                    .font(.system(size: 18, weight: .semibold, design: .rounded))
-                    .foregroundStyle(.white)
+                .font(.system(size: 18, weight: .semibold, design: .rounded))
+                .foregroundStyle(.white)
                 if !numberQuery.isEmpty {
                     Button {
                         numberQuery = ""
@@ -242,26 +242,26 @@ struct ParticipantOverviewView: View {
                     .accessibilityHidden(true)
                 Text(title)
             }
-                .font(.system(size: 18, weight: .bold, design: .rounded))
-                .foregroundStyle(
-                    isSelected
-                        ? (usesColorIndependentSelection ? Color.black : selectedForegroundColor)
-                        : Color.white
+            .font(.system(size: 18, weight: .bold, design: .rounded))
+            .foregroundStyle(
+                isSelected
+                    ? (usesColorIndependentSelection ? Color.black : selectedForegroundColor)
+                    : Color.white
+            )
+            .padding(.horizontal, 18)
+            .frame(minHeight: 52)
+            .background(
+                usesColorIndependentSelection
+                    ? (isSelected ? Color.white : Color.black)
+                    : (isSelected ? color.opacity(0.9) : color.opacity(0.14))
+            )
+            .clipShape(Capsule())
+            .overlay(
+                Capsule().stroke(
+                    usesColorIndependentSelection ? Color.white : color.opacity(isSelected ? 1 : 0.5),
+                    lineWidth: isSelected ? 2 : 1
                 )
-                .padding(.horizontal, 18)
-                .frame(minHeight: 52)
-                .background(
-                    usesColorIndependentSelection
-                        ? (isSelected ? Color.white : Color.black)
-                        : (isSelected ? color.opacity(0.9) : color.opacity(0.14))
-                )
-                .clipShape(Capsule())
-                .overlay(
-                    Capsule().stroke(
-                        usesColorIndependentSelection ? Color.white : color.opacity(isSelected ? 1 : 0.5),
-                        lineWidth: isSelected ? 2 : 1
-                    )
-                )
+            )
         }
         .buttonStyle(.plain)
         .accessibilityLabel("\(title), \(isSelected ? "ausgewählt" : "nicht ausgewählt")")

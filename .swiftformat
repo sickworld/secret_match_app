@@ -2,9 +2,10 @@
 --indent 4
 --linebreaks lf
 --maxwidth none
+--swiftversion 5.0
 --wraparguments preserve
 --wrapcollections preserve
 --trimwhitespace always
 
-# Keine semantische Bereinigung in einem reinen Format-Check.
---disable redundantSelf
+# Nur mechanische Formatregeln; keine semantischen Umformungen.
+--rules blankLineAfterImports,blankLinesAroundMark,blankLinesAtEndOfScope,blankLinesAtStartOfScope,consecutiveBlankLines,consecutiveSpaces,duplicateImports,indent,linebreakAtEndOfFile,linebreaks,sortImports,spaceAroundBraces,spaceAroundBrackets,spaceAroundComments,spaceAroundGenerics,spaceAroundOperators,spaceAroundParens,spaceInsideBraces,spaceInsideBrackets,spaceInsideComments,spaceInsideGenerics,spaceInsideParens,trailingSpace

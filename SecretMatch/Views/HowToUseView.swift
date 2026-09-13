@@ -23,7 +23,7 @@ struct HowToUseView: View {
     private let maxStep = 5
     private var options: [DemoActionOption] {
         api.matchDefinitions.filter(\.enabled).map { .init(type: $0.id, title: $0.name, emoji: $0.emoji, color: Color(hex: $0.color)) }
-        + api.actionDefinitions.filter(\.enabled).map { .init(type: $0.id, title: $0.name, emoji: $0.emoji, color: Color(hex: $0.color)) }
+            + api.actionDefinitions.filter(\.enabled).map { .init(type: $0.id, title: $0.name, emoji: $0.emoji, color: Color(hex: $0.color)) }
     }
 
     private var matchOptions: [DemoActionOption] {
@@ -176,7 +176,7 @@ struct HowToUseView: View {
 
     private var progressBar: some View {
         HStack(spacing: 7) {
-            ForEach(0...maxStep, id: \.self) { item in
+            ForEach(0 ... maxStep, id: \.self) { item in
                 Capsule()
                     .fill(item <= step ? SecretMatchTheme.primary : SecretMatchTheme.surfaceRaised)
                     .frame(height: 6)

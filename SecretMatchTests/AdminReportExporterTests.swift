@@ -1,6 +1,6 @@
 import Foundation
-import XCTest
 @testable import SecretMatch
+import XCTest
 
 @MainActor
 final class AdminReportExporterTests: XCTestCase {

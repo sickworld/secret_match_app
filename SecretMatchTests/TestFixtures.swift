@@ -72,7 +72,7 @@ func makeAdminStatisticsFixture() -> AdminEventStatistics {
         topParticipants: [
             AdminParticipantStatistic(number: "7", sent: 4, received: 5, matches: 2),
         ],
-        timeline: (0..<30).map { index in
+        timeline: (0 ..< 30).map { index in
             AdminStatisticTimelinePoint(
                 hour: String(format: "20:%02d", index * 2),
                 requests: index,
@@ -168,7 +168,7 @@ func makeAdminDeviceFixture() -> AdminDeviceStatus {
         number: "7",
         batteryLevel: 82,
         batteryState: "charging",
-        appVersion: "148",
+        appVersion: "149",
         lastSeen: Int(Date().timeIntervalSince1970) - 20,
         online: true,
         queuedSendCount: 2,

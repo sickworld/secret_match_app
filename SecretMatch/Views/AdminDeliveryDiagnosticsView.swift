@@ -111,10 +111,10 @@ struct AdminDeliveryDiagnosticsView: View {
                 keyboard: .number(maxDigits: 10),
                 keyboardTitle: title
             )
-                .font(.title3.bold().monospacedDigit())
-                .padding(12)
-                .background(SecretMatchTheme.surfaceRaised)
-                .clipShape(RoundedRectangle(cornerRadius: SecretMatchTheme.cornerRadius))
+            .font(.title3.bold().monospacedDigit())
+            .padding(12)
+            .background(SecretMatchTheme.surfaceRaised)
+            .clipShape(RoundedRectangle(cornerRadius: SecretMatchTheme.cornerRadius))
         }
         .frame(maxWidth: .infinity)
     }

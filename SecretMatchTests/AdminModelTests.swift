@@ -1,6 +1,6 @@
+@testable import SecretMatch
 import SwiftUI
 import XCTest
-@testable import SecretMatch
 
 @MainActor
 final class ParticipantPresentationTests: XCTestCase {

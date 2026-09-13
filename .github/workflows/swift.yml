@@ -24,10 +24,10 @@ env:
   DEVELOPER_DIR: /Applications/Xcode_26.6.app/Contents/Developer
 
 jobs:
-  build-test-quality:
-    name: Build, tests and quality
+  quality:
+    name: Code quality
     runs-on: macos-26
-    timeout-minutes: 30
+    timeout-minutes: 10
 
     defaults:
       run:
@@ -39,17 +39,16 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Prepare reports
+      - name: Prepare quality report
         run: |
           mkdir -p artifacts
-          touch artifacts/participant-build.log artifacts/admin-build.log artifacts/tests.log artifacts/swiftformat.log
+          touch artifacts/swiftformat.log
 
       - name: Show toolchain
         run: |
           set -euo pipefail
           xcodebuild -version
           swiftformat --version
-          xcbeautify --version
 
       - name: Check repository hygiene and project versions
         run: |
@@ -84,13 +83,12 @@ jobs:
           xcodebuild -list -project "$PROJECT"
           echo "Build $build_versions / Version $marketing_versions" | tee artifacts/project-version.txt
 
-      - name: Run SwiftFormat lint (advisory)
+      - name: Enforce SwiftFormat
         run: |
           set -o pipefail
           set +e
           swiftformat \
             --lint \
-            --lenient \
             --config .swiftformat \
             --reporter github-actions-log \
             SecretMatch SecretMatchTests \
@@ -101,12 +99,51 @@ jobs:
           format_issues="$(awk '/^::(warning|error)/ { count++ } END { print count + 0 }' artifacts/swiftformat.log)"
           printf '%s\n' "$format_issues" > artifacts/swiftformat-issue-count.txt
           if [[ "$format_status" -ne 0 ]]; then
-            echo "::warning::SwiftFormat konnte nicht vollständig ausgeführt werden. Der Check ist vorerst informativ."
+            echo "::error::SwiftFormat meldet $format_issues Abweichungen. Bitte Auto-Fix lokal ausführen und erneut committen."
+            exit "$format_status"
           fi
+
+      - name: Publish quality summary
+        if: always()
+        run: |
+          format_issues="–"
+          [[ -f artifacts/swiftformat-issue-count.txt ]] && format_issues="$(tr -d '\n' < artifacts/swiftformat-issue-count.txt)"
+          {
+            echo "## Code quality"
+            echo
+            echo "- SwiftFormat-Abweichungen: **$format_issues**"
+            echo "- Projektversionen und Repository-Hygiene wurden geprüft."
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload quality report
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: code-quality-report
+          path: artifacts/
+          if-no-files-found: warn
+          retention-days: 14
+
+  build-participant:
+    name: Build participant app
+    needs: quality
+    runs-on: macos-26
+    timeout-minutes: 15
+
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+        with:
+          persist-credentials: false
 
       - name: Build participant app
         run: |
           set -euo pipefail
+          mkdir -p artifacts
           xcodebuild \
             -project "$PROJECT" \
             -scheme "$PARTICIPANT_SCHEME" \
@@ -115,11 +152,45 @@ jobs:
             -derivedDataPath "$RUNNER_TEMP/SecretMatchParticipant" \
             CODE_SIGNING_ALLOWED=NO \
             build 2>&1 | tee artifacts/participant-build.log | xcbeautify --renderer github-actions
-          touch artifacts/participant-build.passed
+
+      - name: Publish participant build summary
+        if: success()
+        run: |
+          {
+            echo "## Participant app"
+            echo
+            echo "✅ Scheme \`$PARTICIPANT_SCHEME\` wurde erfolgreich für den iOS-Simulator gebaut."
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload participant build log
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: participant-build-log
+          path: artifacts/participant-build.log
+          if-no-files-found: warn
+          retention-days: 14
+
+  build-admin:
+    name: Build admin app
+    needs: quality
+    runs-on: macos-26
+    timeout-minutes: 15
+
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+        with:
+          persist-credentials: false
 
       - name: Build admin app
         run: |
           set -euo pipefail
+          mkdir -p artifacts
           xcodebuild \
             -project "$PROJECT" \
             -scheme "$ADMIN_SCHEME" \
@@ -128,7 +199,45 @@ jobs:
             -derivedDataPath "$RUNNER_TEMP/SecretMatchAdmin" \
             CODE_SIGNING_ALLOWED=NO \
             build 2>&1 | tee artifacts/admin-build.log | xcbeautify --renderer github-actions
-          touch artifacts/admin-build.passed
+
+      - name: Publish admin build summary
+        if: success()
+        run: |
+          {
+            echo "## Admin app"
+            echo
+            echo "✅ Scheme \`$ADMIN_SCHEME\` wurde erfolgreich für den iOS-Simulator gebaut."
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload admin build log
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: admin-build-log
+          path: artifacts/admin-build.log
+          if-no-files-found: warn
+          retention-days: 14
+
+  tests:
+    name: Tests and coverage
+    needs: quality
+    runs-on: macos-26
+    timeout-minutes: 20
+
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Prepare test reports
+        run: |
+          mkdir -p artifacts
+          touch artifacts/tests.log
 
       - name: Select an available iPad simulator
         run: |
@@ -160,7 +269,6 @@ jobs:
             -resultBundlePath artifacts/SecretMatchTests.xcresult \
             CODE_SIGNING_ALLOWED=NO \
             2>&1 | tee artifacts/tests.log | xcbeautify --renderer github-actions
-          touch artifacts/tests.passed
 
       - name: Extract test and coverage reports
         run: |
@@ -189,16 +297,9 @@ jobs:
             exit 1
           fi
 
-      - name: Publish quality summary
+      - name: Publish test summary
         if: always()
         run: |
-          participant="❌"
-          admin="❌"
-          tests="❌"
-          [[ -f artifacts/participant-build.passed ]] && participant="✅"
-          [[ -f artifacts/admin-build.passed ]] && admin="✅"
-          [[ -f artifacts/tests.passed ]] && tests="✅"
-
           passed_tests="–"
           failed_tests="–"
           if [[ -f artifacts/test-summary.json ]]; then
@@ -208,30 +309,23 @@ jobs:
 
           coverage="–"
           [[ -f artifacts/coverage-percent.txt ]] && coverage="$(tr -d '\n' < artifacts/coverage-percent.txt)%"
-          format_issues="–"
-          [[ -f artifacts/swiftformat-issue-count.txt ]] && format_issues="$(tr -d '\n' < artifacts/swiftformat-issue-count.txt)"
-          compiler_warnings="$(awk '/warning:/ { count++ } END { print count + 0 }' artifacts/*build.log artifacts/tests.log 2>/dev/null || true)"
+          compiler_warnings="$(awk '/warning:/ { count++ } END { print count + 0 }' artifacts/tests.log)"
 
           {
-            echo "## iOS-Qualitätsbericht"
+            echo "## Tests and coverage"
             echo
             echo "| Prüfung | Ergebnis |"
             echo "| --- | --- |"
-            echo "| Teilnehmer-App | $participant |"
-            echo "| Admin-App | $admin |"
-            echo "| Tests | $tests · $passed_tests bestanden / $failed_tests fehlgeschlagen |"
+            echo "| Tests | $passed_tests bestanden / $failed_tests fehlgeschlagen |"
             echo "| Zeilenabdeckung | $coverage · Mindestwert ${COVERAGE_THRESHOLD}% |"
-            echo "| SwiftFormat | $format_issues Hinweise · informativ |"
             echo "| Compiler | $compiler_warnings Warnungen |"
-            echo
-            echo "Vollständige Logs, Coverage-Daten und das Xcode-Ergebnisbundle liegen im Artefakt **ios-quality-reports**."
           } >> "$GITHUB_STEP_SUMMARY"
 
-      - name: Upload logs and Xcode reports
+      - name: Upload test and coverage reports
         if: always()
         uses: actions/upload-artifact@v6
         with:
-          name: ios-quality-reports
+          name: test-and-coverage-reports
           path: artifacts/
           if-no-files-found: warn
           retention-days: 14

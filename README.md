@@ -4,9 +4,9 @@
 
 In allen sichtbaren App-Texten, Exporten und Benachrichtigungen lautet der Produktname **Match&Play**. Interne Bezeichner wie API-Pfade, Bundle-IDs und technische Klassen bleiben aus Kompatibilitätsgründen unverändert.
 
-## Automatisierte Tests (Build 148)
+## Automatisierte Tests (Build 149)
 
-Das Xcode-Projekt enthält das Unit-Test-Target `SecretMatchTests`. Die Tests prüfen ohne produktive Serverzugriffe unter anderem Eventnummernformatierung, Match- und Aktionsdefinitionen, Queue-Texte, lokale Codable-Persistenz, zentrale JSON- und API-Verträge für Teilnehmer- und Admin-Abläufe sowie den anonymen CSV-/PDF-Export. Netzwerkfreie Offscreen-Renderings decken zusätzlich Teilnehmer- und Admin-Oberflächen mit leeren und befüllten Zuständen im Hoch- und Querformat ab. Der vollständige Testlauf für Build 148 erreicht 70,14 % Zeilenabdeckung (23.352 von 33.293 Zeilen); Code Coverage ist im gemeinsamen `SecretMatch`-Scheme aktiviert.
+Das Xcode-Projekt enthält das Unit-Test-Target `SecretMatchTests`. Die Tests prüfen ohne produktive Serverzugriffe unter anderem Eventnummernformatierung, Match- und Aktionsdefinitionen, Queue-Texte, lokale Codable-Persistenz, zentrale JSON- und API-Verträge für Teilnehmer- und Admin-Abläufe sowie den anonymen CSV-/PDF-Export. Netzwerkfreie Offscreen-Renderings decken zusätzlich Teilnehmer- und Admin-Oberflächen mit leeren und befüllten Zuständen im Hoch- und Querformat ab. Der vollständige Testlauf für Build 149 erreicht 70,07 % Zeilenabdeckung (23.325 von 33.288 Zeilen); Code Coverage ist im gemeinsamen `SecretMatch`-Scheme aktiviert.
 
 Die Suite kann auf einem installierten iPad-Simulator ausgeführt werden:
 
@@ -16,9 +16,18 @@ xcodebuild -project SecretMatch.xcodeproj -scheme SecretMatch -configuration Deb
 
 ## GitHub Actions
 
-Der Workflow `iOS Quality` läuft bei Pushes und Pull Requests auf `main` sowie manuell. Er prüft die Repository-Hygiene und synchrone App-Versionen, führt SwiftFormat im Prüfmodus aus, baut die Teilnehmer- und Admin-App, startet die vollständige Testsuite auf einem verfügbaren iPad-Simulator und erzwingt mindestens 70 % Zeilenabdeckung für `SecretMatch.app`.
+Der Workflow `iOS Quality` läuft bei Pushes und Pull Requests auf `main` sowie manuell. Er zeigt getrennte Jobs für Code-Qualität, Teilnehmer-Build, Admin-Build sowie Tests und Coverage. Der Quality-Job prüft zuerst die Repository-Hygiene, synchrone App-Versionen und SwiftFormat; nur nach seinem Erfolg starten die übrigen drei Jobs parallel. Die Tests laufen auf einem verfügbaren iPad-Simulator und erzwingen mindestens 70 % Zeilenabdeckung für `SecretMatch.app`.
 
-Build- und Testdiagnosen werden direkt in GitHub dargestellt. Eine Zusammenfassung mit Testanzahl, Coverage, SwiftFormat-Hinweisen und Compiler-Warnungen erscheint im Job Summary. Rohlogs, Coverage-Berichte und das Xcode-Ergebnisbundle werden 14 Tage lang als Artefakt `ios-quality-reports` gespeichert. SwiftFormat ist zunächst informativ, damit bestehende Stilprobleme sichtbar werden, ohne die Pipeline zu blockieren; Builds, Tests, Versionskonsistenz, Repository-Hygiene und die Coverage-Schwelle sind verpflichtend.
+Build- und Testdiagnosen werden direkt in GitHub dargestellt. Jeder Job schreibt eine eigene Zusammenfassung; Rohlogs, Coverage-Berichte und das Xcode-Ergebnisbundle werden 14 Tage lang als getrennte Artefakte gespeichert. SwiftFormat, Builds, Tests, Versionskonsistenz, Repository-Hygiene und die Coverage-Schwelle sind verpflichtend.
+
+Vor einem Commit kann SwiftFormat alle rein mechanischen Stilabweichungen automatisch beheben und anschließend verbindlich prüfen:
+
+```bash
+swiftformat --config .swiftformat SecretMatch SecretMatchTests
+swiftformat --lint --config .swiftformat SecretMatch SecretMatchTests
+```
+
+Erst wenn der zweite Befehl ohne Abweichung beendet wird, sollte der Commit erstellt werden. Pull Requests mit verbleibenden Formatabweichungen werden von `iOS Quality` abgelehnt.
 
 Die Tests verändern weder den Produktivserver noch gespeicherte Eventdaten. Netzwerk-, vollständige UI- und End-to-End-Abläufe benötigen weiterhin eigene Integrations- beziehungsweise UI-Tests.
 

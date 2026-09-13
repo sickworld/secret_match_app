@@ -87,7 +87,7 @@ struct AdminScreensaverMediaView: View {
             Text("So lange wartet die Loginseite nach der letzten Bedienung.")
                 .foregroundStyle(SecretMatchTheme.muted)
 
-            Stepper(value: $idleSeconds, in: 15...600, step: 5) {
+            Stepper(value: $idleSeconds, in: 15 ... 600, step: 5) {
                 HStack {
                     Text("Bildschirmschoner starten nach")
                     Spacer()
@@ -328,7 +328,7 @@ struct AdminScreensaverMediaView: View {
                         enabled: $editEnabled
                     )
 
-                    Stepper("Position \(editSortOrder)", value: $editSortOrder, in: 0...999)
+                    Stepper("Position \(editSortOrder)", value: $editSortOrder, in: 0 ... 999)
                         .foregroundStyle(.white)
 
                     Button {
@@ -371,7 +371,7 @@ struct AdminScreensaverMediaView: View {
             Text("Für dunkle oder schwarze Logos auf dem dunklen App-Hintergrund.")
                 .font(.caption)
                 .foregroundStyle(SecretMatchTheme.muted)
-            Stepper("Je Bild \(displaySeconds.wrappedValue) Sekunden", value: displaySeconds, in: 3...30)
+            Stepper("Je Bild \(displaySeconds.wrappedValue) Sekunden", value: displaySeconds, in: 3 ... 30)
         }
         .foregroundStyle(.white)
         .tint(SecretMatchTheme.primary)

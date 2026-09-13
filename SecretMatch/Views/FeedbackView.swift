@@ -150,7 +150,7 @@ struct FeedbackView: View {
 
     private func starPicker(selection: Binding<Int?>) -> some View {
         HStack(spacing: 10) {
-            ForEach(1...5, id: \.self) { value in
+            ForEach(1 ... 5, id: \.self) { value in
                 Button {
                     selection.wrappedValue = value
                     errorMessage = nil

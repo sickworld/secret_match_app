@@ -2,7 +2,7 @@ import SwiftUI
 
 struct MatchView: View {
     @EnvironmentObject var api: APIService
-    
+
     @State private var showOverviewOverlay = false
     @State private var selectedOverviewSection: ParticipantOverviewSection = .matches
     @State private var showGuideOverlay = false
@@ -21,7 +21,6 @@ struct MatchView: View {
     @State private var allowedActionTypes: Set<String> = Set(ActionDefinition.fallbacks.map(\.id))
     @State private var usesOfflineSelectionFallback = false
 
-
     // Inactivity / Auto-Logout
     @State private var autoLogoutTask: Task<Void, Never>?
     @State private var secondsRemaining = 30
@@ -34,9 +33,8 @@ struct MatchView: View {
 
     @State private var isLoading = false
 
-
     // MARK: - Inactivity Handling
-    
+
     func resetInactivityTimer() {
         autoLogoutTask?.cancel()
         isInactivityTimerPaused = false
@@ -151,14 +149,14 @@ struct MatchView: View {
                 .onAppear {
                     resetInactivityTimer()
                 }
-            
+
             if showOverviewOverlay {
                 ParticipantOverviewView(
                     isPresented: $showOverviewOverlay,
                     selectedSection: selectedOverviewSection
                 )
-                    .environmentObject(api)
-                    .zIndex(5)
+                .environmentObject(api)
+                .zIndex(5)
             }
 
             if showGuideOverlay {
@@ -198,7 +196,7 @@ struct MatchView: View {
                     .onDisappear { resetInactivityTimer() }
                     .zIndex(6)
             }
-            
+
         }.onTapGesture {
             withAnimation {
                 showKeyboard = false

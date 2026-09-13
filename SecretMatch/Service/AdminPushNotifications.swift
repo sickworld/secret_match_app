@@ -31,23 +31,23 @@ final class SecretMatchAppDelegate: NSObject, UIApplicationDelegate, UNUserNotif
 
 enum AdminPushNotifications {
     static var environment: String {
-#if DEBUG
-        "sandbox"
-#else
-        "production"
-#endif
+        #if DEBUG
+            "sandbox"
+        #else
+            "production"
+        #endif
     }
 
     @MainActor
     static func requestAuthorizationAndRegister() async {
-#if ADMIN_APP
-        let center = UNUserNotificationCenter.current()
-        let granted = (try? await center.requestAuthorization(options: [.alert, .sound, .badge])) == true
-        guard granted else {
-            await APIService.shared.unregisterAdminPushToken()
-            return
-        }
-        UIApplication.shared.registerForRemoteNotifications()
-#endif
+        #if ADMIN_APP
+            let center = UNUserNotificationCenter.current()
+            let granted = (try? await center.requestAuthorization(options: [.alert, .sound, .badge])) == true
+            guard granted else {
+                await APIService.shared.unregisterAdminPushToken()
+                return
+            }
+            UIApplication.shared.registerForRemoteNotifications()
+        #endif
     }
 }

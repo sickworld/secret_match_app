@@ -53,7 +53,7 @@ struct AdminMatchListView: View {
                             keyboard: .number(maxDigits: 10),
                             keyboardTitle: "Matches durchsuchen"
                         )
-                            .foregroundStyle(.white)
+                        .foregroundStyle(.white)
                     }
                     .padding(.horizontal, 16)
                     .frame(minHeight: 54)
@@ -158,11 +158,11 @@ struct AdminMatchListView: View {
     }
 
     private var usesCompactHeader: Bool {
-#if ADMIN_APP
-        true
-#else
-        horizontalSizeClass == .compact
-#endif
+        #if ADMIN_APP
+            true
+        #else
+            horizontalSizeClass == .compact
+        #endif
     }
 
     private func loadErrorState(message: String) -> some View {

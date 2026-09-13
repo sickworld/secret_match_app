@@ -1,6 +1,6 @@
+@testable import SecretMatch
 import SwiftUI
 import XCTest
-@testable import SecretMatch
 
 @MainActor
 final class ViewSmokeTests: XCTestCase {
@@ -210,7 +210,7 @@ final class ViewSmokeTests: XCTestCase {
             }
         }
 
-        for level in 0...2 {
+        for level in 0 ... 2 {
             defaults.set(level, forKey: levelKey)
             defaults.set(level == 2, forKey: contrastKey)
             assertRenders(

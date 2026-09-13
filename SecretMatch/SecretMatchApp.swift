@@ -5,16 +5,16 @@ struct SecretMatchApp: App {
     @UIApplicationDelegateAdaptor(SecretMatchAppDelegate.self) private var appDelegate
     @StateObject private var api = APIService.shared
     @Environment(\.scenePhase) private var scenePhase
-    
+
     var body: some Scene {
         WindowGroup {
-#if ADMIN_APP
-            applicationContent
-#else
-            AccessibleInterfaceContainer {
+            #if ADMIN_APP
                 applicationContent
-            }
-#endif
+            #else
+                AccessibleInterfaceContainer {
+                    applicationContent
+                }
+            #endif
         }
         .onChange(of: scenePhase, initial: true) { _, phase in
             guard !isRunningUnitTests else { return }
@@ -36,25 +36,25 @@ struct SecretMatchApp: App {
 
     private var applicationContent: some View {
         ZStack {
-#if ADMIN_APP
-            Group {
-                if api.isAdmin {
-                    AdminMainView()
-                } else {
-                    AdminLoginView(isPresented: .constant(true), allowsDismiss: false)
+            #if ADMIN_APP
+                Group {
+                    if api.isAdmin {
+                        AdminMainView()
+                    } else {
+                        AdminLoginView(isPresented: .constant(true), allowsDismiss: false)
+                    }
                 }
-            }
-#else
-            Group {
-                if api.isAdmin {
-                    AdminMainView()
-                } else if api.isLoggedIn {
-                    MatchView()
-                } else {
-                    LoginView()
+            #else
+                Group {
+                    if api.isAdmin {
+                        AdminMainView()
+                    } else if api.isLoggedIn {
+                        MatchView()
+                    } else {
+                        LoginView()
+                    }
                 }
-            }
-#endif
+            #endif
         }
         .environmentObject(api)
         .preferredColorScheme(.dark)

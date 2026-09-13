@@ -1,5 +1,5 @@
-import SwiftUI
 import LocalAuthentication
+import SwiftUI
 
 struct AdminLoginView: View {
     @Binding var isPresented: Bool
@@ -22,92 +22,92 @@ struct AdminLoginView: View {
                 ScrollView {
                     VStack(spacing: 0) {
                         VStack(spacing: 34) {
-                    Image("logo")
-                        .resizable()
-                        .scaledToFit()
-                        .frame(width: 230, height: 150)
-                        .shadow(color: SecretMatchTheme.primary.opacity(0.18), radius: 18)
+                            Image("logo")
+                                .resizable()
+                                .scaledToFit()
+                                .frame(width: 230, height: 150)
+                                .shadow(color: SecretMatchTheme.primary.opacity(0.18), radius: 18)
 
-                    VStack(spacing: 12) {
-                        Text("EVENT CONTROL")
-                            .font(.caption.bold())
-                            .tracking(2.4)
-                            .foregroundStyle(SecretMatchTheme.secondary)
-                        Text("Admin-Bereich")
-                            .font(.system(size: 36, weight: .bold, design: .rounded))
-                            .foregroundStyle(.white)
-                        Text("Melde dich an, um Event und Billboard zu verwalten.")
-                            .font(.system(size: 17, weight: .medium, design: .rounded))
-                            .foregroundStyle(SecretMatchTheme.muted)
-                            .multilineTextAlignment(.center)
-                    }
-
-                    HStack {
-                        AdminKeyboardTextField(
-                            title: "Admin-Passwort",
-                            text: $password,
-                            keyboard: .text(maxCharacters: 128),
-                            keyboardTitle: "Admin-Passwort eingeben",
-                            isSecure: !showPassword,
-                            doneLabel: "Anmelden",
-                            onSubmit: performLogin
-                        )
-                        .font(.system(size: 20, weight: .semibold, design: .rounded))
-                        .foregroundStyle(.white)
-                        .textContentType(.password)
-                        .submitLabel(.go)
-
-                        Button {
-                            showPassword.toggle()
-                        } label: {
-                            Image(systemName: showPassword ? "eye.slash.fill" : "eye.fill")
-                                .font(.title3)
-                                .foregroundStyle(SecretMatchTheme.muted)
-                                .frame(width: 48, height: 48)
-                        }
-                    }
-                    .secretInput(highlighted: !password.isEmpty)
-
-                    if let errorMessage {
-                        Label(errorMessage, systemImage: "exclamationmark.triangle.fill")
-                            .foregroundStyle(SecretMatchTheme.danger)
-                            .font(.system(size: 16, weight: .semibold, design: .rounded))
-                            .padding(14)
-                            .frame(maxWidth: .infinity)
-                            .background(SecretMatchTheme.danger.opacity(0.14))
-                            .clipShape(RoundedRectangle(cornerRadius: SecretMatchTheme.cornerRadius))
-                    }
-
-                    if api.hasSavedAdminSession && biometricType != .none {
-                        Button(action: performBiometricLogin) {
-                            HStack {
-                                Image(systemName: biometricIcon)
-                                Text("Mit \(biometricName) anmelden")
-                                Spacer()
+                            VStack(spacing: 12) {
+                                Text("EVENT CONTROL")
+                                    .font(.caption.bold())
+                                    .tracking(2.4)
+                                    .foregroundStyle(SecretMatchTheme.secondary)
+                                Text("Admin-Bereich")
+                                    .font(.system(size: 36, weight: .bold, design: .rounded))
+                                    .foregroundStyle(.white)
+                                Text("Melde dich an, um Event und Billboard zu verwalten.")
+                                    .font(.system(size: 17, weight: .medium, design: .rounded))
+                                    .foregroundStyle(SecretMatchTheme.muted)
+                                    .multilineTextAlignment(.center)
                             }
-                        }
-                        .buttonStyle(SecretPrimaryButtonStyle(fontSize: 19, minHeight: 68))
-                        .disabled(isLoading)
 
-                        Text("Oder Admin-Passwort verwenden")
-                            .font(.caption.weight(.semibold))
-                            .foregroundStyle(SecretMatchTheme.muted)
-                    }
-
-                    Button(action: performLogin) {
-                        if isLoading {
-                            ProgressView().tint(.white)
-                        } else {
                             HStack {
-                                Text("Admin anmelden")
-                                Spacer()
-                                Image(systemName: "arrow.right")
+                                AdminKeyboardTextField(
+                                    title: "Admin-Passwort",
+                                    text: $password,
+                                    keyboard: .text(maxCharacters: 128),
+                                    keyboardTitle: "Admin-Passwort eingeben",
+                                    isSecure: !showPassword,
+                                    doneLabel: "Anmelden",
+                                    onSubmit: performLogin
+                                )
+                                .font(.system(size: 20, weight: .semibold, design: .rounded))
+                                .foregroundStyle(.white)
+                                .textContentType(.password)
+                                .submitLabel(.go)
+
+                                Button {
+                                    showPassword.toggle()
+                                } label: {
+                                    Image(systemName: showPassword ? "eye.slash.fill" : "eye.fill")
+                                        .font(.title3)
+                                        .foregroundStyle(SecretMatchTheme.muted)
+                                        .frame(width: 48, height: 48)
+                                }
                             }
-                        }
-                    }
-                    .buttonStyle(SecretPrimaryButtonStyle(fontSize: 20, minHeight: 76))
-                    .disabled(password.isEmpty || isLoading)
-                    .opacity(password.isEmpty ? 0.55 : 1)
+                            .secretInput(highlighted: !password.isEmpty)
+
+                            if let errorMessage {
+                                Label(errorMessage, systemImage: "exclamationmark.triangle.fill")
+                                    .foregroundStyle(SecretMatchTheme.danger)
+                                    .font(.system(size: 16, weight: .semibold, design: .rounded))
+                                    .padding(14)
+                                    .frame(maxWidth: .infinity)
+                                    .background(SecretMatchTheme.danger.opacity(0.14))
+                                    .clipShape(RoundedRectangle(cornerRadius: SecretMatchTheme.cornerRadius))
+                            }
+
+                            if api.hasSavedAdminSession && biometricType != .none {
+                                Button(action: performBiometricLogin) {
+                                    HStack {
+                                        Image(systemName: biometricIcon)
+                                        Text("Mit \(biometricName) anmelden")
+                                        Spacer()
+                                    }
+                                }
+                                .buttonStyle(SecretPrimaryButtonStyle(fontSize: 19, minHeight: 68))
+                                .disabled(isLoading)
+
+                                Text("Oder Admin-Passwort verwenden")
+                                    .font(.caption.weight(.semibold))
+                                    .foregroundStyle(SecretMatchTheme.muted)
+                            }
+
+                            Button(action: performLogin) {
+                                if isLoading {
+                                    ProgressView().tint(.white)
+                                } else {
+                                    HStack {
+                                        Text("Admin anmelden")
+                                        Spacer()
+                                        Image(systemName: "arrow.right")
+                                    }
+                                }
+                            }
+                            .buttonStyle(SecretPrimaryButtonStyle(fontSize: 20, minHeight: 76))
+                            .disabled(password.isEmpty || isLoading)
+                            .opacity(password.isEmpty ? 0.55 : 1)
                         }
                         .frame(maxWidth: 560)
                         .padding(.horizontal, allowsDismiss ? 50 : 32)

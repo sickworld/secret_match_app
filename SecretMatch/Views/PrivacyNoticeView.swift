@@ -73,7 +73,6 @@ struct PrivacyNoticeView: View {
                             title: "Löschung nach dem Event",
                             text: "Eventnummern, Aktionen, Matches, Sitzungen und anonyme Feedbacks werden nach Abschluss des Events aus dem aktiven Match&Play-System gelöscht."
                         )
-
                     }
                 }
             }

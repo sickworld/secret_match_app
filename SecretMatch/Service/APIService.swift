@@ -1,5 +1,5 @@
-import Foundation
 import Combine
+import Foundation
 import LocalAuthentication
 import Network
 import SwiftUI
@@ -206,7 +206,7 @@ class APIService: ObservableObject {
         let session = URLSession(configuration: configuration)
 
         let (_, response) = try await session.data(for: request)
-        guard let http = response as? HTTPURLResponse, (200...299).contains(http.statusCode) else {
+        guard let http = response as? HTTPURLResponse, (200 ... 299).contains(http.statusCode) else {
             throw URLError(.badServerResponse)
         }
     }
@@ -352,7 +352,7 @@ class APIService: ObservableObject {
         do {
             let (data, response) = try await URLSession.shared.data(for: request)
             guard let http = response as? HTTPURLResponse,
-                  (200...299).contains(http.statusCode) else {
+                  (200 ... 299).contains(http.statusCode) else {
                 setConnectionState(.serverUnavailable)
                 return
             }
@@ -523,7 +523,7 @@ class APIService: ObservableObject {
             return (firstResult.data, firstResult.response)
         }
     }
-    
+
     @MainActor
     func loadMatches() async throws -> [Match] {
         let url = baseURL.appendingPathComponent("matches")
@@ -547,7 +547,7 @@ class APIService: ObservableObject {
 
         return try JSONDecoder().decode([IncomingInterest].self, from: data)
     }
-    
+
     @MainActor
     func loadActions() async throws -> [SecretAction] {
         let url = baseURL.appendingPathComponent("actions")
@@ -625,14 +625,14 @@ class APIService: ObservableObject {
         guard let http = response as? HTTPURLResponse else {
             throw ActionWithdrawalError(message: "Die Aktion konnte gerade nicht zurückgezogen werden.")
         }
-        guard (200...299).contains(http.statusCode) else {
+        guard (200 ... 299).contains(http.statusCode) else {
             let payload = try? JSONDecoder().decode(AdminMutationResponseError.self, from: data)
             throw ActionWithdrawalError(
                 message: payload?.message ?? "Die Aktion konnte gerade nicht zurückgezogen werden."
             )
         }
     }
-    
+
     @MainActor
     private func sendAction(_ interaction: PendingInteraction) async throws -> String {
         let url = baseURL.appendingPathComponent("actions")
@@ -667,7 +667,7 @@ class APIService: ObservableObject {
         let json = try JSONSerialization.jsonObject(with: data) as? [String: Any]
         return json?["message"] as? String ?? "Aktion gespeichert"
     }
-    
+
     @MainActor
     func adminLogin(password: String) async -> AdminAuthenticationResult {
         await performAdminLogin(password: password, storesBiometricCredential: true)
@@ -752,7 +752,7 @@ class APIService: ObservableObject {
                 handleExpiredAdminToken(response)
                 return .sessionExpired
             }
-            guard (200...299).contains(http.statusCode) else { return .connectionFailed }
+            guard (200 ... 299).contains(http.statusCode) else { return .connectionFailed }
 
             adminDashboard = try? JSONDecoder().decode(AdminDashboard.self, from: data)
             activateAdminSession()
@@ -819,7 +819,7 @@ class APIService: ObservableObject {
             // Explicit logout also attempts removal; network failures remain non-blocking.
         }
     }
-    
+
     @MainActor
     func loadAdminActions() async throws {
         let url = baseURL.appendingPathComponent("admin/actions")
@@ -865,7 +865,7 @@ class APIService: ObservableObject {
         let url = baseURL.appendingPathComponent("admin/match-types").appendingPathComponent(id)
         var request = try adminRequest(url: url); request.httpMethod = "DELETE"
         let (data, response) = try await URLSession.shared.data(for: request)
-        guard let http = response as? HTTPURLResponse, (200...299).contains(http.statusCode) else {
+        guard let http = response as? HTTPURLResponse, (200 ... 299).contains(http.statusCode) else {
             handleExpiredAdminToken(response)
             let responseError = try? JSONDecoder().decode(AdminMutationResponseError.self, from: data)
             throw AdminMutationError(message: responseError?.message ?? "Match-Typ konnte nicht gelöscht werden.")
@@ -897,14 +897,14 @@ class APIService: ObservableObject {
         var request = try adminRequest(url: url)
         request.httpMethod = "DELETE"
         let (data, response) = try await URLSession.shared.data(for: request)
-        guard let http = response as? HTTPURLResponse, (200...299).contains(http.statusCode) else {
+        guard let http = response as? HTTPURLResponse, (200 ... 299).contains(http.statusCode) else {
             handleExpiredAdminToken(response)
             let responseError = try? JSONDecoder().decode(AdminMutationResponseError.self, from: data)
             throw AdminMutationError(message: responseError?.message ?? "Aktionsart konnte nicht gelöscht werden.")
         }
         try await loadAdminActionDefinitions()
     }
-    
+
     @MainActor
     func loadAdminMatches() async throws {
         let url = baseURL.appendingPathComponent("admin/matches")
@@ -1112,7 +1112,7 @@ class APIService: ObservableObject {
         guard let http = response as? HTTPURLResponse else {
             throw AdminMutationError(message: "Ungültige Serverantwort.")
         }
-        guard (200...299).contains(http.statusCode) else {
+        guard (200 ... 299).contains(http.statusCode) else {
             handleExpiredAdminToken(response)
             let responseError = try? JSONDecoder().decode(AdminMutationResponseError.self, from: data)
             throw AdminMutationError(message: responseError?.message ?? "Serverfehler (HTTP \(http.statusCode)).")
@@ -1366,7 +1366,7 @@ class APIService: ObservableObject {
         ])
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         let (data, response) = try await URLSession.shared.data(for: request)
-        guard let http = response as? HTTPURLResponse, (200...299).contains(http.statusCode) else {
+        guard let http = response as? HTTPURLResponse, (200 ... 299).contains(http.statusCode) else {
             handleExpiredAdminToken(response)
             let responseError = try? JSONDecoder().decode(AdminMutationResponseError.self, from: data)
             throw AdminMutationError(message: responseError?.message ?? "Nummernbereich konnte nicht geändert werden.")
@@ -1406,7 +1406,7 @@ class APIService: ObservableObject {
         request.httpBody = try JSONSerialization.data(withJSONObject: ["reset_pin": true])
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         let (data, response) = try await URLSession.shared.data(for: request)
-        guard let http = response as? HTTPURLResponse, (200...299).contains(http.statusCode) else {
+        guard let http = response as? HTTPURLResponse, (200 ... 299).contains(http.statusCode) else {
             handleExpiredAdminToken(response)
             let responseError = try? JSONDecoder().decode(AdminMutationResponseError.self, from: data)
             throw AdminMutationError(message: responseError?.message ?? "PIN-Reset fehlgeschlagen.")
@@ -1465,7 +1465,7 @@ class APIService: ObservableObject {
                         imageRequest.timeoutInterval = 6
                         let (imageData, imageResponse) = try await Self.performTimedRequest(imageRequest, hardTimeout: 6)
                         guard let imageHTTP = imageResponse as? HTTPURLResponse,
-                              (200...299).contains(imageHTTP.statusCode),
+                              (200 ... 299).contains(imageHTTP.statusCode),
                               UIImage(data: imageData) != nil else {
                             throw URLError(.cannotDecodeContentData)
                         }
@@ -1474,7 +1474,7 @@ class APIService: ObservableObject {
                 }
 
                 var result: [String: Data] = [:]
-                for try await (id, imageData) in group {
+                for try await(id, imageData) in group {
                     result[id] = imageData
                 }
                 return result
@@ -1571,7 +1571,7 @@ class APIService: ObservableObject {
         request.httpBody = body
 
         let (responseData, response) = try await URLSession.shared.data(for: request)
-        guard let http = response as? HTTPURLResponse, (200...299).contains(http.statusCode) else {
+        guard let http = response as? HTTPURLResponse, (200 ... 299).contains(http.statusCode) else {
             handleExpiredAdminToken(response)
             let responseError = try? JSONDecoder().decode(AdminMutationResponseError.self, from: responseData)
             throw AdminMutationError(message: responseError?.message ?? "Das Bild konnte nicht hochgeladen werden.")
@@ -1615,7 +1615,7 @@ class APIService: ObservableObject {
         var request = try adminRequest(url: url)
         request.httpMethod = "DELETE"
         let (data, response) = try await URLSession.shared.data(for: request)
-        guard let http = response as? HTTPURLResponse, (200...299).contains(http.statusCode) else {
+        guard let http = response as? HTTPURLResponse, (200 ... 299).contains(http.statusCode) else {
             handleExpiredAdminToken(response)
             let responseError = try? JSONDecoder().decode(AdminMutationResponseError.self, from: data)
             throw AdminMutationError(message: responseError?.message ?? "Das Bild konnte nicht entfernt werden.")
@@ -1834,7 +1834,7 @@ class APIService: ObservableObject {
         guard let http = response as? HTTPURLResponse else {
             throw AdminMutationError(message: "Ungültige Serverantwort.")
         }
-        guard (200...299).contains(http.statusCode) else {
+        guard (200 ... 299).contains(http.statusCode) else {
             handleExpiredAdminToken(response)
             let responseError = try? JSONDecoder().decode(AdminMutationResponseError.self, from: data)
             throw AdminMutationError(message: responseError?.message ?? "Serverfehler (HTTP \(http.statusCode)).")
@@ -1858,7 +1858,7 @@ class APIService: ObservableObject {
     }
 
     private func validateAdminResponse(_ response: URLResponse) throws {
-        guard let http = response as? HTTPURLResponse, (200...299).contains(http.statusCode) else {
+        guard let http = response as? HTTPURLResponse, (200 ... 299).contains(http.statusCode) else {
             handleExpiredAdminToken(response)
             throw URLError(.badServerResponse)
         }
@@ -1924,19 +1924,19 @@ class APIService: ObservableObject {
 
     private func startDeviceHeartbeat() {
         heartbeatTask?.cancel()
-#if ADMIN_APP
-        heartbeatTask = nil
-        return
-#else
-        guard isApplicationActive else { return }
-        UIDevice.current.isBatteryMonitoringEnabled = true
-        heartbeatTask = Task { @MainActor [weak self] in
-            while !Task.isCancelled {
-                await self?.sendDeviceHeartbeat()
-                do { try await Task.sleep(for: .seconds(30)) } catch { return }
+        #if ADMIN_APP
+            heartbeatTask = nil
+            return
+        #else
+            guard isApplicationActive else { return }
+            UIDevice.current.isBatteryMonitoringEnabled = true
+            heartbeatTask = Task { @MainActor [weak self] in
+                while !Task.isCancelled {
+                    await self?.sendDeviceHeartbeat()
+                    do { try await Task.sleep(for: .seconds(30)) } catch { return }
+                }
             }
-        }
-#endif
+        #endif
     }
 
     private func sendDeviceHeartbeat() async {
@@ -1980,7 +1980,7 @@ class APIService: ObservableObject {
         request.timeoutInterval = 8
         do {
             let (_, response) = try await URLSession.shared.data(for: request)
-            guard let http = response as? HTTPURLResponse, (200...299).contains(http.statusCode) else { return }
+            guard let http = response as? HTTPURLResponse, (200 ... 299).contains(http.statusCode) else { return }
             markSuccessfulSync()
             await flushTelemetryEvents()
         } catch {
@@ -2189,8 +2189,8 @@ class APIService: ObservableObject {
               isLoggedIn,
               number.normalizedEventNumber == senderNumber,
               let nextAttempt = pendingInteractions
-                .first(where: { $0.senderNumber == senderNumber })?
-                .nextAttemptAt else {
+              .first(where: { $0.senderNumber == senderNumber })?
+              .nextAttemptAt else {
             return
         }
 
@@ -2381,7 +2381,7 @@ class APIService: ObservableObject {
 
             do {
                 let (_, response) = try await URLSession.shared.data(for: request)
-                guard let http = response as? HTTPURLResponse, (200...299).contains(http.statusCode) else {
+                guard let http = response as? HTTPURLResponse, (200 ... 299).contains(http.statusCode) else {
                     return
                 }
                 let sentIDs = Set(batch.map(\.id))

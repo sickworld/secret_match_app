@@ -48,7 +48,7 @@ struct MatchInputBox: View {
             .filter(\.enabled)
             .sorted { $0.sortOrder == $1.sortOrder ? $0.name < $1.name : $0.sortOrder < $1.sortOrder }
             .map { ActionOption(type: $0.id, title: $0.name, emoji: $0.emoji, color: Color(hex: $0.color)) }
-        + actionDefinitions
+            + actionDefinitions
             .filter(\.enabled)
             .sorted { $0.sortOrder == $1.sortOrder ? $0.name < $1.name : $0.sortOrder < $1.sortOrder }
             .map { ActionOption(type: $0.id, title: $0.name, emoji: $0.emoji, color: Color(hex: $0.color)) }
@@ -160,9 +160,9 @@ struct MatchInputBox: View {
                     ? "Wähle jetzt Match-Wünsche oder passende Aktionen."
                     : "Gib zuerst die Zielnummer ein und bestätige sie auf der Tastatur."
             )
-                .font(.system(size: metric(16, 18), weight: .medium, design: .rounded))
-                .foregroundStyle(SecretMatchTheme.muted)
-                .multilineTextAlignment(.center)
+            .font(.system(size: metric(16, 18), weight: .medium, design: .rounded))
+            .foregroundStyle(SecretMatchTheme.muted)
+            .multilineTextAlignment(.center)
         }
     }
 
@@ -548,8 +548,8 @@ struct MatchInputBox: View {
                     reportedShipmentCount: queuedBatchCount,
                     actionCount: queuedSendCount
                 ))
-                    .font(.headline.bold())
-                    .foregroundStyle(.white)
+                .font(.headline.bold())
+                .foregroundStyle(.white)
                 Text("Geht automatisch raus, sobald die Verbindung wieder da ist.")
                     .font(.subheadline.weight(.semibold))
                     .foregroundStyle(SecretMatchTheme.muted)

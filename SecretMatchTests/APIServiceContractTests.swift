@@ -1,7 +1,7 @@
 import Foundation
+@testable import SecretMatch
 import SwiftUI
 import XCTest
-@testable import SecretMatch
 
 private final class MockURLProtocol: URLProtocol {
     static var handler: ((URLRequest) throws -> (HTTPURLResponse, Data))?

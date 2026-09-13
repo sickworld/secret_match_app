@@ -1,5 +1,5 @@
-import SwiftUI
 import Combine
+import SwiftUI
 
 struct LoginView: View {
     @Environment(\.secretMatchInterfaceScale) private var interfaceScale
@@ -22,7 +22,7 @@ struct LoginView: View {
     @State private var errorMessage: String?
     @State private var showScreensaver = false
     @State private var screensaverTask: Task<Void, Never>?
-    
+
     var body: some View {
         ZStack {
             SecretMatchTheme.background
@@ -34,118 +34,118 @@ struct LoginView: View {
                 ScrollView {
                     VStack(spacing: 0) {
                         VStack(spacing: isHeightConstrained ? 20 : 34) {
-                    Image("logo")
-                        .resizable()
-                        .scaledToFit()
-                        .frame(
-                            width: loginLogoWidth,
-                            height: loginLogoHeight
-                        )
-                        .shadow(color: SecretMatchTheme.primary.opacity(0.22), radius: 24)
-                        .onTapGesture(count: 2) {
-                            UIImpactFeedbackGenerator(style: .medium).impactOccurred()
-                            showAdminLogin = true
-                        }
-
-                    VStack(alignment: .leading, spacing: 14) {
-                        if requiresLoginPIN {
-                            HStack {
-                                VStack(alignment: .leading, spacing: 4) {
-                                    Text("DEINE EVENTNUMMER")
-                                        .font(.caption.bold())
-                                        .tracking(1.5)
-                                        .foregroundStyle(SecretMatchTheme.secondary)
-                                    Text(number.displayEventNumber)
-                                        .font(.system(size: 30, weight: .bold, design: .rounded).monospacedDigit())
-                                        .foregroundStyle(SecretMatchTheme.text)
+                            Image("logo")
+                                .resizable()
+                                .scaledToFit()
+                                .frame(
+                                    width: loginLogoWidth,
+                                    height: loginLogoHeight
+                                )
+                                .shadow(color: SecretMatchTheme.primary.opacity(0.22), radius: 24)
+                                .onTapGesture(count: 2) {
+                                    UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+                                    showAdminLogin = true
                                 }
-                                Spacer()
-                                Button("Ändern") { editNumber() }
-                                    .font(.callout.bold())
-                                    .foregroundStyle(SecretMatchTheme.secondary)
+
+                            VStack(alignment: .leading, spacing: 14) {
+                                if requiresLoginPIN {
+                                    HStack {
+                                        VStack(alignment: .leading, spacing: 4) {
+                                            Text("DEINE EVENTNUMMER")
+                                                .font(.caption.bold())
+                                                .tracking(1.5)
+                                                .foregroundStyle(SecretMatchTheme.secondary)
+                                            Text(number.displayEventNumber)
+                                                .font(.system(size: 30, weight: .bold, design: .rounded).monospacedDigit())
+                                                .foregroundStyle(SecretMatchTheme.text)
+                                        }
+                                        Spacer()
+                                        Button("Ändern") { editNumber() }
+                                            .font(.callout.bold())
+                                            .foregroundStyle(SecretMatchTheme.secondary)
+                                    }
+                                    .padding(16)
+                                    .background(SecretMatchTheme.surfaceRaised.opacity(0.72))
+                                    .overlay(Rectangle().stroke(SecretMatchTheme.border, lineWidth: 1))
+
+                                    Button {
+                                        withAnimation(.easeOut(duration: 0.2)) {
+                                            activeField = .pin
+                                            showKeyboard = true
+                                        }
+                                    } label: {
+                                        loginEntryField(
+                                            value: pin,
+                                            placeholder: "Deine 2-stellige PIN",
+                                            icon: "lock.fill",
+                                            obscuresText: true
+                                        )
+                                    }
+                                    .buttonStyle(.plain)
+                                    .accessibilityElement(children: .ignore)
+                                    .accessibilityLabel(pin.isEmpty ? "PIN eingeben" : "PIN, \(pin.count) Stellen eingegeben")
+                                    .accessibilityHint("Öffnet die appinterne Zahlentastatur")
+                                    .accessibilityAddTraits(.isButton)
+                                    .transition(.move(edge: .trailing).combined(with: .opacity))
+                                } else {
+                                    Button {
+                                        withAnimation(.easeOut(duration: 0.2)) {
+                                            activeField = .number
+                                            showKeyboard = true
+                                        }
+                                    } label: {
+                                        loginEntryField(
+                                            value: number,
+                                            placeholder: "Deine Nummer eingeben",
+                                            icon: "number",
+                                            obscuresText: false
+                                        )
+                                    }
+                                    .buttonStyle(.plain)
+                                    .accessibilityElement(children: .ignore)
+                                    .accessibilityLabel(number.isEmpty ? "Eventnummer eingeben" : "Eventnummer \(number.displayEventNumber)")
+                                    .accessibilityHint("Öffnet die appinterne Zahlentastatur")
+                                    .accessibilityAddTraits(.isButton)
+                                }
                             }
-                            .padding(16)
-                            .background(SecretMatchTheme.surfaceRaised.opacity(0.72))
-                            .overlay(Rectangle().stroke(SecretMatchTheme.border, lineWidth: 1))
+                            .animation(.easeInOut(duration: 0.22), value: requiresLoginPIN)
+
+                            if let errorMessage {
+                                Text(errorMessage)
+                                    .foregroundStyle(SecretMatchTheme.text)
+                                    .font(.footnote.weight(.semibold))
+                                    .padding(.horizontal, 14)
+                                    .padding(.vertical, 10)
+                                    .frame(maxWidth: .infinity)
+                                    .background(SecretMatchTheme.danger.opacity(0.16))
+                                    .clipShape(RoundedRectangle(cornerRadius: SecretMatchTheme.cornerRadius))
+                                    .overlay(RoundedRectangle(cornerRadius: SecretMatchTheme.cornerRadius).stroke(SecretMatchTheme.danger.opacity(0.4)))
+                            }
+
+                            Button(action: submitLogin) {
+                                HStack {
+                                    Text(requiresLoginPIN ? "Anmelden" : "Weiter")
+                                    Spacer()
+                                    Image(systemName: "arrow.right")
+                                }
+                            }
+                            .buttonStyle(SecretPrimaryButtonStyle(
+                                fontSize: isHeightConstrained ? 19 : 21,
+                                minHeight: isHeightConstrained ? 68 : 78
+                            ))
+                            .disabled(loginIsDisabled)
+                            .opacity(loginIsDisabled ? 0.55 : 1)
 
                             Button {
-                                withAnimation(.easeOut(duration: 0.2)) {
-                                    activeField = .pin
-                                    showKeyboard = true
-                                }
+                                showKeyboard = false
+                                showInfoSupport = true
                             } label: {
-                                loginEntryField(
-                                    value: pin,
-                                    placeholder: "Deine 2-stellige PIN",
-                                    icon: "lock.fill",
-                                    obscuresText: true
-                                )
+                                Label("Info, Datenschutz & Impressum", systemImage: "info.circle.fill")
+                                    .fontWeight(.bold)
                             }
-                            .buttonStyle(.plain)
-                            .accessibilityElement(children: .ignore)
-                            .accessibilityLabel(pin.isEmpty ? "PIN eingeben" : "PIN, \(pin.count) Stellen eingegeben")
-                            .accessibilityHint("Öffnet die appinterne Zahlentastatur")
-                            .accessibilityAddTraits(.isButton)
-                                .transition(.move(edge: .trailing).combined(with: .opacity))
-                        } else {
-                            Button {
-                                withAnimation(.easeOut(duration: 0.2)) {
-                                    activeField = .number
-                                    showKeyboard = true
-                                }
-                            } label: {
-                                loginEntryField(
-                                    value: number,
-                                    placeholder: "Deine Nummer eingeben",
-                                    icon: "number",
-                                    obscuresText: false
-                                )
-                            }
-                            .buttonStyle(.plain)
-                            .accessibilityElement(children: .ignore)
-                            .accessibilityLabel(number.isEmpty ? "Eventnummer eingeben" : "Eventnummer \(number.displayEventNumber)")
-                            .accessibilityHint("Öffnet die appinterne Zahlentastatur")
-                            .accessibilityAddTraits(.isButton)
-                        }
-                    }
-                    .animation(.easeInOut(duration: 0.22), value: requiresLoginPIN)
-
-                    if let errorMessage {
-                        Text(errorMessage)
-                            .foregroundStyle(SecretMatchTheme.text)
-                            .font(.footnote.weight(.semibold))
-                            .padding(.horizontal, 14)
-                            .padding(.vertical, 10)
-                            .frame(maxWidth: .infinity)
-                            .background(SecretMatchTheme.danger.opacity(0.16))
-                            .clipShape(RoundedRectangle(cornerRadius: SecretMatchTheme.cornerRadius))
-                            .overlay(RoundedRectangle(cornerRadius: SecretMatchTheme.cornerRadius).stroke(SecretMatchTheme.danger.opacity(0.4)))
-                    }
-
-                    Button(action: submitLogin) {
-                        HStack {
-                            Text(requiresLoginPIN ? "Anmelden" : "Weiter")
-                            Spacer()
-                            Image(systemName: "arrow.right")
-                        }
-                    }
-                    .buttonStyle(SecretPrimaryButtonStyle(
-                        fontSize: isHeightConstrained ? 19 : 21,
-                        minHeight: isHeightConstrained ? 68 : 78
-                    ))
-                    .disabled(loginIsDisabled)
-                    .opacity(loginIsDisabled ? 0.55 : 1)
-
-                    Button {
-                            showKeyboard = false
-                            showInfoSupport = true
-                    } label: {
-                        Label("Info, Datenschutz & Impressum", systemImage: "info.circle.fill")
-                            .fontWeight(.bold)
-                    }
-                    .font(.system(size: 14, weight: .medium, design: .rounded))
-                    .foregroundStyle(SecretMatchTheme.secondary)
-                    .accessibilityHint("Öffnet Info, Feedback, Datenschutz und Impressum")
+                            .font(.system(size: 14, weight: .medium, design: .rounded))
+                            .foregroundStyle(SecretMatchTheme.secondary)
+                            .accessibilityHint("Öffnet Info, Feedback, Datenschutz und Impressum")
                         }
                         .frame(maxWidth: 680)
                         .padding(.horizontal, isHeightConstrained ? 36 : 50)
@@ -336,8 +336,8 @@ struct LoginView: View {
                 .frame(width: 26)
 
             Text(value.isEmpty
-                 ? placeholder
-                 : (obscuresText ? String(repeating: "•", count: value.count) : value.displayEventNumber))
+                ? placeholder
+                : (obscuresText ? String(repeating: "•", count: value.count) : value.displayEventNumber))
                 .foregroundStyle(value.isEmpty ? SecretMatchTheme.muted : SecretMatchTheme.text)
                 .font(.system(size: obscuresText ? 32 : 36, weight: .bold, design: .rounded))
                 .lineLimit(1)

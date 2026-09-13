@@ -10,36 +10,36 @@ struct AdminMainView: View {
 
     var body: some View {
         content(isCompact: usesCompactNavigation)
-        .fullScreenCover(isPresented: $showBillboard) {
-            AdminBillboardView(isPresented: $showBillboard)
-                .environmentObject(api)
-        }
-        .sheet(isPresented: $showAdminMenu) {
-            ScrollView {
-                sidebar(isCompact: true)
+            .fullScreenCover(isPresented: $showBillboard) {
+                AdminBillboardView(isPresented: $showBillboard)
+                    .environmentObject(api)
             }
-            .background(SecretMatchTheme.surface)
-            .presentationDetents([.medium, .large])
-            .presentationDragIndicator(.visible)
-        }
-        .sheet(isPresented: $showNumberLookup) {
-            AdminNumberLookupView()
-                .environmentObject(api)
-                .presentationDetents([.large])
+            .sheet(isPresented: $showAdminMenu) {
+                ScrollView {
+                    sidebar(isCompact: true)
+                }
+                .background(SecretMatchTheme.surface)
+                .presentationDetents([.medium, .large])
                 .presentationDragIndicator(.visible)
-        }
-        .onChange(of: dashboardSection) { _, _ in
-            showAdminMenu = false
-        }
-        .task {
-            await AdminPushNotifications.requestAuthorizationAndRegister()
-        }
-        .preference(
-            key: SecretMatchAccessibilityControlsHiddenPreferenceKey.self,
-            value: true
-        )
-        .buttonBorderShape(.roundedRectangle(radius: SecretMatchTheme.cornerRadius))
-        .tint(SecretMatchTheme.primary)
+            }
+            .sheet(isPresented: $showNumberLookup) {
+                AdminNumberLookupView()
+                    .environmentObject(api)
+                    .presentationDetents([.large])
+                    .presentationDragIndicator(.visible)
+            }
+            .onChange(of: dashboardSection) { _, _ in
+                showAdminMenu = false
+            }
+            .task {
+                await AdminPushNotifications.requestAuthorizationAndRegister()
+            }
+            .preference(
+                key: SecretMatchAccessibilityControlsHiddenPreferenceKey.self,
+                value: true
+            )
+            .buttonBorderShape(.roundedRectangle(radius: SecretMatchTheme.cornerRadius))
+            .tint(SecretMatchTheme.primary)
     }
 
     private func content(isCompact: Bool) -> some View {
@@ -110,8 +110,8 @@ struct AdminMainView: View {
                 selectedSection: $dashboardSection,
                 showsFeatureOverview: !usesCompactNavigation
             )
-                .environment(\.adminDashboardSection, dashboardSection)
-                .environmentObject(api)
+            .environment(\.adminDashboardSection, dashboardSection)
+            .environmentObject(api)
         }
     }
 
@@ -214,15 +214,14 @@ struct AdminMainView: View {
     }
 
     private var usesCompactNavigation: Bool {
-#if ADMIN_APP
-        true
-#else
-        false
-#endif
+        #if ADMIN_APP
+            true
+        #else
+            false
+        #endif
     }
 
     private func toolbarTitle(showsMenu: Bool) -> String {
         showsMenu && dashboardSection == .overview ? "Dashboard" : dashboardSection.title
     }
-
 }

@@ -301,69 +301,69 @@ struct AdminKeyboardTextField: View {
     @State private var showsKeyboard = false
 
     var body: some View {
-#if ADMIN_APP
-        nativeField
-#else
-        keyboardButton
-            .fullScreenCover(isPresented: $showsKeyboard) {
-                AdminKeyboardEntryView(
-                    text: $text,
-                    title: keyboardTitle ?? title,
-                    placeholder: title,
-                    keyboard: keyboard,
-                    isSecure: isSecure,
-                    forcesUppercase: forcesUppercase,
-                    doneLabel: doneLabel,
-                    onSubmit: onSubmit
-                )
+        #if ADMIN_APP
+            nativeField
+        #else
+            keyboardButton
+                .fullScreenCover(isPresented: $showsKeyboard) {
+                    AdminKeyboardEntryView(
+                        text: $text,
+                        title: keyboardTitle ?? title,
+                        placeholder: title,
+                        keyboard: keyboard,
+                        isSecure: isSecure,
+                        forcesUppercase: forcesUppercase,
+                        doneLabel: doneLabel,
+                        onSubmit: onSubmit
+                    )
+                }
+        #endif
+    }
+
+    #if ADMIN_APP
+        @ViewBuilder
+        private var nativeField: some View {
+            if isSecure {
+                SecureField(title, text: $text)
+                    .onSubmit(onSubmit)
+            } else {
+                TextField(title, text: $text)
+                    .keyboardType(nativeKeyboardType)
+                    .onSubmit(onSubmit)
             }
-#endif
-    }
-
-#if ADMIN_APP
-    @ViewBuilder
-    private var nativeField: some View {
-        if isSecure {
-            SecureField(title, text: $text)
-                .onSubmit(onSubmit)
-        } else {
-            TextField(title, text: $text)
-                .keyboardType(nativeKeyboardType)
-                .onSubmit(onSubmit)
         }
-    }
 
-    private var nativeKeyboardType: UIKeyboardType {
-        if case .number = keyboard { return .numberPad }
-        return .default
-    }
-#else
-    private var keyboardButton: some View {
-        Button {
-            showsKeyboard = true
-        } label: {
-            HStack(spacing: 10) {
-                Text(fieldText)
-                    .foregroundStyle(text.isEmpty ? Color.secondary : Color.primary)
-                    .lineLimit(1)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                Image(systemName: "keyboard")
-                    .font(.callout.bold())
-                    .foregroundStyle(SecretMatchTheme.secondary)
-                    .accessibilityHidden(true)
+        private var nativeKeyboardType: UIKeyboardType {
+            if case .number = keyboard { return .numberPad }
+            return .default
+        }
+    #else
+        private var keyboardButton: some View {
+            Button {
+                showsKeyboard = true
+            } label: {
+                HStack(spacing: 10) {
+                    Text(fieldText)
+                        .foregroundStyle(text.isEmpty ? Color.secondary : Color.primary)
+                        .lineLimit(1)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                    Image(systemName: "keyboard")
+                        .font(.callout.bold())
+                        .foregroundStyle(SecretMatchTheme.secondary)
+                        .accessibilityHidden(true)
+                }
+                .contentShape(Rectangle())
             }
-            .contentShape(Rectangle())
+            .buttonStyle(.plain)
+            .accessibilityLabel(text.isEmpty ? title : "\(title): \(isSecure ? "ausgefüllt" : text)")
+            .accessibilityHint("Öffnet die App-Tastatur")
         }
-        .buttonStyle(.plain)
-        .accessibilityLabel(text.isEmpty ? title : "\(title): \(isSecure ? "ausgefüllt" : text)")
-        .accessibilityHint("Öffnet die App-Tastatur")
-    }
 
-    private var fieldText: String {
-        guard !text.isEmpty else { return title }
-        return isSecure ? String(repeating: "•", count: text.count) : text
-    }
-#endif
+        private var fieldText: String {
+            guard !text.isEmpty else { return title }
+            return isSecure ? String(repeating: "•", count: text.count) : text
+        }
+    #endif
 }
 
 struct AdminKeyboardTextEditor: View {
@@ -376,108 +376,108 @@ struct AdminKeyboardTextEditor: View {
     @State private var showsKeyboard = false
 
     var body: some View {
-#if ADMIN_APP
-        TextEditor(text: $text)
-#else
-        Button {
-            showsKeyboard = true
-        } label: {
-            HStack(alignment: .top, spacing: 10) {
-                Text(text.isEmpty ? title : text)
-                    .foregroundStyle(text.isEmpty ? Color.secondary : Color.primary)
-                    .multilineTextAlignment(.leading)
-                    .lineLimit(5)
-                    .frame(maxWidth: .infinity, alignment: .topLeading)
-                Image(systemName: "keyboard")
-                    .font(.callout.bold())
-                    .foregroundStyle(SecretMatchTheme.secondary)
-                    .accessibilityHidden(true)
+        #if ADMIN_APP
+            TextEditor(text: $text)
+        #else
+            Button {
+                showsKeyboard = true
+            } label: {
+                HStack(alignment: .top, spacing: 10) {
+                    Text(text.isEmpty ? title : text)
+                        .foregroundStyle(text.isEmpty ? Color.secondary : Color.primary)
+                        .multilineTextAlignment(.leading)
+                        .lineLimit(5)
+                        .frame(maxWidth: .infinity, alignment: .topLeading)
+                    Image(systemName: "keyboard")
+                        .font(.callout.bold())
+                        .foregroundStyle(SecretMatchTheme.secondary)
+                        .accessibilityHidden(true)
+                }
+                .contentShape(Rectangle())
             }
-            .contentShape(Rectangle())
-        }
-        .buttonStyle(.plain)
-        .accessibilityLabel(text.isEmpty ? title : "\(title): \(text)")
-        .accessibilityHint("Öffnet die App-Tastatur")
-        .fullScreenCover(isPresented: $showsKeyboard) {
-            AdminKeyboardEntryView(
-                text: $text,
-                title: title,
-                placeholder: title,
-                keyboard: .text(maxCharacters: maxCharacters, allowsNewlines: allowsNewlines),
-                doneLabel: doneLabel
-            )
-        }
-#endif
+            .buttonStyle(.plain)
+            .accessibilityLabel(text.isEmpty ? title : "\(title): \(text)")
+            .accessibilityHint("Öffnet die App-Tastatur")
+            .fullScreenCover(isPresented: $showsKeyboard) {
+                AdminKeyboardEntryView(
+                    text: $text,
+                    title: title,
+                    placeholder: title,
+                    keyboard: .text(maxCharacters: maxCharacters, allowsNewlines: allowsNewlines),
+                    doneLabel: doneLabel
+                )
+            }
+        #endif
     }
 }
 
 #if !ADMIN_APP
-private struct AdminKeyboardEntryView: View {
-    @Environment(\.dismiss) private var dismiss
-    @Binding var text: String
-    let title: String
-    let placeholder: String
-    let keyboard: AdminKeyboardKind
-    var isSecure = false
-    var forcesUppercase = false
-    var doneLabel = "Fertig"
-    var onSubmit: () -> Void = {}
+    private struct AdminKeyboardEntryView: View {
+        @Environment(\.dismiss) private var dismiss
+        @Binding var text: String
+        let title: String
+        let placeholder: String
+        let keyboard: AdminKeyboardKind
+        var isSecure = false
+        var forcesUppercase = false
+        var doneLabel = "Fertig"
+        var onSubmit: () -> Void = {}
 
-    var body: some View {
-        ZStack {
-            Color.black.opacity(backgroundOpacity)
-                .ignoresSafeArea()
-                .onTapGesture { dismiss() }
+        var body: some View {
+            ZStack {
+                Color.black.opacity(backgroundOpacity)
+                    .ignoresSafeArea()
+                    .onTapGesture { dismiss() }
 
-            VStack {
-                Spacer(minLength: 12)
+                VStack {
+                    Spacer(minLength: 12)
 
-                switch keyboard {
-                case .number(let maxDigits):
-                    CustomNumberKeyboard(
-                        text: $text,
-                        doneLabel: doneLabel,
-                        placeholder: placeholder,
-                        maxDigits: maxDigits,
-                        obscuresText: isSecure,
-                        onClose: { dismiss() }
-                    ) {
-                        onSubmit()
-                        dismiss()
-                    }
-                    .frame(maxWidth: 740)
-                    .padding()
-                    .shadow(radius: 20)
-                case .text(let maxCharacters, let allowsNewlines):
-                    CustomTextKeyboard(
-                        text: $text,
-                        title: title,
-                        placeholder: placeholder,
-                        maxCharacters: maxCharacters,
-                        doneLabel: doneLabel,
-                        allowsNewlines: allowsNewlines,
-                        obscuresText: isSecure,
-                        forcesUppercase: forcesUppercase,
-                        onClose: {
+                    switch keyboard {
+                    case .number(let maxDigits):
+                        CustomNumberKeyboard(
+                            text: $text,
+                            doneLabel: doneLabel,
+                            placeholder: placeholder,
+                            maxDigits: maxDigits,
+                            obscuresText: isSecure,
+                            onClose: { dismiss() }
+                        ) {
                             onSubmit()
                             dismiss()
                         }
-                    )
-                    .padding(18)
+                        .frame(maxWidth: 740)
+                        .padding()
+                        .shadow(radius: 20)
+                    case .text(let maxCharacters, let allowsNewlines):
+                        CustomTextKeyboard(
+                            text: $text,
+                            title: title,
+                            placeholder: placeholder,
+                            maxCharacters: maxCharacters,
+                            doneLabel: doneLabel,
+                            allowsNewlines: allowsNewlines,
+                            obscuresText: isSecure,
+                            forcesUppercase: forcesUppercase,
+                            onClose: {
+                                onSubmit()
+                                dismiss()
+                            }
+                        )
+                        .padding(18)
+                    }
+
+                    Spacer(minLength: 12)
                 }
-
-                Spacer(minLength: 12)
+                .transition(.scale(scale: 0.94).combined(with: .opacity))
             }
-            .transition(.scale(scale: 0.94).combined(with: .opacity))
+            .presentationBackground(.clear)
+            .buttonBorderShape(.roundedRectangle(radius: SecretMatchTheme.cornerRadius))
+            .tint(SecretMatchTheme.primary)
         }
-        .presentationBackground(.clear)
-        .buttonBorderShape(.roundedRectangle(radius: SecretMatchTheme.cornerRadius))
-        .tint(SecretMatchTheme.primary)
-    }
 
-    private var backgroundOpacity: Double {
-        if case .text = keyboard { return 0.72 }
-        return 0.6
+        private var backgroundOpacity: Double {
+            if case .text = keyboard { return 0.72 }
+            return 0.6
+        }
     }
-}
 #endif

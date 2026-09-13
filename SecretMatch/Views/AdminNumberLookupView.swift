@@ -110,9 +110,9 @@ struct AdminNumberLookupView: View {
                 keyboardTitle: "Eventnummer suchen",
                 onSubmit: { Task { await search() } }
             )
-                .font(.title2.bold().monospacedDigit())
-                .textContentType(.none)
-                .foregroundStyle(.white)
+            .font(.title2.bold().monospacedDigit())
+            .textContentType(.none)
+            .foregroundStyle(.white)
             Button("Suchen") { Task { await search() } }
                 .buttonStyle(.borderedProminent)
                 .tint(SecretMatchTheme.primary)

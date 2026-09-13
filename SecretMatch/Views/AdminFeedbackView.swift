@@ -180,7 +180,7 @@ struct AdminFeedbackView: View {
             Spacer()
             if let value {
                 HStack(spacing: 3) {
-                    ForEach(1...5, id: \.self) { star in
+                    ForEach(1 ... 5, id: \.self) { star in
                         Image(systemName: star <= value ? "star.fill" : "star")
                             .foregroundStyle(star <= value ? SecretMatchTheme.secondary : SecretMatchTheme.muted)
                     }

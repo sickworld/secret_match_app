@@ -1,5 +1,5 @@
-import XCTest
 @testable import SecretMatch
+import XCTest
 
 @MainActor
 final class EventNumberFormattingTests: XCTestCase {

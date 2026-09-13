@@ -180,12 +180,12 @@ struct AdminEventLogView: View {
                     keyboardTitle: "Eventprotokoll durchsuchen",
                     onSubmit: { Task { await load(reset: true) } }
                 )
-                    .textFieldStyle(.plain)
-                    .padding(.horizontal, 14)
-                    .frame(minHeight: 50)
-                    .background(SecretMatchTheme.surfaceRaised)
-                    .clipShape(RoundedRectangle(cornerRadius: SecretMatchTheme.cornerRadius))
-                    .foregroundStyle(.white)
+                .textFieldStyle(.plain)
+                .padding(.horizontal, 14)
+                .frame(minHeight: 50)
+                .background(SecretMatchTheme.surfaceRaised)
+                .clipShape(RoundedRectangle(cornerRadius: SecretMatchTheme.cornerRadius))
+                .foregroundStyle(.white)
 
                 Button {
                     Task { await load(reset: true) }

@@ -139,7 +139,7 @@ private struct MatchDefinitionEditorView: View {
                     AdminKeyboardTextField(title: "Name", text: $name, keyboard: .text(maxCharacters: 48))
                     AdminKeyboardTextField(title: "Emoji", text: $emoji, keyboard: .text(maxCharacters: 8))
                     AdminKeyboardTextField(title: "Hex-Farbe", text: $color, keyboard: .text(maxCharacters: 7), forcesUppercase: true)
-                    Stepper("Position / Stärke \(sortOrder)", value: $sortOrder, in: 0...999, step: 10)
+                    Stepper("Position / Stärke \(sortOrder)", value: $sortOrder, in: 0 ... 999, step: 10)
                     Toggle("In der Teilnehmer-App aktiv", isOn: $enabled)
                 }
                 Section { Text("Treffen zwei unterschiedliche Wünsche aufeinander, wird der erste aktive Match-Typ verwendet. Gleiche Wünsche ergeben genau diesen Typ.").foregroundStyle(.secondary) }

@@ -115,9 +115,9 @@ struct AccessibleInterfaceContainer<Content: View>: View {
 
                 if !hidesControlsForScreensaver && !hidesControlsForOverlay {
                     accessibilityControlsButton(level: level, usesHighContrast: usesHighContrast)
-                    .padding(.top, 14)
-                    .padding(.trailing, 18)
-                    .zIndex(10_000)
+                        .padding(.top, 14)
+                        .padding(.trailing, 18)
+                        .zIndex(10_000)
                 }
             }
         }

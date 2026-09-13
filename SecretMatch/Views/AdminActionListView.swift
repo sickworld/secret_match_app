@@ -96,19 +96,19 @@ struct AdminActionListView: View {
     }
 
     private var editorPresentationDetents: Set<PresentationDetent> {
-#if ADMIN_APP
-        [.medium, .large]
-#else
-        [.fraction(0.72), .large]
-#endif
+        #if ADMIN_APP
+            [.medium, .large]
+        #else
+            [.fraction(0.72), .large]
+        #endif
     }
 
     private var usesCompactLayout: Bool {
-#if ADMIN_APP
-        true
-#else
-        horizontalSizeClass == .compact
-#endif
+        #if ADMIN_APP
+            true
+        #else
+            horizontalSizeClass == .compact
+        #endif
     }
 
     private var actionGridColumns: [GridItem] {
@@ -385,7 +385,7 @@ struct AdminActionListView: View {
     private func actionEmoji(for type: String) -> String {
         actionDefinition(for: type).emoji
     }
-    
+
     private func prettyAction(_ type: String) -> String {
         actionDefinition(for: type).name
     }
