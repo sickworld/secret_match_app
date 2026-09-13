@@ -1,14 +1,14 @@
 import SwiftUI
 
 enum AdminDashboardSection: String, CaseIterable, Identifiable {
-    case overview, readiness, diagnostics, liveFeed, announcements, eventLog, statistics, actions, requests, matches, feedback, controls, participants, system
+    case overview, readiness, diagnostics, liveFeed, announcements, eventLog, statistics, actions, requests, matches, feedback, controls, participants, system, changelog
 
     var id: String { rawValue }
 
     static let featureSections: [AdminDashboardSection] = [
         .liveFeed, .announcements, .actions, .requests, .matches,
         .participants, .controls, .readiness, .diagnostics,
-        .eventLog, .statistics, .feedback, .system
+        .eventLog, .statistics, .feedback, .system, .changelog
     ]
 
     var title: String {
@@ -27,6 +27,7 @@ enum AdminDashboardSection: String, CaseIterable, Identifiable {
         case .controls: return "Eventsteuerung"
         case .participants: return "Teilnehmer"
         case .system: return "System & Archiv"
+        case .changelog: return "Changelog"
         }
     }
 
@@ -46,6 +47,7 @@ enum AdminDashboardSection: String, CaseIterable, Identifiable {
         case .controls: return "Billboards, Medien, Schnelltexte und Testdaten"
         case .participants: return "Nummern, PIN und Gender verwalten"
         case .system: return "Status, Geräte und Event-Archiv"
+        case .changelog: return "Neue Funktionen und Verbesserungen nachlesen"
         }
     }
 
@@ -65,6 +67,7 @@ enum AdminDashboardSection: String, CaseIterable, Identifiable {
         case .controls: return "slider.horizontal.3"
         case .participants: return "person.3.fill"
         case .system: return "gearshape.2.fill"
+        case .changelog: return "clock.arrow.circlepath"
         }
     }
 
@@ -78,6 +81,7 @@ enum AdminDashboardSection: String, CaseIterable, Identifiable {
         case .requests: return Color(hex: "#8E63D2")
         case .matches: return Color(hex: "#E83E8C")
         case .participants: return Color(hex: "#3E9ED6")
+        case .changelog: return .mint
         }
     }
 }
@@ -251,7 +255,7 @@ struct AdminDashboardView: View {
             systemStatus
             deviceStatus
             resetCard
-        case .readiness, .diagnostics, .liveFeed, .announcements, .eventLog, .statistics, .actions, .requests, .matches, .feedback:
+        case .readiness, .diagnostics, .liveFeed, .announcements, .eventLog, .statistics, .actions, .requests, .matches, .feedback, .changelog:
             EmptyView()
         }
     }

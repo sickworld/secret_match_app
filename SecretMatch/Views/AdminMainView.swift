@@ -102,6 +102,8 @@ struct AdminMainView: View {
         case .feedback:
             AdminFeedbackView()
                 .environmentObject(api)
+        case .changelog:
+            AdminChangelogView()
         default:
             AdminDashboardView(
                 showBillboard: $showBillboard,
