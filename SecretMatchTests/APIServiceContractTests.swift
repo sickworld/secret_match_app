@@ -37,6 +37,7 @@ private final class MockURLProtocol: URLProtocol {
 final class APIServiceContractTests: XCTestCase {
     override func setUp() {
         super.setUp()
+        Self.clearAdminPushDefaults()
         URLProtocol.registerClass(MockURLProtocol.self)
         MockURLProtocol.handler = { request in
             try Self.response(for: request, json: "{}")
@@ -46,6 +47,7 @@ final class APIServiceContractTests: XCTestCase {
     override func tearDown() {
         MockURLProtocol.handler = nil
         URLProtocol.unregisterClass(MockURLProtocol.self)
+        Self.clearAdminPushDefaults()
         super.tearDown()
     }
 
@@ -433,8 +435,25 @@ final class APIServiceContractTests: XCTestCase {
 
         await api.registerAdminPushToken(String(repeating: "a", count: 64), environment: "sandbox")
         await api.unregisterAdminPushToken()
+
+        api.applicationDidEnterBackground()
+        Self.clearAdminPushDefaults()
+        let logoutCompleted = expectation(description: "Admin-Logout abgeschlossen")
+        MockURLProtocol.handler = { request in
+            switch request.url?.path {
+            case "/wp-json/secretmatch/v1/admin/logout":
+                XCTAssertEqual(request.httpMethod, "POST")
+                logoutCompleted.fulfill()
+                return try Self.response(for: request, json: "{}")
+            case "/wp-json/secretmatch/v1/heartbeat":
+                return try Self.response(for: request, json: "{}")
+            default:
+                XCTFail("Unerwarteter Endpunkt beim Admin-Logout: \(request.url?.absoluteString ?? "nil")")
+                return try Self.response(for: request, statusCode: 404, json: "{}")
+            }
+        }
         api.logout()
-        try await Task.sleep(for: .milliseconds(100))
+        await fulfillment(of: [logoutCompleted], timeout: 2)
     }
 
     private static func response(
@@ -462,6 +481,11 @@ final class APIServiceContractTests: XCTestCase {
         api.number = ""
         api.logout()
         try? await Task.sleep(for: .milliseconds(100))
+    }
+
+    private static func clearAdminPushDefaults() {
+        UserDefaults.standard.removeObject(forKey: "secretmatch.admin-push-device-token")
+        UserDefaults.standard.removeObject(forKey: "secretmatch.admin-push-environment")
     }
 
     private func assertRenders<Content: View>(
