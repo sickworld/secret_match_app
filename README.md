@@ -2,6 +2,10 @@
 
 In allen sichtbaren App-Texten, Exporten und Benachrichtigungen lautet der Produktname **Match&Play**. Interne Bezeichner wie API-Pfade, Bundle-IDs und technische Klassen bleiben aus Kompatibilitätsgründen unverändert.
 
+## Automatischer PIN-Login (Build 144)
+
+Beim normalen Teilnehmer-Login startet der Anmeldeversuch direkt nach Eingabe der zweiten PIN-Ziffer. Die sichtbare **Anmelden**-Taste bleibt als verständliche Rückfall- und Bedienmöglichkeit erhalten. Ein synchroner Ladeschutz verhindert doppelte Login-Requests, wenn gleichzeitig die Bestätigungstaste betätigt wird. Die erstmalige PIN-Anlage mit Wiederholung bleibt unverändert und wird weiterhin ausdrücklich gespeichert.
+
 ## Zuverlässiger Teilnehmer-Auto-Logout (Build 143)
 
 Der 30-Sekunden-Countdown wird jetzt bei jeder Berührung im angemeldeten Teilnehmerbereich neu gestartet – auch bei SwiftUI-Buttons, Auswahlfeldern und beim Scrollen in Overlays wie **Deine Übersicht**. Bewusst pausierte Phasen, etwa während laufender Serveranfragen oder in der Supportansicht, bleiben pausiert und werden durch darüberliegende Gesten nicht versehentlich reaktiviert. Ohne weitere Aktivität meldet die App den Teilnehmer weiterhin automatisch ab.

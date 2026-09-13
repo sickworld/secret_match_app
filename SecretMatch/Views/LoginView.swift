@@ -252,6 +252,14 @@ struct LoginView: View {
             showScreensaver = false
         }
         .onChange(of: number) { _, _ in restartScreensaverTimer() }
+        .onChange(of: pin) { _, updatedPIN in
+            restartScreensaverTimer()
+            guard requiresLoginPIN,
+                  activeField == .pin,
+                  updatedPIN.count == 2,
+                  !isLoading else { return }
+            submitLogin()
+        }
         .onChange(of: showKeyboard) { _, _ in restartScreensaverTimer() }
         .onChange(of: showInfoSupport) { _, _ in restartScreensaverTimer() }
         .onChange(of: showGenderChoice) { _, _ in restartScreensaverTimer() }
@@ -352,10 +360,10 @@ struct LoginView: View {
     private func submitLogin() {
         guard !loginIsDisabled else { return }
 
+        isLoading = true
         showKeyboard = false
         errorMessage = nil
         Task {
-            isLoading = true
             defer { isLoading = false }
 
             do {
