@@ -22,7 +22,7 @@ Load the matching project skill when the task touches its area:
 - Run `git diff --check` before committing.
 - Stage only task-related files and exclude Xcode user-state files.
 - Commit with a clear product-level message and push the current branch unless the user explicitly says not to.
-- After every push, identify all GitHub Actions runs for the pushed commit SHA and wait until each reaches a final result. A delivery is successful only when every required job in `iOS Quality`, including `CodeQL security and quality`, is green. If a pipeline fails or is cancelled, investigate and fix it where possible; otherwise report the exact failed job and blocker. Do not report the task as successfully completed while any required pipeline is queued or running.
+- After every push, identify all GitHub Actions runs for the pushed commit SHA and wait until each reaches a final result. A delivery is successful only when every required job in `iOS Quality`, including `CodeQL security and quality` and the documentation-wiki sync on `main`, is green. If a pipeline fails or is cancelled, investigate and fix it where possible; otherwise report the exact failed job and blocker. Do not report the task as successfully completed while any required pipeline is queued or running.
 - Never commit credentials, passwords, tokens, signing material, or local Xcode state.
 - If review, build, commit, or push cannot be completed, report the exact blocker and next action.
 

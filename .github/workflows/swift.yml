@@ -399,3 +399,90 @@ jobs:
           path: artifacts/
           if-no-files-found: warn
           retention-days: 14
+
+  publish-wiki:
+    name: Publish documentation wiki
+    needs:
+      - quality
+      - build-participant
+      - build-admin
+      - codeql
+      - tests
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    permissions:
+      contents: write
+
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+      - name: Check out documentation sources
+        uses: actions/checkout@v6
+        with:
+          path: source
+          persist-credentials: false
+
+      - name: Check out wiki
+        uses: actions/checkout@v6
+        with:
+          repository: "${{ github.repository }}.wiki"
+          ref: master
+          path: wiki
+
+      - name: Synchronize documentation pages
+        run: |
+          set -euo pipefail
+
+          cp source/README.md wiki/Home.md
+          cp source/EVENT-NETZWERK-SETUP.md wiki/Event-Netzwerk-Setup.md
+          cp source/AGENTS.md wiki/Agent-Instructions.md
+          cp source/skill/agent.md wiki/Agent-Workflow.md
+          cp source/skill/secretmatch-ios/SKILL.md wiki/SecretMatch-iOS-Skill.md
+          cp source/skill/secretmatch-review/SKILL.md wiki/SecretMatch-Review-Skill.md
+
+          printf '%s\n' \
+            '# SecretMatch' \
+            '' \
+            '- [Startseite](Home)' \
+            '- [Event-Netzwerk-Setup](Event-Netzwerk-Setup)' \
+            '- [Agent Instructions](Agent-Instructions)' \
+            '- [Agent Workflow](Agent-Workflow)' \
+            '- [SecretMatch iOS Skill](SecretMatch-iOS-Skill)' \
+            '- [SecretMatch Review Skill](SecretMatch-Review-Skill)' \
+            > wiki/_Sidebar.md
+
+      - name: Publish changed wiki pages
+        run: |
+          set -euo pipefail
+
+          git -C wiki config user.name 'github-actions[bot]'
+          git -C wiki config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git -C wiki add \
+            Home.md \
+            Event-Netzwerk-Setup.md \
+            Agent-Instructions.md \
+            Agent-Workflow.md \
+            SecretMatch-iOS-Skill.md \
+            SecretMatch-Review-Skill.md \
+            _Sidebar.md
+
+          if git -C wiki diff --cached --quiet; then
+            echo 'Wiki ist bereits aktuell.'
+            exit 0
+          fi
+
+          git -C wiki commit -m "Sync documentation from ${GITHUB_SHA::7}"
+          git -C wiki push origin HEAD:master
+
+      - name: Publish wiki summary
+        if: always()
+        run: |
+          {
+            echo "## Documentation wiki"
+            echo
+            echo "Verwaltete Markdown-Seiten wurden mit dem Repository-Wiki synchronisiert."
+          } >> "$GITHUB_STEP_SUMMARY"
