@@ -9,6 +9,18 @@ struct AdminDeliveryDiagnosticsView: View {
     @State private var isLoading = false
     @State private var errorMessage: String?
 
+    init(
+        sourceNumber: String = "",
+        targetNumber: String = "",
+        diagnostics: [AdminDeliveryDiagnostic] = [],
+        hasSearched: Bool = false
+    ) {
+        _sourceNumber = State(initialValue: sourceNumber)
+        _targetNumber = State(initialValue: targetNumber)
+        _diagnostics = State(initialValue: diagnostics)
+        _hasSearched = State(initialValue: hasSearched)
+    }
+
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 20) {

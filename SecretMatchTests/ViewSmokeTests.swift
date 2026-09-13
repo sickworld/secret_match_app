@@ -120,16 +120,119 @@ final class ViewSmokeTests: XCTestCase {
         )
     }
 
+    func testAdminEditorsAndTextKeyboardsRenderRepresentativeStates() {
+        assertRenders(
+            AdminRecordEditorView(
+                title: "Match anlegen",
+                firstNumberLabel: "Nummer A",
+                secondNumberLabel: "Nummer B",
+                typeOptions: [
+                    AdminRecordTypeOption(value: "normal", title: "❤️ Hot-Match"),
+                    AdminRecordTypeOption(value: "hot", title: "🍆 Fuck-Match"),
+                ],
+                onSave: { _, _, _ in }
+            )
+        )
+        assertRenders(
+            AdminRecordEditorView(
+                title: "Match bearbeiten",
+                firstNumberLabel: "Nummer A",
+                secondNumberLabel: "Nummer B",
+                typeOptions: [AdminRecordTypeOption(value: "normal", title: "❤️ Hot-Match")],
+                initialFirstNumber: "7",
+                initialSecondNumber: "7",
+                initialType: "normal",
+                onSave: { _, _, _ in }
+            )
+        )
+        assertRenders(
+            CustomTextKeyboard(
+                text: .constant("Hallo Match & Play!"),
+                title: "Event-Mitteilung",
+                maxCharacters: 180,
+                doneLabel: "Speichern",
+                allowsNewlines: true,
+                obscuresText: false,
+                forcesUppercase: false
+            )
+        )
+        assertRenders(
+            CustomTextKeyboard(
+                text: .constant("PASSWORT"),
+                title: "Passwort",
+                maxCharacters: 32,
+                obscuresText: true,
+                forcesUppercase: true
+            )
+            .environment(\.secretMatchHighContrast, true)
+        )
+        assertRenders(
+            AdminKeyboardTextField(
+                title: "Nummer",
+                text: .constant("42"),
+                keyboard: .number(maxDigits: 10)
+            )
+        )
+        assertRenders(
+            AdminKeyboardTextField(
+                title: "Passwort",
+                text: .constant("geheim"),
+                keyboard: .text(maxCharacters: 64),
+                isSecure: true
+            )
+        )
+        assertRenders(
+            AdminKeyboardTextEditor(
+                title: "Dialogtext",
+                text: .constant("Willkommen beim Event"),
+                maxCharacters: 500,
+                allowsNewlines: true
+            )
+        )
+    }
+
+    func testAccessibleContainerRendersStoredScaleAndContrastVariants() {
+        let defaults = UserDefaults.standard
+        let levelKey = "secretmatch.interface-scale-level"
+        let contrastKey = "secretmatch.high-contrast-enabled"
+        let previousLevel = defaults.object(forKey: levelKey)
+        let previousContrast = defaults.object(forKey: contrastKey)
+        defer {
+            if let previousLevel {
+                defaults.set(previousLevel, forKey: levelKey)
+            } else {
+                defaults.removeObject(forKey: levelKey)
+            }
+            if let previousContrast {
+                defaults.set(previousContrast, forKey: contrastKey)
+            } else {
+                defaults.removeObject(forKey: contrastKey)
+            }
+        }
+
+        for level in 0...2 {
+            defaults.set(level, forKey: levelKey)
+            defaults.set(level == 2, forKey: contrastKey)
+            assertRenders(
+                AccessibleInterfaceContainer {
+                    BrandBackground()
+                }
+            )
+        }
+    }
+
     private func assertRenders<Content: View>(
         _ content: Content,
         file: StaticString = #filePath,
         line: UInt = #line
     ) {
-        let renderer = ImageRenderer(
-            content: content.frame(width: 1_024, height: 768)
-        )
-        renderer.scale = 1
+        for size in [CGSize(width: 1_024, height: 768), CGSize(width: 768, height: 1_024)] {
+            let renderer = ImageRenderer(
+                content: content.frame(width: size.width, height: size.height)
+            )
+            renderer.scale = 1
 
-        XCTAssertNotNil(renderer.uiImage, file: file, line: line)
+            XCTAssertNotNil(renderer.uiImage, file: file, line: line)
+        }
     }
 }

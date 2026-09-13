@@ -13,6 +13,11 @@ struct AdminNumberLookupView: View {
     @State private var operationError: String?
     @State private var pendingReset: ResetAction?
 
+    init(query: String = "", initialOverview: AdminNumberOverview? = nil) {
+        _query = State(initialValue: query)
+        _overview = State(initialValue: initialOverview)
+    }
+
     private enum ResetAction: Identifiable {
         case pin(String)
         case gender(String)
