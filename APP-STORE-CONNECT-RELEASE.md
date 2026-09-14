@@ -14,9 +14,29 @@ Ein offener PR, ein fehlgeschlagener Quality-Run, ein normal benannter PR oder e
 
 Der Workflow überträgt Builds nach App Store Connect. Nach Apples asynchroner Verarbeitung stehen sie in TestFlight bereit. Er verteilt sie nicht automatisch an externe Tester und reicht keine App-Version automatisch zur App-Store-Prüfung ein.
 
-## Einmalige GitHub-Einrichtung
+## App Store Connect API Key und GitHub Secrets
 
-Unter **Settings → Environments** ein Environment namens `app-store-connect` anlegen. Dort diese Environment Secrets speichern:
+### Werte bei Apple erzeugen und finden
+
+Für diesen Workflow einen **Team API Key** verwenden:
+
+1. [App Store Connect](https://appstoreconnect.apple.com/) öffnen.
+2. **Users and Access → Integrations → App Store Connect API → Team Keys** öffnen.
+3. Falls dort zunächst **Request Access** erscheint, muss der Account Holder den API-Zugriff einmalig beantragen und freischalten lassen.
+4. Als Account Holder oder Admin **Generate API Key** beziehungsweise **+** wählen, einen internen Namen wie `GitHub Actions Release` vergeben und eine zum Build-Upload berechtigte Rolle auswählen.
+5. Nach **Generate** stehen die drei zusammengehörenden Werte bereit:
+
+| GitHub Secret | Fundstelle bei Apple |
+| --- | --- |
+| `APP_STORE_CONNECT_API_KEY_ID` | Wert **Key ID** in der Zeile des erzeugten Team Keys |
+| `APP_STORE_CONNECT_API_ISSUER_ID` | Wert **Issuer ID** auf der Seite **App Store Connect API** |
+| `APP_STORE_CONNECT_API_PRIVATE_KEY` | vollständiger Textinhalt der heruntergeladenen Datei `AuthKey_<KEY_ID>.p8`, einschließlich `BEGIN PRIVATE KEY` und `END PRIVATE KEY` |
+
+Die `.p8`-Datei kann nur einmal heruntergeladen werden. Ist der Download nicht mehr verfügbar und wurde die Datei nicht sicher gespeichert, den alten Key widerrufen und einen neuen Team Key erzeugen. Keinen individuellen API Key verwenden, weil der Release-Workflow die Provisioning- und Signing-Funktionen des Team Keys benötigt. Details stehen in Apples Dokumentation zu [App Store Connect API Keys](https://developer.apple.com/help/app-store-connect/get-started/app-store-connect-api).
+
+### Werte bei GitHub hinterlegen
+
+Im Repository **Settings → Environments** öffnen und ein Environment namens `app-store-connect` anlegen. In diesem Environment unter **Environment secrets → Add secret** jeden der drei Werte einzeln speichern:
 
 | Secret | Inhalt |
 | --- | --- |
@@ -24,7 +44,9 @@ Unter **Settings → Environments** ein Environment namens `app-store-connect` a
 | `APP_STORE_CONNECT_API_ISSUER_ID` | Issuer-ID des App-Store-Connect-Accounts |
 | `APP_STORE_CONNECT_API_PRIVATE_KEY` | vollständiger Inhalt der einmal herunterladbaren Datei `AuthKey_<KEY_ID>.p8` |
 
-Der private Schlüssel darf niemals ins Repository, in Artefakte oder Logs gelangen. Das Environment kann optional mit Required Reviewers geschützt werden; ohne diese Zusatzfreigabe startet der Upload direkt nach der grünen Pipeline.
+Beim privaten Key die Datei in einem Texteditor öffnen und ihren gesamten Inhalt als Secret-Wert einsetzen; die `.p8`-Datei selbst wird nicht ins Repository hochgeladen. GitHub beschreibt diese Oberfläche unter [Environment Secrets anlegen](https://docs.github.com/en/actions/how-tos/write-workflows/choose-what-workflows-do/use-secrets#creating-secrets-for-an-environment).
+
+Der private Schlüssel darf niemals ins Repository, in Artefakte, Logs oder einen Chat gelangen. Das Environment kann optional mit Required Reviewers geschützt werden; ohne diese Zusatzfreigabe startet der Upload direkt nach der grünen Pipeline.
 
 ## Einmalige Apple-Einrichtung
 
