@@ -281,6 +281,86 @@ final class APIServiceContractTests: XCTestCase {
         api.logout()
     }
 
+    func testAdminLoginMapsCredentialServerAndPayloadFailures() async {
+        await resetService()
+        let api = APIService.shared
+
+        MockURLProtocol.handler = { request in
+            try Self.response(for: request, statusCode: 401, json: #"{"code":"invalid_credentials"}"#)
+        }
+        guard case .invalidCredentials = await api.adminLogin(password: "falsch") else {
+            return XCTFail("HTTP 401 wurde nicht als ungültige Anmeldung erkannt")
+        }
+
+        MockURLProtocol.handler = { request in
+            try Self.response(for: request, statusCode: 500, json: "{}")
+        }
+        guard case .connectionFailed = await api.adminLogin(password: "test") else {
+            return XCTFail("HTTP 500 wurde nicht als Verbindungsfehler erkannt")
+        }
+
+        MockURLProtocol.handler = { request in
+            try Self.response(for: request, json: #"{"unexpected":true}"#)
+        }
+        guard case .connectionFailed = await api.adminLogin(password: "test") else {
+            return XCTFail("Eine ungültige Login-Antwort wurde akzeptiert")
+        }
+    }
+
+    func testAdminFeedbackSupportsEnvelopesAndMapsResponseErrors() async throws {
+        await resetService()
+        let api = APIService.shared
+        MockURLProtocol.handler = { request in
+            try Self.response(for: request, json: #"{"token":"feedback-contract-token"}"#)
+        }
+        guard case .success = await api.adminLogin(password: "test") else {
+            return XCTFail("Admin-Login für Feedback-Verträge fehlgeschlagen")
+        }
+
+        var statusCode = 200
+        var responseJSON = #"{"feedback":[{"id":"wrapped","rating":"5","created_at":"jetzt"}]}"#
+        MockURLProtocol.handler = { request in
+            try Self.response(for: request, statusCode: statusCode, json: responseJSON)
+        }
+
+        try await api.loadAdminFeedback()
+        XCTAssertEqual(api.adminFeedback.map(\.id), ["wrapped"])
+
+        responseJSON = #"{"data":[{"id":"legacy","rating":4,"created_at":"vorhin"}]}"#
+        try await api.loadAdminFeedback()
+        XCTAssertEqual(api.adminFeedback.map(\.id), ["legacy"])
+
+        responseJSON = #"{"unknown":[]}"#
+        do {
+            try await api.loadAdminFeedback()
+            XCTFail("Unbekanntes Feedback-Format wurde akzeptiert")
+        } catch AdminFeedbackLoadError.invalidPayload {
+            // Expected.
+        } catch {
+            XCTFail("Falscher Fehler für unbekanntes Feedback-Format: \(error)")
+        }
+
+        statusCode = 503
+        do {
+            try await api.loadAdminFeedback()
+            XCTFail("Feedback-Serverfehler wurde akzeptiert")
+        } catch AdminFeedbackLoadError.server(let receivedStatusCode) {
+            XCTAssertEqual(receivedStatusCode, 503)
+        } catch {
+            XCTFail("Falscher Fehler für Feedback-Serverfehler: \(error)")
+        }
+
+        statusCode = 401
+        do {
+            try await api.loadAdminFeedback()
+            XCTFail("Abgelaufene Feedback-Sitzung wurde akzeptiert")
+        } catch AdminFeedbackLoadError.sessionExpired {
+            XCTAssertFalse(api.isAdmin)
+        } catch {
+            XCTFail("Falscher Fehler für abgelaufene Feedback-Sitzung: \(error)")
+        }
+    }
+
     func testAdminReadAndMutationContracts() async throws {
         await resetService()
         MockURLProtocol.handler = { request in
