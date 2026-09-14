@@ -10,9 +10,9 @@ Die vollständige fachliche Dokumentation beginnt unter [Match&Play Business-Log
 
 Die Markdown-Dateien werden als fortlaufende Projektspezifikation gepflegt. Relevante gemeinsam vereinbarte Produkt-, Business-, Betriebs- und Workflow-Entscheidungen werden deshalb im selben Arbeitspaket auf den jeweils passenden Seiten aktualisiert und anschließend über die Pipeline ins Wiki übernommen.
 
-## Automatisierte Tests (Build 149)
+## Automatisierte Tests (Build 150)
 
-Das Xcode-Projekt enthält das Unit-Test-Target `SecretMatchTests`. Die Tests prüfen ohne produktive Serverzugriffe unter anderem Eventnummernformatierung, Match- und Aktionsdefinitionen, Queue-Texte, lokale Codable-Persistenz, zentrale JSON- und API-Verträge für Teilnehmer- und Admin-Abläufe sowie den anonymen CSV-/PDF-Export. Netzwerkfreie Offscreen-Renderings decken zusätzlich Teilnehmer- und Admin-Oberflächen mit leeren und befüllten Zuständen im Hoch- und Querformat ab. Der vollständige Testlauf für Build 149 erreicht 70,07 % Zeilenabdeckung (23.325 von 33.288 Zeilen); Code Coverage ist im gemeinsamen `SecretMatch`-Scheme aktiviert.
+Das Xcode-Projekt enthält das Unit-Test-Target `SecretMatchTests`. Die Tests prüfen ohne produktive Serverzugriffe unter anderem Eventnummernformatierung, Match- und Aktionsdefinitionen, Queue-Texte, lokale Codable-Persistenz, zentrale JSON- und API-Verträge für Teilnehmer- und Admin-Abläufe sowie den anonymen CSV-/PDF-Export. Netzwerkfreie Offscreen-Renderings decken zusätzlich Teilnehmer- und Admin-Oberflächen mit leeren und befüllten Zuständen im Hoch- und Querformat ab. Der vollständige Testlauf für Build 150 erreicht 70,07 % Zeilenabdeckung (23.325 von 33.288 Zeilen); Code Coverage ist im gemeinsamen `SecretMatch`-Scheme aktiviert.
 
 Die Suite kann auf einem installierten iPad-Simulator ausgeführt werden:
 
