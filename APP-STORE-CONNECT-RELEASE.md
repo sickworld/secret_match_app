@@ -1,16 +1,16 @@
 # Automatischer App-Store-Connect-Release
 
-Der Workflow `iOS Quality` lädt in seinen Release-Jobs die Teilnehmer-App und die Admin-App nach App Store Connect hoch, sobald ein entsprechend benannter Pull Request sicher nach `main` gemergt wurde und die Pflichtjobs für genau diesen Merge-Commit vollständig erfolgreich waren. Qualitätsprüfung und Upload gehören damit zu demselben GitHub-Actions-Run; es gibt keinen nachgelagerten separaten Release-Workflow.
+Der Workflow `iOS Quality` lädt in seinen Release-Jobs die Teilnehmer-App und die Admin-App nach App Store Connect hoch, sobald ein Pull Request aus einem `release/…`-Branch sicher nach `main` gemergt wurde und die Pflichtjobs für genau diesen Merge-Commit vollständig erfolgreich waren. Qualitätsprüfung und Upload gehören damit zu demselben GitHub-Actions-Run; es gibt keinen nachgelagerten separaten Release-Workflow.
 
 ## Release auslösen
 
-1. Die Release-Änderungen mit synchroner Marketing- und Buildversion für beide Targets als Pull Request nach `main` öffnen.
-2. Den PR exakt `release`, `Release <Version>` oder `Release: <Version>` nennen; Groß-/Kleinschreibung ist egal und `<Version>` muss aus drei numerischen Blöcken wie `2026.09.14` bestehen.
+1. Die Release-Änderungen mit synchroner Marketing- und Buildversion für beide Targets in einem Branch mit dem Präfix `release/` vorbereiten, beispielsweise `release/2026.09.14-151`, und daraus einen Pull Request nach `main` öffnen.
+2. Den PR beliebig verständlich benennen; allein der Quellbranch entscheidet über die Release-Freigabe.
 3. Den normalen PR-Run prüfen und den PR mergen.
 4. Der Push-Run von `iOS Quality` prüft den tatsächlichen Merge-Commit erneut.
 5. Nur bei grünem Ergebnis führt derselbe Run **Verify merged release PR** und anschließend beide Upload-Jobs nacheinander aus.
 
-Ein offener PR, ein fehlgeschlagener Quality-Run, ein normal benannter PR oder ein direkter Push löst keinen Upload aus. Ein erneuter Upload derselben App-Version und Buildnummer wird von Apple abgewiesen; jeder Release-Stand benötigt deshalb eine noch nicht verwendete Buildnummer.
+Ein offener PR, ein fehlgeschlagener Quality-Run, ein PR aus einem anderen Branch oder ein direkter Push löst keinen Upload aus. Ein erneuter Upload derselben App-Version und Buildnummer wird von Apple abgewiesen; jeder Release-Stand benötigt deshalb eine noch nicht verwendete Buildnummer.
 
 Der Workflow überträgt Builds nach App Store Connect. Nach Apples asynchroner Verarbeitung stehen sie in TestFlight bereit. Er verteilt sie nicht automatisch an externe Tester und reicht keine App-Version automatisch zur App-Store-Prüfung ein.
 
@@ -21,13 +21,13 @@ Ein vollständiger Test ist ein echter Upload nach App Store Connect, veröffent
 1. Von aktuellem `main` einen neuen Branch erstellen.
 2. `MARKETING_VERSION` in beiden Targets und allen Build-Konfigurationen auf das aktuelle Datum setzen und `CURRENT_PROJECT_VERSION` auf eine bei Apple noch nicht verwendete Nummer erhöhen. Für diesen erneuten Test ist Build `151` vorgesehen, sofern diese Nummer noch bei keiner der beiden Apps verwendet wurde.
 3. Die Versionsänderung committen, pushen und einen Pull Request nach `main` öffnen.
-4. Den PR exakt `release` oder beispielsweise `Release: 2026.09.14` nennen.
+4. Den PR verständlich benennen; ein bestimmtes Titelformat ist nicht erforderlich.
 5. Zuerst den normalen PR-Lauf von `iOS Quality` prüfen. Solange der PR nur offen ist, erfolgt kein Apple-Upload.
 6. Den grünen PR nach `main` mergen. Dadurch startet ein neuer `iOS Quality`-Push-Lauf für den tatsächlichen Merge-Commit.
 7. Im selben Run unter **Actions → iOS Quality** prüfen, dass **Verify merged release PR**, **Upload participant-app to App Store Connect** und **Upload admin-app to App Store Connect** erfolgreich sind.
 8. Nach Apples Verarbeitung in App Store Connect bei beiden Apps unter **TestFlight** prüfen, dass der neue Build erscheint.
 
-Der Test verbraucht die gewählte Buildnummer bei Apple dauerhaft. Einen fehlgeschlagenen Upload erst nach Fehleranalyse erneut ausführen; sobald Apple einen Build angenommen hat, benötigt ein weiterer Upload derselben App eine neue Buildnummer. Übersprungene Release-Jobs in einem offenen PR, bei einem normalen Push oder bei einem nicht passenden PR-Titel sind erwartet und bestätigen, dass der Release-Gate keine unbeabsichtigten Uploads zulässt.
+Der Test verbraucht die gewählte Buildnummer bei Apple dauerhaft. Einen fehlgeschlagenen Upload erst nach Fehleranalyse erneut ausführen; sobald Apple einen Build angenommen hat, benötigt ein weiterer Upload derselben App eine neue Buildnummer. Übersprungene Release-Jobs in einem offenen PR, bei einem normalen Push oder bei einem PR aus einem Branch ohne `release/`-Präfix sind erwartet und bestätigen, dass der Release-Gate keine unbeabsichtigten Uploads zulässt.
 
 ## App Store Connect API Key und GitHub Secrets
 

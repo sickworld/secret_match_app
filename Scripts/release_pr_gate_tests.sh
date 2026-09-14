@@ -19,49 +19,39 @@ assert_gate() {
 }
 
 assert_gate \
-  'exakter Release-Titel' \
-  '{"number":12,"title":"release","merged_at":"2026-09-14T08:00:00Z","base":{"ref":"main"}}' \
-  '[{"number":12,"title":"release","merged_at":"2026-09-14T08:00:00Z","base":{"ref":"main"}}]'
+  'Release-Branch mit beliebigem PR-Titel' \
+  '{"number":12,"title":"Build ausprobieren","merged_at":"2026-09-14T08:00:00Z","base":{"ref":"main"},"head":{"ref":"release/2026.09.14-151"}}' \
+  '[{"number":12,"title":"Build ausprobieren","merged_at":"2026-09-14T08:00:00Z","base":{"ref":"main"},"head":{"ref":"release/2026.09.14-151"}}]'
 
 assert_gate \
-  'Release-Titel mit Versionszusatz' \
-  '{"number":13,"title":"Release: 2026.09.14","merged_at":"2026-09-14T09:00:00Z","base":{"ref":"main"}}' \
-  '[{"number":13,"title":"Release: 2026.09.14","merged_at":"2026-09-14T09:00:00Z","base":{"ref":"main"}}]'
+  'Release-Branch unabhängig von Großschreibung' \
+  '{"number":13,"title":"Noch ein Versuch","merged_at":"2026-09-14T09:00:00Z","base":{"ref":"main"},"head":{"ref":"Release/2026.09.14-152"}}' \
+  '[{"number":13,"title":"Noch ein Versuch","merged_at":"2026-09-14T09:00:00Z","base":{"ref":"main"},"head":{"ref":"Release/2026.09.14-152"}}]'
 
 assert_gate \
-  'Release-Titel mit echter Versionsnummer' \
-  '{"number":14,"title":"Release 2026.09.14","merged_at":"2026-09-14T09:30:00Z","base":{"ref":"main"}}' \
-  '[{"number":14,"title":"Release 2026.09.14","merged_at":"2026-09-14T09:30:00Z","base":{"ref":"main"}}]'
-
-assert_gate \
-  'offener Release-PR' \
+  'offener PR aus Release-Branch' \
   'null' \
-  '[{"number":15,"title":"release","merged_at":null,"base":{"ref":"main"}}]'
+  '[{"number":14,"title":"Egal","merged_at":null,"base":{"ref":"main"},"head":{"ref":"release/2026.09.14-153"}}]'
 
 assert_gate \
-  'normaler gemergter PR' \
+  'Release-Titel aus normalem Branch' \
   'null' \
-  '[{"number":16,"title":"Improve login","merged_at":"2026-09-14T10:00:00Z","base":{"ref":"main"}}]'
+  '[{"number":15,"title":"Release 2026.09.14","merged_at":"2026-09-14T10:00:00Z","base":{"ref":"main"},"head":{"ref":"feature/login"}}]'
 
 assert_gate \
-  'Release-ähnlicher Titel ohne Freigabeformat' \
+  'ähnlicher Branch ohne Release-Prefix' \
   'null' \
-  '[{"number":17,"title":"release candidate","merged_at":"2026-09-14T10:30:00Z","base":{"ref":"main"}}]'
-
-assert_gate \
-  'Release-Titel ohne echte Versionsnummer' \
-  'null' \
-  '[{"number":18,"title":"release version","merged_at":"2026-09-14T10:45:00Z","base":{"ref":"main"}}]'
+  '[{"number":16,"title":"Release Candidate","merged_at":"2026-09-14T10:30:00Z","base":{"ref":"main"},"head":{"ref":"release-candidate/151"}}]'
 
 assert_gate \
   'Release in anderen Basisbranch' \
   'null' \
-  '[{"number":19,"title":"release","merged_at":"2026-09-14T11:00:00Z","base":{"ref":"develop"}}]'
+  '[{"number":17,"title":"Beliebig","merged_at":"2026-09-14T11:00:00Z","base":{"ref":"develop"},"head":{"ref":"release/2026.09.14-154"}}]'
 
 assert_gate \
   'neuesten passenden Merge auswählen' \
-  '{"number":21,"title":"Release: 2026.09.14","merged_at":"2026-09-14T13:00:00Z","base":{"ref":"main"}}' \
-  '[{"number":20,"title":"release","merged_at":"2026-09-14T12:00:00Z","base":{"ref":"main"}},{"number":21,"title":"Release: 2026.09.14","merged_at":"2026-09-14T13:00:00Z","base":{"ref":"main"}}]'
+  '{"number":19,"title":"Zweiter Stand","merged_at":"2026-09-14T13:00:00Z","base":{"ref":"main"},"head":{"ref":"release/2026.09.14-156"}}' \
+  '[{"number":18,"title":"Erster Stand","merged_at":"2026-09-14T12:00:00Z","base":{"ref":"main"},"head":{"ref":"release/2026.09.14-155"}},{"number":19,"title":"Zweiter Stand","merged_at":"2026-09-14T13:00:00Z","base":{"ref":"main"},"head":{"ref":"release/2026.09.14-156"}}]'
 
 if printf 'kein json' | "$gate" >/dev/null 2>&1; then
   printf 'Fehlgeschlagen: Ungültiges JSON wurde akzeptiert.\n' >&2
