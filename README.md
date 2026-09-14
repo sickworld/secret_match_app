@@ -16,7 +16,7 @@ xcodebuild -project SecretMatch.xcodeproj -scheme SecretMatch -configuration Deb
 
 ## GitHub Actions
 
-Der Workflow `iOS Quality` läuft bei Pushes und Pull Requests auf `main` sowie manuell. Er zeigt getrennte Jobs für Code-Qualität, Teilnehmer-Build, Admin-Build, Tests und Coverage sowie CodeQL. Der Quality-Job prüft zuerst die Repository-Hygiene, synchrone App-Versionen und SwiftFormat; nur nach seinem Erfolg starten die übrigen vier Qualitätsjobs parallel. Die Tests laufen auf einem verfügbaren iPad-Simulator und erzwingen mindestens 70 % Zeilenabdeckung für `SecretMatch.app`.
+Der Workflow `iOS Quality` läuft bei Pushes und Pull Requests auf `main`, wöchentlich sowie manuell. Er zeigt getrennte Jobs für Code-Qualität, Teilnehmer-Build, Admin-Build, Tests und Coverage sowie CodeQL. Der Quality-Job prüft zuerst die Repository-Hygiene, synchrone App-Versionen und SwiftFormat; danach starten die übrigen Prüfungen parallel. Die Tests laufen auf einem verfügbaren iPad-Simulator und erzwingen mindestens 70 % Zeilenabdeckung für `SecretMatch.app`.
 
 Die Code-Qualität ist in GitHub unter **Actions → iOS Quality → gewünschter Run → Code quality** sichtbar. Details stehen in den einzelnen Steps und in der Run-Zusammenfassung; der herunterladbare Bericht heißt `code-quality-report`. Build- und Testdiagnosen werden ebenfalls direkt im jeweiligen Job dargestellt. Jeder Job schreibt eine eigene Zusammenfassung; Rohlogs, Coverage-Berichte und das Xcode-Ergebnisbundle werden 14 Tage lang als getrennte Artefakte gespeichert. SwiftFormat, Builds, Tests, Versionskonsistenz, Repository-Hygiene und die Coverage-Schwelle sind verpflichtend.
 
@@ -31,9 +31,9 @@ Vor jedem Commit müssen beide Befehle in dieser Reihenfolge ausgeführt werden.
 
 Nach jedem Push wird geprüft, dass der zum Commit-SHA gehörende GitHub-Actions-Run angelegt wurde; Link und aktueller Status werden gemeldet. Auf noch wartende oder laufende Jobs wird nicht blockierend gewartet. Das endgültige Ergebnis bleibt jederzeit direkt in GitHub sichtbar.
 
-Der zusätzliche Job `CodeQL security and quality` analysiert innerhalb desselben `iOS Quality`-Runs beide Swift-App-Schemes. Er startet nach dem schnellen Quality-Gate parallel zu Builds und Tests und verwendet die erweiterte CodeQL-Suite `security-and-quality` für Sicherheits-, Zuverlässigkeits- und Wartbarkeitsprobleme. Die Ergebnisse sind unter **Security → Code scanning** und im Actions-Job sichtbar.
+Der zusätzliche Job `CodeQL security and quality` analysiert innerhalb desselben `iOS Quality`-Workflows beide Swift-App-Schemes und verwendet die erweiterte CodeQL-Suite `security-and-quality` für Sicherheits-, Zuverlässigkeits- und Wartbarkeitsprobleme. Da der instrumentierte Doppel-Build rund 19 Minuten benötigt, läuft CodeQL nicht bei jedem Push, sondern im wöchentlichen Lauf und bei manueller Ausführung. Normale Pushes bleiben dadurch bei ungefähr vier bis fünf Minuten. Die Ergebnisse sind unter **Security → Code scanning** und im Actions-Job sichtbar.
 
-Sind die fünf Qualitätsjobs bei einem Push auf `main` grün, synchronisiert `Publish documentation wiki` alle sechs versionierten Markdown-Dokumente in das GitHub-Wiki. README wird zur Startseite; Netzwerk-Setup, Agentenanweisungen und die beiden Projektskills erhalten eigene Seiten und eine gemeinsame Sidebar. Andere manuell angelegte Wiki-Seiten werden nicht gelöscht.
+Sind Code-Qualität, beide Builds sowie Tests und Coverage bei einem Push auf `main` grün, synchronisiert `Publish documentation wiki` alle sechs versionierten Markdown-Dokumente in das GitHub-Wiki. README wird zur Startseite; Netzwerk-Setup, Agentenanweisungen und die beiden Projektskills erhalten eigene Seiten und eine gemeinsame Sidebar. Andere manuell angelegte Wiki-Seiten werden nicht gelöscht.
 
 Die Tests verändern weder den Produktivserver noch gespeicherte Eventdaten. Netzwerk-, vollständige UI- und End-to-End-Abläufe benötigen weiterhin eigene Integrations- beziehungsweise UI-Tests.
 
