@@ -4,7 +4,7 @@ Der Workflow `iOS Quality` lädt in seinen Release-Jobs die Teilnehmer-App und d
 
 ## Release auslösen
 
-1. Die Release-Änderungen mit synchroner Marketing- und Buildversion für beide Targets in einem Branch mit dem Präfix `release/` vorbereiten, beispielsweise `release/2026.09.14-151`, und daraus einen Pull Request nach `main` öffnen.
+1. Die Release-Änderungen mit synchroner Marketing- und Buildversion für beide Targets in einem Branch mit dem Präfix `release/` vorbereiten, beispielsweise `release/2026.09.14-152`, und daraus einen Pull Request nach `main` öffnen.
 2. Den PR beliebig verständlich benennen; allein der Quellbranch entscheidet über die Release-Freigabe.
 3. Den normalen PR-Run prüfen und den PR mergen.
 4. Der Push-Run von `iOS Quality` prüft den tatsächlichen Merge-Commit erneut.
@@ -19,7 +19,7 @@ Der Workflow überträgt Builds nach App Store Connect. Nach Apples asynchroner 
 Ein vollständiger Test ist ein echter Upload nach App Store Connect, veröffentlicht die Apps aber noch nicht im öffentlichen App Store:
 
 1. Von aktuellem `main` einen neuen Branch erstellen.
-2. `MARKETING_VERSION` in beiden Targets und allen Build-Konfigurationen auf das aktuelle Datum setzen und `CURRENT_PROJECT_VERSION` auf eine bei Apple noch nicht verwendete Nummer erhöhen. Für diesen erneuten Test ist Build `151` vorgesehen, sofern diese Nummer noch bei keiner der beiden Apps verwendet wurde.
+2. `MARKETING_VERSION` in beiden Targets und allen Build-Konfigurationen auf das aktuelle Datum setzen und `CURRENT_PROJECT_VERSION` auf eine bei Apple noch nicht verwendete Nummer erhöhen. Für diesen erneuten Test ist Build `152` vorgesehen, sofern diese Nummer noch bei keiner der beiden Apps verwendet wurde.
 3. Die Versionsänderung committen, pushen und einen Pull Request nach `main` öffnen.
 4. Den PR verständlich benennen; ein bestimmtes Titelformat ist nicht erforderlich.
 5. Zuerst den normalen PR-Lauf von `iOS Quality` prüfen. Solange der PR nur offen ist, erfolgt kein Apple-Upload.

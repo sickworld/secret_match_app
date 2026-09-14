@@ -10,9 +10,9 @@ Die vollständige fachliche Dokumentation beginnt unter [Match&Play Business-Log
 
 Die Markdown-Dateien werden als fortlaufende Projektspezifikation gepflegt. Relevante gemeinsam vereinbarte Produkt-, Business-, Betriebs- und Workflow-Entscheidungen werden deshalb im selben Arbeitspaket auf den jeweils passenden Seiten aktualisiert und anschließend über die Pipeline ins Wiki übernommen.
 
-## Automatisierte Tests (Build 151)
+## Automatisierte Tests (Build 152)
 
-Das Xcode-Projekt enthält das Unit-Test-Target `SecretMatchTests`. Die 63 Tests prüfen ohne produktive Serverzugriffe unter anderem Eventnummernformatierung, Match- und Aktionsdefinitionen, Queue-Texte, lokale Codable-Persistenz, Schlüsselbund- und Cache-Helfer, zentrale JSON- und API-Verträge für Teilnehmer- und Admin-Abläufe sowie den anonymen CSV-/PDF-Export. Netzwerkfreie Offscreen-Renderings decken zusätzlich Teilnehmer- und Admin-Oberflächen mit leeren und befüllten Zuständen im Hoch- und Querformat ab. Der vollständige Build-151-Lauf erreicht 82,61 % Core Coverage (3.501 von 4.238 Zeilen) und 67,86 % für `SecretMatch.app` inklusive SwiftUI (22.589 von 33.288 Zeilen); Xcodes aggregierte Laufmetrik liegt bei 70,10 %. Code Coverage ist im gemeinsamen `SecretMatch`-Scheme aktiviert.
+Das Xcode-Projekt enthält das Unit-Test-Target `SecretMatchTests`. Die 63 Tests prüfen ohne produktive Serverzugriffe unter anderem Eventnummernformatierung, Match- und Aktionsdefinitionen, Queue-Texte, lokale Codable-Persistenz, Schlüsselbund- und Cache-Helfer, zentrale JSON- und API-Verträge für Teilnehmer- und Admin-Abläufe sowie den anonymen CSV-/PDF-Export. Netzwerkfreie Offscreen-Renderings decken zusätzlich Teilnehmer- und Admin-Oberflächen mit leeren und befüllten Zuständen im Hoch- und Querformat ab. Der vollständige Build-152-Lauf erreicht 82,61 % Core Coverage (3.501 von 4.238 Zeilen) und 67,88 % für `SecretMatch.app` inklusive SwiftUI (22.597 von 33.288 Zeilen); Xcodes aggregierte Laufmetrik liegt bei 70,12 %. Code Coverage ist im gemeinsamen `SecretMatch`-Scheme aktiviert.
 
 Die Suite kann auf einem installierten iPad-Simulator ausgeführt werden:
 
