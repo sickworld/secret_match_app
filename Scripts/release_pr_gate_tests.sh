@@ -29,29 +29,39 @@ assert_gate \
   '[{"number":13,"title":"Release: 2026.09.14","merged_at":"2026-09-14T09:00:00Z","base":{"ref":"main"}}]'
 
 assert_gate \
+  'Release-Titel mit echter Versionsnummer' \
+  '{"number":14,"title":"Release 2026.09.14","merged_at":"2026-09-14T09:30:00Z","base":{"ref":"main"}}' \
+  '[{"number":14,"title":"Release 2026.09.14","merged_at":"2026-09-14T09:30:00Z","base":{"ref":"main"}}]'
+
+assert_gate \
   'offener Release-PR' \
   'null' \
-  '[{"number":14,"title":"release","merged_at":null,"base":{"ref":"main"}}]'
+  '[{"number":15,"title":"release","merged_at":null,"base":{"ref":"main"}}]'
 
 assert_gate \
   'normaler gemergter PR' \
   'null' \
-  '[{"number":15,"title":"Improve login","merged_at":"2026-09-14T10:00:00Z","base":{"ref":"main"}}]'
+  '[{"number":16,"title":"Improve login","merged_at":"2026-09-14T10:00:00Z","base":{"ref":"main"}}]'
 
 assert_gate \
   'Release-ähnlicher Titel ohne Freigabeformat' \
   'null' \
-  '[{"number":16,"title":"release candidate","merged_at":"2026-09-14T10:30:00Z","base":{"ref":"main"}}]'
+  '[{"number":17,"title":"release candidate","merged_at":"2026-09-14T10:30:00Z","base":{"ref":"main"}}]'
+
+assert_gate \
+  'Release-Titel ohne echte Versionsnummer' \
+  'null' \
+  '[{"number":18,"title":"release version","merged_at":"2026-09-14T10:45:00Z","base":{"ref":"main"}}]'
 
 assert_gate \
   'Release in anderen Basisbranch' \
   'null' \
-  '[{"number":17,"title":"release","merged_at":"2026-09-14T11:00:00Z","base":{"ref":"develop"}}]'
+  '[{"number":19,"title":"release","merged_at":"2026-09-14T11:00:00Z","base":{"ref":"develop"}}]'
 
 assert_gate \
   'neuesten passenden Merge auswählen' \
-  '{"number":19,"title":"Release: 150","merged_at":"2026-09-14T13:00:00Z","base":{"ref":"main"}}' \
-  '[{"number":18,"title":"release","merged_at":"2026-09-14T12:00:00Z","base":{"ref":"main"}},{"number":19,"title":"Release: 150","merged_at":"2026-09-14T13:00:00Z","base":{"ref":"main"}}]'
+  '{"number":21,"title":"Release: 2026.09.14","merged_at":"2026-09-14T13:00:00Z","base":{"ref":"main"}}' \
+  '[{"number":20,"title":"release","merged_at":"2026-09-14T12:00:00Z","base":{"ref":"main"}},{"number":21,"title":"Release: 2026.09.14","merged_at":"2026-09-14T13:00:00Z","base":{"ref":"main"}}]'
 
 if printf 'kein json' | "$gate" >/dev/null 2>&1; then
   printf 'Fehlgeschlagen: Ungültiges JSON wurde akzeptiert.\n' >&2
