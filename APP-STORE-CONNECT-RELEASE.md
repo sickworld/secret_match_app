@@ -5,7 +5,7 @@ Der Workflow `App Store Connect Release` lädt die Teilnehmer-App und die Admin-
 ## Release auslösen
 
 1. Die Release-Änderungen mit synchroner Marketing- und Buildversion für beide Targets als Pull Request nach `main` öffnen.
-2. Den PR exakt `release` oder `Release: <Version>` nennen; Groß-/Kleinschreibung ist egal.
+2. Den PR exakt `release`, `Release <Version>` oder `Release: <Version>` nennen; die Version muss dreiteilig numerisch sein und Groß-/Kleinschreibung ist egal.
 3. Den normalen PR-Run prüfen und den PR mergen.
 4. Der Push-Run von `iOS Quality` prüft den tatsächlichen Merge-Commit erneut.
 5. Nur bei grünem Ergebnis lädt `App Store Connect Release` beide Schemes nacheinander hoch.
@@ -21,7 +21,7 @@ Ein vollständiger Test ist ein echter Upload nach App Store Connect, veröffent
 1. Von aktuellem `main` einen neuen Branch erstellen.
 2. `MARKETING_VERSION` in beiden Targets und allen Build-Konfigurationen auf das aktuelle Datum setzen und `CURRENT_PROJECT_VERSION` auf eine bei Apple noch nicht verwendete Nummer erhöhen. Für den ersten Test nach Build `149` ist Build `150` vorgesehen, sofern diese Nummer noch bei keiner der beiden Apps verwendet wurde.
 3. Die Versionsänderung committen, pushen und einen Pull Request nach `main` öffnen.
-4. Den PR exakt `release` oder beispielsweise `Release: 2026.09.14` nennen.
+4. Den PR beispielsweise `Release 2026.09.14` oder `Release: 2026.09.14` nennen. Der Kurztitel `release` bleibt ebenfalls gültig.
 5. Zuerst den normalen PR-Lauf von `iOS Quality` prüfen. Solange der PR nur offen ist, erfolgt kein Apple-Upload.
 6. Den grünen PR nach `main` mergen. Dadurch startet ein neuer `iOS Quality`-Push-Lauf für den tatsächlichen Merge-Commit.
 7. Nach dessen Erfolg unter **Actions → App Store Connect Release** prüfen, dass **Verify merged release PR**, **Upload participant-app to App Store Connect** und **Upload admin-app to App Store Connect** erfolgreich sind.

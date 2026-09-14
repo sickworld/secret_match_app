@@ -9,7 +9,7 @@ jq -c --arg base_ref "$base_ref" '
     .[]
     | select(.merged_at != null)
     | select(.base.ref == $base_ref)
-    | select(.title | test("^release(: .+)?$"; "i"))
+    | select(.title | test("^release(:? [0-9]+(\\.[0-9]+){2})?$"; "i"))
   ]
   | sort_by(.merged_at)
   | last // null
