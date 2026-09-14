@@ -45,7 +45,19 @@ Diese Datei enthält die verbindlichen Arbeitsregeln für Agenten in diesem Repo
 
 ## Dokumentation
 
-`README.md` aktualisieren, wenn sich Setup, unterstützte Plattformen, Bedienung, API-Vertrag, Konfiguration oder Build-Ablauf ändern.
+Die Markdown-Dokumentation ist eine fortlaufend gepflegte Spezifikation und gehört zu jedem Arbeitspaket. Relevante Absprachen und Entscheidungen aus der Zusammenarbeit mit dem User müssen zusammen mit der Umsetzung in den passenden `.md`-Dateien festgehalten werden. Eine Änderung gilt erst als vollständig, wenn Code, Tests und Dokumentation denselben aktuellen Stand beschreiben.
+
+Dabei gilt folgende Zuordnung:
+
+- Produktverhalten, Bedienung und übergreifende Funktionsübersicht in `README.md` dokumentieren.
+- Fachliche Regeln, Zustände, Randfälle und API-Verträge auf der passenden Seite unter `docs/business-logic/` aktualisieren.
+- Setup, Betrieb, Netzwerk, Release und CI/CD in der jeweiligen thematischen Markdown-Datei dokumentieren und aus `README.md` verlinken.
+- Dauerhafte Arbeits-, Test-, Review- oder Dokumentationskonventionen in `AGENTS.md` beziehungsweise `skill/agent.md` festhalten.
+- Änderungen am WordPress-Vertrag zusätzlich in dessen `README.md` und bei Bedarf `CHANGELOG.md` nachziehen.
+
+Bestehende Dokumente aktualisieren, statt ein wortwörtliches Chatprotokoll oder redundante Notizdateien anzulegen. Nur vereinbarte beziehungsweise tatsächlich umgesetzte Entscheidungen dokumentieren; verworfene Zwischenideen, temporäre Debugdetails, Secrets, Passwörter, Tokens und personenbezogene Daten gehören nicht in die Dokumentation.
+
+`README.md` immer aktualisieren, wenn sich Setup, unterstützte Plattformen, Bedienung, API-Vertrag, Konfiguration oder Build-Ablauf ändern. Die passende Fachdokumentation im selben Commit mitführen, damit der automatische Wiki-Sync den aktuellen Stand veröffentlicht.
 
 Für sichtbare Produktänderungen Release Notes oder ein vorhandenes Changelog aktualisieren. Falls noch kein Changelog existiert, keines nur für eine kleine Änderung erfinden; den Bedarf bei einer Release-Aufgabe neu bewerten.
 

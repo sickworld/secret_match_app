@@ -13,6 +13,7 @@ Load the matching project skill when the task touches its area:
 - Before editing, inspect the relevant code and run `git status --short`.
 - Preserve existing user changes and never revert unrelated work.
 - Keep changes small, thematic, and consistent with the existing SwiftUI architecture.
+- Keep the Markdown documentation as a living specification. Every implementation task must capture the relevant decisions and resulting behavior agreed with the user in the same delivery: product and business behavior in `README.md` and the matching file under `docs/business-logic/`, setup and operations in the relevant topic document, and workflow conventions in `AGENTS.md` or `skill/agent.md`. Update existing pages instead of keeping a separate chat transcript. Never document credentials, personal data, discarded ideas, or temporary debugging details.
 - Every new feature or behavior change must include suitable automated test coverage in the same delivery. The feature is not complete until those tests pass. Skipping coverage requires the user's explicit approval and must be reported as a remaining risk.
 - Review every completed code change before delivery.
 - Run the smallest relevant checks; for app changes, build the `SecretMatch` scheme.

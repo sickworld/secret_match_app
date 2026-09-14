@@ -8,6 +8,8 @@ In allen sichtbaren App-Texten, Exporten und Benachrichtigungen lautet der Produ
 
 Die vollständige fachliche Dokumentation beginnt unter [Match&Play Business-Logik](docs/business-logic/Business-Logic.md) und wird zusätzlich ins [GitHub-Wiki](https://github.com/sickworld/secret_match_app/wiki/Business-Logic) veröffentlicht. Sie beschreibt Domänenmodell, Anmeldung und Sitzungen, Matches und Aktionen, Offline-Queue, Adminrechte, Eventlebenszyklus, Billboard und Medien, Betrieb und Datenschutz sowie sämtliche REST-API-Routen im Zusammenspiel von App und WordPress-Backend.
 
+Die Markdown-Dateien werden als fortlaufende Projektspezifikation gepflegt. Relevante gemeinsam vereinbarte Produkt-, Business-, Betriebs- und Workflow-Entscheidungen werden deshalb im selben Arbeitspaket auf den jeweils passenden Seiten aktualisiert und anschließend über die Pipeline ins Wiki übernommen.
+
 ## Automatisierte Tests (Build 149)
 
 Das Xcode-Projekt enthält das Unit-Test-Target `SecretMatchTests`. Die Tests prüfen ohne produktive Serverzugriffe unter anderem Eventnummernformatierung, Match- und Aktionsdefinitionen, Queue-Texte, lokale Codable-Persistenz, zentrale JSON- und API-Verträge für Teilnehmer- und Admin-Abläufe sowie den anonymen CSV-/PDF-Export. Netzwerkfreie Offscreen-Renderings decken zusätzlich Teilnehmer- und Admin-Oberflächen mit leeren und befüllten Zuständen im Hoch- und Querformat ab. Der vollständige Testlauf für Build 149 erreicht 70,07 % Zeilenabdeckung (23.325 von 33.288 Zeilen); Code Coverage ist im gemeinsamen `SecretMatch`-Scheme aktiviert.
