@@ -445,11 +445,49 @@ jobs:
           cp source/skill/agent.md wiki/Agent-Workflow.md
           cp source/skill/secretmatch-ios/SKILL.md wiki/SecretMatch-iOS-Skill.md
           cp source/skill/secretmatch-review/SKILL.md wiki/SecretMatch-Review-Skill.md
+          cp source/docs/business-logic/Business-Logic.md wiki/Business-Logic.md
+          cp source/docs/business-logic/domain-model-and-invariants.md wiki/domain-model-and-invariants.md
+          cp source/docs/business-logic/participant-authentication-and-sessions.md wiki/participant-authentication-and-sessions.md
+          cp source/docs/business-logic/interactions-matches-actions.md wiki/interactions-matches-actions.md
+          cp source/docs/business-logic/offline-queue-connectivity-telemetry.md wiki/offline-queue-connectivity-telemetry.md
+          cp source/docs/business-logic/admin-and-access-control.md wiki/admin-and-access-control.md
+          cp source/docs/business-logic/event-lifecycle-statistics-and-exports.md wiki/event-lifecycle-statistics-and-exports.md
+          cp source/docs/business-logic/billboards-announcements-and-media.md wiki/billboards-announcements-and-media.md
+          cp source/docs/business-logic/devices-alerts-feedback-and-privacy.md wiki/devices-alerts-feedback-and-privacy.md
+          cp source/docs/business-logic/api-contracts.md wiki/api-contracts.md
+          sed -i \
+            -e 's|(docs/business-logic/Business-Logic.md)|(Business-Logic)|g' \
+            -e 's|(EVENT-NETZWERK-SETUP.md)|(Event-Netzwerk-Setup)|g' \
+            wiki/Home.md
+          for page in \
+            wiki/Business-Logic.md \
+            wiki/domain-model-and-invariants.md \
+            wiki/participant-authentication-and-sessions.md \
+            wiki/interactions-matches-actions.md \
+            wiki/offline-queue-connectivity-telemetry.md \
+            wiki/admin-and-access-control.md \
+            wiki/event-lifecycle-statistics-and-exports.md \
+            wiki/billboards-announcements-and-media.md \
+            wiki/devices-alerts-feedback-and-privacy.md \
+            wiki/api-contracts.md; do
+            sed -i -E 's|\(([^)/]+)\.md\)|(\1)|g' "$page"
+          done
 
           printf '%s\n' \
             '# SecretMatch' \
             '' \
             '- [Startseite](Home)' \
+            '- **Business-Logik**' \
+            '  - [Übersicht](Business-Logic)' \
+            '  - [Domänenmodell und Invarianten](domain-model-and-invariants)' \
+            '  - [Teilnehmer-Anmeldung und Sitzungen](participant-authentication-and-sessions)' \
+            '  - [Wünsche, Matches und Aktionen](interactions-matches-actions)' \
+            '  - [Offline-Queue, Verbindung und Telemetrie](offline-queue-connectivity-telemetry)' \
+            '  - [Admin und Zugriffsschutz](admin-and-access-control)' \
+            '  - [Event-Lebenszyklus, Statistik und Exporte](event-lifecycle-statistics-and-exports)' \
+            '  - [Billboard, Mitteilungen und Medien](billboards-announcements-and-media)' \
+            '  - [Geräte, Warnungen, Feedback und Datenschutz](devices-alerts-feedback-and-privacy)' \
+            '  - [REST-API-Verträge](api-contracts)' \
             '- [Event-Netzwerk-Setup](Event-Netzwerk-Setup)' \
             '- [Agent Instructions](Agent-Instructions)' \
             '- [Agent Workflow](Agent-Workflow)' \
@@ -470,6 +508,16 @@ jobs:
             Agent-Workflow.md \
             SecretMatch-iOS-Skill.md \
             SecretMatch-Review-Skill.md \
+            Business-Logic.md \
+            domain-model-and-invariants.md \
+            participant-authentication-and-sessions.md \
+            interactions-matches-actions.md \
+            offline-queue-connectivity-telemetry.md \
+            admin-and-access-control.md \
+            event-lifecycle-statistics-and-exports.md \
+            billboards-announcements-and-media.md \
+            devices-alerts-feedback-and-privacy.md \
+            api-contracts.md \
             _Sidebar.md
 
           if git -C wiki diff --cached --quiet; then

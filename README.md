@@ -4,6 +4,10 @@
 
 In allen sichtbaren App-Texten, Exporten und Benachrichtigungen lautet der Produktname **Match&Play**. Interne Bezeichner wie API-Pfade, Bundle-IDs und technische Klassen bleiben aus Kompatibilitätsgründen unverändert.
 
+## Business-Logik
+
+Die vollständige fachliche Dokumentation beginnt unter [Match&Play Business-Logik](docs/business-logic/Business-Logic.md) und wird zusätzlich ins [GitHub-Wiki](https://github.com/sickworld/secret_match_app/wiki/Business-Logic) veröffentlicht. Sie beschreibt Domänenmodell, Anmeldung und Sitzungen, Matches und Aktionen, Offline-Queue, Adminrechte, Eventlebenszyklus, Billboard und Medien, Betrieb und Datenschutz sowie sämtliche REST-API-Routen im Zusammenspiel von App und WordPress-Backend.
+
 ## Automatisierte Tests (Build 149)
 
 Das Xcode-Projekt enthält das Unit-Test-Target `SecretMatchTests`. Die Tests prüfen ohne produktive Serverzugriffe unter anderem Eventnummernformatierung, Match- und Aktionsdefinitionen, Queue-Texte, lokale Codable-Persistenz, zentrale JSON- und API-Verträge für Teilnehmer- und Admin-Abläufe sowie den anonymen CSV-/PDF-Export. Netzwerkfreie Offscreen-Renderings decken zusätzlich Teilnehmer- und Admin-Oberflächen mit leeren und befüllten Zuständen im Hoch- und Querformat ab. Der vollständige Testlauf für Build 149 erreicht 70,07 % Zeilenabdeckung (23.325 von 33.288 Zeilen); Code Coverage ist im gemeinsamen `SecretMatch`-Scheme aktiviert.
@@ -33,7 +37,7 @@ Nach jedem Push wird geprüft, dass der zum Commit-SHA gehörende GitHub-Actions
 
 Der zusätzliche Job `CodeQL security and quality` analysiert innerhalb desselben `iOS Quality`-Workflows beide Swift-App-Schemes und verwendet die erweiterte CodeQL-Suite `security-and-quality` für Sicherheits-, Zuverlässigkeits- und Wartbarkeitsprobleme. Da der instrumentierte Doppel-Build rund 19 Minuten benötigt, läuft CodeQL nicht bei jedem Push, sondern im wöchentlichen Lauf und bei manueller Ausführung. Normale Pushes bleiben dadurch bei ungefähr vier bis fünf Minuten. Die Ergebnisse sind unter **Security → Code scanning** und im Actions-Job sichtbar.
 
-Sind Code-Qualität, beide Builds sowie Tests und Coverage bei einem Push auf `main` grün, synchronisiert `Publish documentation wiki` alle sechs versionierten Markdown-Dokumente in das GitHub-Wiki. README wird zur Startseite; Netzwerk-Setup, Agentenanweisungen und die beiden Projektskills erhalten eigene Seiten und eine gemeinsame Sidebar. Andere manuell angelegte Wiki-Seiten werden nicht gelöscht.
+Sind Code-Qualität, beide Builds sowie Tests und Coverage bei einem Push auf `main` grün, synchronisiert `Publish documentation wiki` die Projekt- und Business-Logik-Dokumentation in das GitHub-Wiki. README wird zur Startseite; Fachseiten, Netzwerk-Setup, Agentenanweisungen und die beiden Projektskills erhalten eigene Seiten und eine gemeinsame Sidebar. Andere manuell angelegte Wiki-Seiten werden nicht gelöscht.
 
 Die Tests verändern weder den Produktivserver noch gespeicherte Eventdaten. Netzwerk-, vollständige UI- und End-to-End-Abläufe benötigen weiterhin eigene Integrations- beziehungsweise UI-Tests.
 
