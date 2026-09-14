@@ -105,6 +105,11 @@ jobs:
             exit "$format_status"
           fi
 
+      - name: Test release pull request gate
+        run: |
+          set -euo pipefail
+          Scripts/release_pr_gate_tests.sh
+
       - name: Publish quality summary
         if: always()
         run: |
@@ -445,6 +450,7 @@ jobs:
           cp source/skill/agent.md wiki/Agent-Workflow.md
           cp source/skill/secretmatch-ios/SKILL.md wiki/SecretMatch-iOS-Skill.md
           cp source/skill/secretmatch-review/SKILL.md wiki/SecretMatch-Review-Skill.md
+          cp source/APP-STORE-CONNECT-RELEASE.md wiki/App-Store-Connect-Release.md
           cp source/docs/business-logic/Business-Logic.md wiki/Business-Logic.md
           cp source/docs/business-logic/domain-model-and-invariants.md wiki/domain-model-and-invariants.md
           cp source/docs/business-logic/participant-authentication-and-sessions.md wiki/participant-authentication-and-sessions.md
@@ -457,6 +463,7 @@ jobs:
           cp source/docs/business-logic/api-contracts.md wiki/api-contracts.md
           sed -i \
             -e 's|(docs/business-logic/Business-Logic.md)|(Business-Logic)|g' \
+            -e 's|(APP-STORE-CONNECT-RELEASE.md)|(App-Store-Connect-Release)|g' \
             -e 's|(EVENT-NETZWERK-SETUP.md)|(Event-Netzwerk-Setup)|g' \
             wiki/Home.md
           for page in \
@@ -477,6 +484,7 @@ jobs:
             '# SecretMatch' \
             '' \
             '- [Startseite](Home)' \
+            '- [App Store Connect Release](App-Store-Connect-Release)' \
             '- **Business-Logik**' \
             '  - [Übersicht](Business-Logic)' \
             '  - [Domänenmodell und Invarianten](domain-model-and-invariants)' \
@@ -508,6 +516,7 @@ jobs:
             Agent-Workflow.md \
             SecretMatch-iOS-Skill.md \
             SecretMatch-Review-Skill.md \
+            App-Store-Connect-Release.md \
             Business-Logic.md \
             domain-model-and-invariants.md \
             participant-authentication-and-sessions.md \

@@ -1,0 +1,215 @@
+name: App Store Connect Release
+
+on:
+  workflow_run:
+    workflows:
+      - iOS Quality
+    types:
+      - completed
+
+concurrency:
+  group: app-store-connect-release
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+env:
+  DEVELOPER_DIR: /Applications/Xcode_26.6.app/Contents/Developer
+
+jobs:
+  release_gate:
+    name: Verify merged release PR
+    if: >-
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.event == 'push' &&
+      github.event.workflow_run.head_branch == 'main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    permissions:
+      contents: read
+      pull-requests: read
+
+    outputs:
+      should_release: ${{ steps.release_pr.outputs.should_release }}
+      pull_request_number: ${{ steps.release_pr.outputs.pull_request_number }}
+
+    steps:
+      - name: Check out trusted release gate
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+          persist-credentials: false
+
+      - name: Find merged release pull request
+        id: release_pr
+        env:
+          GH_TOKEN: ${{ github.token }}
+          HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+          REPOSITORY: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+
+          associated_pull_requests="$(gh api \
+            -H 'Accept: application/vnd.github+json' \
+            "/repos/${REPOSITORY}/commits/${HEAD_SHA}/pulls")"
+          release_pull_request="$(printf '%s' "$associated_pull_requests" | Scripts/release_pr_gate.sh)"
+
+          if [[ "$release_pull_request" == 'null' ]]; then
+            echo 'should_release=false' >> "$GITHUB_OUTPUT"
+            echo 'Kein gemergter Release-PR für diesen Commit gefunden.'
+            exit 0
+          fi
+
+          pull_request_number="$(printf '%s' "$release_pull_request" | jq -r '.number')"
+          echo 'should_release=true' >> "$GITHUB_OUTPUT"
+          echo "pull_request_number=$pull_request_number" >> "$GITHUB_OUTPUT"
+          echo "Release durch Pull Request #$pull_request_number freigegeben."
+
+  upload:
+    name: Upload ${{ matrix.product_name }} to App Store Connect
+    needs: release_gate
+    if: needs.release_gate.outputs.should_release == 'true'
+    runs-on: macos-26
+    timeout-minutes: 45
+    environment:
+      name: app-store-connect
+      url: https://appstoreconnect.apple.com/
+
+    permissions:
+      contents: read
+
+    strategy:
+      fail-fast: false
+      max-parallel: 1
+      matrix:
+        include:
+          - product_name: participant-app
+            scheme: SecretMatch
+            archive_name: SecretMatch
+          - product_name: admin-app
+            scheme: SecretMatch Admin
+            archive_name: SecretMatchAdmin
+
+    defaults:
+      run:
+        shell: bash
+
+    env:
+      PROJECT: SecretMatch.xcodeproj
+      DEVELOPMENT_TEAM: BVCKM275FP
+      APP_STORE_CONNECT_API_KEY_ID: ${{ secrets.APP_STORE_CONNECT_API_KEY_ID }}
+      APP_STORE_CONNECT_API_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_API_ISSUER_ID }}
+      APP_STORE_CONNECT_API_PRIVATE_KEY: ${{ secrets.APP_STORE_CONNECT_API_PRIVATE_KEY }}
+
+    steps:
+      - name: Check out tested release commit
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+          persist-credentials: false
+
+      - name: Validate App Store Connect configuration
+        run: |
+          set -euo pipefail
+
+          for required_name in \
+            APP_STORE_CONNECT_API_KEY_ID \
+            APP_STORE_CONNECT_API_ISSUER_ID \
+            APP_STORE_CONNECT_API_PRIVATE_KEY; do
+            if [[ -z "${!required_name:-}" ]]; then
+              echo "::error::GitHub Environment Secret $required_name fehlt."
+              exit 1
+            fi
+          done
+
+          if ! plutil -lint AppStoreExportOptions.plist; then
+            echo '::error::AppStoreExportOptions.plist ist ungültig.'
+            exit 1
+          fi
+
+      - name: Prepare App Store Connect API key
+        run: |
+          set -euo pipefail
+
+          key_directory="$RUNNER_TEMP/app-store-connect"
+          key_path="$key_directory/AuthKey_${APP_STORE_CONNECT_API_KEY_ID}.p8"
+          mkdir -p "$key_directory"
+          printf '%s\n' "$APP_STORE_CONNECT_API_PRIVATE_KEY" > "$key_path"
+          chmod 600 "$key_path"
+          echo "APP_STORE_CONNECT_API_KEY_PATH=$key_path" >> "$GITHUB_ENV"
+
+      - name: Archive ${{ matrix.product_name }}
+        env:
+          SCHEME: ${{ matrix.scheme }}
+          ARCHIVE_NAME: ${{ matrix.archive_name }}
+        run: |
+          set -euo pipefail
+
+          mkdir -p artifacts
+          archive_path="$RUNNER_TEMP/${ARCHIVE_NAME}.xcarchive"
+          echo "ARCHIVE_PATH=$archive_path" >> "$GITHUB_ENV"
+
+          xcodebuild archive \
+            -project "$PROJECT" \
+            -scheme "$SCHEME" \
+            -configuration Release \
+            -destination 'generic/platform=iOS' \
+            -archivePath "$archive_path" \
+            -allowProvisioningUpdates \
+            -authenticationKeyPath "$APP_STORE_CONNECT_API_KEY_PATH" \
+            -authenticationKeyID "$APP_STORE_CONNECT_API_KEY_ID" \
+            -authenticationKeyIssuerID "$APP_STORE_CONNECT_API_ISSUER_ID" \
+            DEVELOPMENT_TEAM="$DEVELOPMENT_TEAM" \
+            CODE_SIGN_STYLE=Automatic \
+            2>&1 | tee artifacts/archive.log | xcbeautify --renderer github-actions
+
+      - name: Upload ${{ matrix.product_name }}
+        run: |
+          set -euo pipefail
+
+          export_path="$RUNNER_TEMP/AppStoreExport"
+          xcodebuild -exportArchive \
+            -archivePath "$ARCHIVE_PATH" \
+            -exportPath "$export_path" \
+            -exportOptionsPlist AppStoreExportOptions.plist \
+            -allowProvisioningUpdates \
+            -authenticationKeyPath "$APP_STORE_CONNECT_API_KEY_PATH" \
+            -authenticationKeyID "$APP_STORE_CONNECT_API_KEY_ID" \
+            -authenticationKeyIssuerID "$APP_STORE_CONNECT_API_ISSUER_ID" \
+            2>&1 | tee artifacts/upload.log | xcbeautify --renderer github-actions
+
+      - name: Remove temporary API key
+        if: always()
+        run: |
+          key_path="$RUNNER_TEMP/app-store-connect/AuthKey_${APP_STORE_CONNECT_API_KEY_ID}.p8"
+          rm -f "$key_path"
+
+      - name: Publish upload summary
+        if: always()
+        env:
+          PRODUCT_NAME: ${{ matrix.product_name }}
+          RELEASE_PR: ${{ needs.release_gate.outputs.pull_request_number }}
+        run: |
+          {
+            echo "## App Store Connect · $PRODUCT_NAME"
+            echo
+            echo "- Release-PR: **#$RELEASE_PR**"
+            echo "- Commit: \`${{ github.event.workflow_run.head_sha }}\`"
+            if [[ "${{ job.status }}" == 'success' ]]; then
+              echo '- Upload: **erfolgreich an App Store Connect übertragen**'
+              echo '- Apple verarbeitet den Build anschließend asynchron für TestFlight.'
+            else
+              echo '- Upload: **fehlgeschlagen** – Details stehen im Archive- oder Upload-Step.'
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload release logs
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: app-store-connect-${{ matrix.product_name }}-logs
+          path: artifacts/
+          if-no-files-found: warn
+          retention-days: 14
