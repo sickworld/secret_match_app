@@ -14,6 +14,21 @@ Ein offener PR, ein fehlgeschlagener Quality-Run, ein normal benannter PR oder e
 
 Der Workflow überträgt Builds nach App Store Connect. Nach Apples asynchroner Verarbeitung stehen sie in TestFlight bereit. Er verteilt sie nicht automatisch an externe Tester und reicht keine App-Version automatisch zur App-Store-Prüfung ein.
 
+## Kontrollierter Testlauf
+
+Ein vollständiger Test ist ein echter Upload nach App Store Connect, veröffentlicht die Apps aber noch nicht im öffentlichen App Store:
+
+1. Von aktuellem `main` einen neuen Branch erstellen.
+2. `MARKETING_VERSION` in beiden Targets und allen Build-Konfigurationen auf das aktuelle Datum setzen und `CURRENT_PROJECT_VERSION` auf eine bei Apple noch nicht verwendete Nummer erhöhen. Für den ersten Test nach Build `149` ist Build `150` vorgesehen, sofern diese Nummer noch bei keiner der beiden Apps verwendet wurde.
+3. Die Versionsänderung committen, pushen und einen Pull Request nach `main` öffnen.
+4. Den PR exakt `release` oder beispielsweise `Release: 2026.09.14` nennen.
+5. Zuerst den normalen PR-Lauf von `iOS Quality` prüfen. Solange der PR nur offen ist, erfolgt kein Apple-Upload.
+6. Den grünen PR nach `main` mergen. Dadurch startet ein neuer `iOS Quality`-Push-Lauf für den tatsächlichen Merge-Commit.
+7. Nach dessen Erfolg unter **Actions → App Store Connect Release** prüfen, dass **Verify merged release PR**, **Upload participant-app to App Store Connect** und **Upload admin-app to App Store Connect** erfolgreich sind.
+8. Nach Apples Verarbeitung in App Store Connect bei beiden Apps unter **TestFlight** prüfen, dass der neue Build erscheint.
+
+Der Test verbraucht die gewählte Buildnummer bei Apple dauerhaft. Einen fehlgeschlagenen Upload erst nach Fehleranalyse erneut ausführen; sobald Apple einen Build angenommen hat, benötigt ein weiterer Upload derselben App eine neue Buildnummer. Ein übersprungener `App Store Connect Release`-Lauf nach einem normalen Push ist erwartet und bestätigt, dass der Release-Gate keine unbeabsichtigten Uploads zulässt.
+
 ## App Store Connect API Key und GitHub Secrets
 
 ### Werte bei Apple erzeugen und finden
