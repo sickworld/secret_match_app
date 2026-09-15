@@ -54,7 +54,7 @@ Aktionen benötigen keine Gegenrichtung. Jeder Versand enthält Aktionstyp, Abse
 - Eine parallele Einfügung wird nach einem Unique-Key-Konflikt erneut gelesen und ebenfalls idempotent beantwortet.
 - Eine bereits zurückgezogene Request-ID bleibt zurückgezogen.
 
-Die Teilnehmerübersicht stellt erhaltene Aktionen und die für einen Rückzug benötigten eigenen Sendungen getrennt dar. Richtungsreiter und Typfilter verwenden auf dem iPad dieselbe visuelle Auswahlkomponente, bleiben aber zwei unabhängige Filterdimensionen. Ein Richtungswechsel setzt Typ- und Nummernfilter zurück, damit keine unsichtbar weiterwirkende Einschränkung aus der zuvor geöffneten Liste bestehen bleibt. Zurückgezogene Aktionen sind beim Empfänger nicht mehr sichtbar.
+Die Teilnehmerübersicht stellt erhaltene Aktionen und die für einen Rückzug benötigten eigenen Sendungen getrennt dar. Die kompakten Richtungsreiter stehen auf dem iPad direkt neben **Alle** und den Typfiltern in einer gemeinsamen horizontalen Auswahlzeile, bleiben fachlich aber eine unabhängige Filterdimension. Ein Richtungswechsel setzt Typ- und Nummernfilter zurück, damit keine unsichtbar weiterwirkende Einschränkung aus der zuvor geöffneten Liste bestehen bleibt. Zurückgezogene Aktionen sind beim Empfänger nicht mehr sichtbar.
 
 ## Rückzug einer Aktion
 

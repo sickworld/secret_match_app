@@ -115,15 +115,12 @@ struct ParticipantOverviewView: View {
 
     private var filterBar: some View {
         VStack(spacing: 12) {
-            if selectedSection == .actions {
-                HStack(spacing: 10) {
-                    actionDirectionButton("Erhalten", sent: false, icon: "tray.and.arrow.down.fill")
-                    actionDirectionButton("Von dir gesendet", sent: true, icon: "paperplane.fill")
-                }
-            }
-
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 10) {
+                    if selectedSection == .actions {
+                        actionDirectionButton("Erhalten", sent: false, icon: "tray.and.arrow.down.fill")
+                        actionDirectionButton("Gesendet", sent: true, icon: "paperplane.fill")
+                    }
                     filterButton(
                         "Alle \(activeEntries.count)",
                         type: "all",
@@ -179,7 +176,7 @@ struct ParticipantOverviewView: View {
             isSelected: isSelected,
             color: SecretMatchTheme.secondary,
             selectedForegroundColor: .black,
-            fillsAvailableWidth: true
+            isCompact: true
         ) {
             withAnimation(.easeOut(duration: 0.18)) {
                 showsSentActions = sent
@@ -232,7 +229,8 @@ struct ParticipantOverviewView: View {
             systemImage: isSelected ? "checkmark.circle.fill" : "circle",
             isSelected: isSelected,
             color: color,
-            selectedForegroundColor: selectedForegroundColor
+            selectedForegroundColor: selectedForegroundColor,
+            isCompact: selectedSection == .actions
         ) {
             withAnimation(.easeOut(duration: 0.18)) {
                 selectedType = type
@@ -246,7 +244,7 @@ struct ParticipantOverviewView: View {
         isSelected: Bool,
         color: Color,
         selectedForegroundColor: Color,
-        fillsAvailableWidth: Bool = false,
+        isCompact: Bool = false,
         action: @escaping () -> Void
     ) -> some View {
         let usesColorIndependentSelection = highContrast || differentiateWithoutColor
@@ -254,19 +252,19 @@ struct ParticipantOverviewView: View {
         return Button(action: action) {
             HStack(spacing: 8) {
                 Image(systemName: systemImage)
-                    .font(.system(size: 17, weight: .bold))
-                    .frame(width: 19, height: 19)
+                    .font(.system(size: isCompact ? 15 : 17, weight: .bold))
+                    .frame(width: isCompact ? 17 : 19, height: isCompact ? 17 : 19)
                     .accessibilityHidden(true)
                 Text(title)
             }
-            .font(.system(size: 18, weight: .bold, design: .rounded))
+            .font(.system(size: isCompact ? 16 : 18, weight: .bold, design: .rounded))
             .foregroundStyle(
                 isSelected
                     ? (usesColorIndependentSelection ? Color.black : selectedForegroundColor)
                     : Color.white
             )
-            .padding(.horizontal, 18)
-            .frame(maxWidth: fillsAvailableWidth ? .infinity : nil, minHeight: 52)
+            .padding(.horizontal, isCompact ? 13 : 18)
+            .frame(minHeight: isCompact ? 44 : 52)
             .background(
                 usesColorIndependentSelection
                     ? (isSelected ? Color.white : Color.black)
