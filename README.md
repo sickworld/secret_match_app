@@ -10,6 +10,8 @@ Die vollständige fachliche Dokumentation beginnt unter [Match&Play Business-Log
 
 Die Markdown-Dateien werden als fortlaufende Projektspezifikation gepflegt. Relevante gemeinsam vereinbarte Produkt-, Business-, Betriebs- und Workflow-Entscheidungen werden deshalb im selben Arbeitspaket auf den jeweils passenden Seiten aktualisiert und anschließend über die Pipeline ins Wiki übernommen.
 
+Der [fachliche Entwurf für Pärchenprofile und gemeinsames Matching](docs/business-logic/couple-profiles-and-matching.md) beschreibt eine mögliche gemeinsame Eventnummer, profiltypabhängige Freigaben sowie Single-zu-Paar- und Paar-zu-Paar-Matches. Das Konzept ist ausdrücklich noch nicht implementiert.
+
 ## Automatisierte Tests (Build 152)
 
 Das Xcode-Projekt enthält das Unit-Test-Target `SecretMatchTests`. Die 63 Tests prüfen ohne produktive Serverzugriffe unter anderem Eventnummernformatierung, Match- und Aktionsdefinitionen, Queue-Texte, lokale Codable-Persistenz, Schlüsselbund- und Cache-Helfer, zentrale JSON- und API-Verträge für Teilnehmer- und Admin-Abläufe sowie den anonymen CSV-/PDF-Export. Netzwerkfreie Offscreen-Renderings decken zusätzlich Teilnehmer- und Admin-Oberflächen mit leeren und befüllten Zuständen im Hoch- und Querformat ab. Der vollständige Build-152-Lauf erreicht 82,61 % Core Coverage (3.501 von 4.238 Zeilen) und 67,88 % für `SecretMatch.app` inklusive SwiftUI (22.597 von 33.288 Zeilen); Xcodes aggregierte Laufmetrik liegt bei 70,12 %. Code Coverage ist im gemeinsamen `SecretMatch`-Scheme aktiviert.

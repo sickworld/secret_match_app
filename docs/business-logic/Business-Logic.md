@@ -1,6 +1,6 @@
 # Match&Play Business-Logik
 
-Stand: 14. September 2026
+Stand: 15. September 2026
 
 Diese Dokumentation beschreibt die fachlichen Regeln von Match&Play im aktuell implementierten Stand. Sie verbindet die Teilnehmer-App, die native Admin-App, die externe Webverwaltung, das Billboard und das WordPress-Plugin zu einem gemeinsamen fachlichen Modell.
 
@@ -37,6 +37,10 @@ Technische interne Namen wie `SecretMatch`, API-Namespace und Bundle-IDs bleiben
 - [Billboard, Mitteilungen und Medien](billboards-announcements-and-media.md)
 - [Geräte, Warnungen, Feedback und Datenschutz](devices-alerts-feedback-and-privacy.md)
 - [REST-API-Verträge](api-contracts.md)
+
+## Geplante Erweiterungen
+
+- [Pärchenprofile und gemeinsames Matching](couple-profiles-and-matching.md) – fachlicher Zielentwurf; noch nicht implementiert
 
 ## Begriffe
 

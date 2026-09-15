@@ -470,6 +470,7 @@ jobs:
           cp source/docs/business-logic/billboards-announcements-and-media.md wiki/billboards-announcements-and-media.md
           cp source/docs/business-logic/devices-alerts-feedback-and-privacy.md wiki/devices-alerts-feedback-and-privacy.md
           cp source/docs/business-logic/api-contracts.md wiki/api-contracts.md
+          cp source/docs/business-logic/couple-profiles-and-matching.md wiki/couple-profiles-and-matching.md
           sed -i \
             -e 's|(docs/business-logic/Business-Logic.md)|(Business-Logic)|g' \
             -e 's|(APP-STORE-CONNECT-RELEASE.md)|(App-Store-Connect-Release)|g' \
@@ -485,7 +486,8 @@ jobs:
             wiki/event-lifecycle-statistics-and-exports.md \
             wiki/billboards-announcements-and-media.md \
             wiki/devices-alerts-feedback-and-privacy.md \
-            wiki/api-contracts.md; do
+            wiki/api-contracts.md \
+            wiki/couple-profiles-and-matching.md; do
             sed -i -E 's|\(([^)/]+)\.md\)|(\1)|g' "$page"
           done
 
@@ -505,6 +507,8 @@ jobs:
             '  - [Billboard, Mitteilungen und Medien](billboards-announcements-and-media)' \
             '  - [Geräte, Warnungen, Feedback und Datenschutz](devices-alerts-feedback-and-privacy)' \
             '  - [REST-API-Verträge](api-contracts)' \
+            '  - **Geplante Erweiterungen**' \
+            '    - [Pärchenprofile und gemeinsames Matching](couple-profiles-and-matching)' \
             '- [Event-Netzwerk-Setup](Event-Netzwerk-Setup)' \
             '- [Agent Instructions](Agent-Instructions)' \
             '- [Agent Workflow](Agent-Workflow)' \
@@ -536,6 +540,7 @@ jobs:
             billboards-announcements-and-media.md \
             devices-alerts-feedback-and-privacy.md \
             api-contracts.md \
+            couple-profiles-and-matching.md \
             _Sidebar.md
 
           if git -C wiki diff --cached --quiet; then
