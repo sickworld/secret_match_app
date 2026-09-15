@@ -116,11 +116,10 @@ struct ParticipantOverviewView: View {
     private var filterBar: some View {
         VStack(spacing: 12) {
             if selectedSection == .actions {
-                HStack(spacing: 0) {
+                HStack(spacing: 10) {
                     actionDirectionButton("Erhalten", sent: false, icon: "tray.and.arrow.down.fill")
                     actionDirectionButton("Von dir gesendet", sent: true, icon: "paperplane.fill")
                 }
-                .overlay(Rectangle().stroke(SecretMatchTheme.border, lineWidth: 1))
             }
 
             ScrollView(.horizontal, showsIndicators: false) {
@@ -174,21 +173,20 @@ struct ParticipantOverviewView: View {
 
     private func actionDirectionButton(_ title: String, sent: Bool, icon: String) -> some View {
         let isSelected = showsSentActions == sent
-        return Button {
+        return overviewFilterButton(
+            title,
+            systemImage: icon,
+            isSelected: isSelected,
+            color: SecretMatchTheme.secondary,
+            selectedForegroundColor: .black,
+            fillsAvailableWidth: true
+        ) {
             withAnimation(.easeOut(duration: 0.18)) {
                 showsSentActions = sent
                 selectedType = "all"
                 numberQuery = ""
             }
-        } label: {
-            Label(title, systemImage: icon)
-                .font(.system(size: 17, weight: .bold, design: .rounded))
-                .foregroundStyle(isSelected ? Color.black : Color.white)
-                .frame(maxWidth: .infinity, minHeight: 50)
-                .background(isSelected ? SecretMatchTheme.secondary : SecretMatchTheme.surfaceRaised)
         }
-        .buttonStyle(.plain)
-        .accessibilityAddTraits(isSelected ? .isSelected : [])
     }
 
     @ViewBuilder
@@ -228,15 +226,34 @@ struct ParticipantOverviewView: View {
         selectedForegroundColor: Color = .white
     ) -> some View {
         let isSelected = selectedType == type
-        let usesColorIndependentSelection = highContrast || differentiateWithoutColor
 
-        return Button {
+        return overviewFilterButton(
+            title,
+            systemImage: isSelected ? "checkmark.circle.fill" : "circle",
+            isSelected: isSelected,
+            color: color,
+            selectedForegroundColor: selectedForegroundColor
+        ) {
             withAnimation(.easeOut(duration: 0.18)) {
                 selectedType = type
             }
-        } label: {
+        }
+    }
+
+    private func overviewFilterButton(
+        _ title: String,
+        systemImage: String,
+        isSelected: Bool,
+        color: Color,
+        selectedForegroundColor: Color,
+        fillsAvailableWidth: Bool = false,
+        action: @escaping () -> Void
+    ) -> some View {
+        let usesColorIndependentSelection = highContrast || differentiateWithoutColor
+
+        return Button(action: action) {
             HStack(spacing: 8) {
-                Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
+                Image(systemName: systemImage)
                     .font(.system(size: 17, weight: .bold))
                     .frame(width: 19, height: 19)
                     .accessibilityHidden(true)
@@ -249,7 +266,7 @@ struct ParticipantOverviewView: View {
                     : Color.white
             )
             .padding(.horizontal, 18)
-            .frame(minHeight: 52)
+            .frame(maxWidth: fillsAvailableWidth ? .infinity : nil, minHeight: 52)
             .background(
                 usesColorIndependentSelection
                     ? (isSelected ? Color.white : Color.black)

@@ -91,6 +91,11 @@ final class AdminViewSmokeTests: XCTestCase {
                     .environmentObject(api)
             )
         }
+        assertRenders(
+            ParticipantOverviewView(isPresented: .constant(true), selectedSection: .actions)
+                .environment(\.secretMatchHighContrast, true)
+                .environmentObject(api)
+        )
     }
 
     func testAdminViewsRenderPopulatedStates() throws {
