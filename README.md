@@ -10,7 +10,7 @@ Die vollständige fachliche Dokumentation beginnt unter [Match&Play Business-Log
 
 Die Markdown-Dateien werden als fortlaufende Projektspezifikation gepflegt. Relevante gemeinsam vereinbarte Produkt-, Business-, Betriebs- und Workflow-Entscheidungen werden deshalb im selben Arbeitspaket auf den jeweils passenden Seiten aktualisiert und anschließend über die Pipeline ins Wiki übernommen.
 
-Der [fachliche Entwurf für Pärchenprofile und gemeinsames Matching](docs/business-logic/couple-profiles-and-matching.md) beschreibt eine mögliche gemeinsame Eventnummer, profiltypabhängige Freigaben sowie Single-zu-Paar- und Paar-zu-Paar-Matches. Das Konzept ist ausdrücklich noch nicht implementiert.
+Der [fachliche Entwurf für Pärchenprofile und gemeinsames Matching](docs/business-logic/couple-profiles-and-matching.md) ergänzt `couple` als dritten Gender-Wert. Paare verwenden eine gemeinsame Eventnummer und den bestehenden Match-Ablauf; nur ein Paar-zu-Paar-Match erhält eine eigene Farbdarstellung. Das Konzept ist ausdrücklich noch nicht implementiert.
 
 ## Automatisierte Tests (Build 152)
 
