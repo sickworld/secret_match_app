@@ -117,10 +117,6 @@ struct ParticipantOverviewView: View {
         VStack(spacing: 12) {
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 10) {
-                    if selectedSection == .actions {
-                        actionDirectionButton("Erhalten", sent: false, icon: "tray.and.arrow.down.fill")
-                        actionDirectionButton("Gesendet", sent: true, icon: "paperplane.fill")
-                    }
                     filterButton(
                         "Alle \(activeEntries.count)",
                         type: "all",
@@ -128,6 +124,8 @@ struct ParticipantOverviewView: View {
                         selectedForegroundColor: .black
                     )
                     if selectedSection == .actions {
+                        actionDirectionButton("Erhalten", sent: false, icon: "tray.and.arrow.down.fill")
+                        actionDirectionButton("Gesendet", sent: true, icon: "paperplane.fill")
                         ForEach(actionFilterDefinitions) { definition in
                             filterButton("\(definition.displayTitle) \(count(for: definition.id))", type: definition.id, color: Color(hex: definition.color))
                         }
